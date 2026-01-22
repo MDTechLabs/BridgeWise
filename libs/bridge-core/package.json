@@ -1,0 +1,21 @@
+{
+  "name": "@bridgewise/bridge-core",
+  "version": "0.1.0",
+  "description": "Core logic for route discovery and API calls for BridgeWise",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/opossum": "^8.1.9",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "opossum": "^9.0.0"
+  }
+}

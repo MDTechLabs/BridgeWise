@@ -1,0 +1,15 @@
+{
+  "name": "@bridgewise/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx tsx src/index.ts"
+  },
+  "dependencies": {
+    "@bridgewise/bridge-core": "file:../../libs/bridge-core"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.2",
+    "typescript": "^5.0.0"
+  }
+}

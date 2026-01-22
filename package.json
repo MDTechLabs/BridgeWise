@@ -1,0 +1,10 @@
+{
+  "name": "bridgewise-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*",
+    "packages/*"
+  ]
+}
