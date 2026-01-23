@@ -4,6 +4,7 @@ import { LayerZeroAdapter } from './adapters/layerzero';
 import { StellarAdapter } from './adapters/stellar';
 import { RouteRequest, AggregatedRoutes, BridgeRoute, BridgeError } from './types';
 import { BridgeValidator, BridgeExecutionRequest, ValidationResult } from './validator';
+import { RouteRanker, RankingWeights, DEFAULT_RANKING_WEIGHTS } from './ranker';
 
 /**
  * Configuration for the bridge aggregator
@@ -21,6 +22,8 @@ export interface AggregatorConfig {
   adapters?: BridgeAdapter[];
   /** Request timeout in milliseconds (default: 15000) */
   timeout?: number;
+  /** Route ranking weights (default: balanced) */
+  rankingWeights?: RankingWeights;
 }
 
 /**
@@ -30,11 +33,13 @@ export class BridgeAggregator {
   private adapters: BridgeAdapter[];
   private readonly timeout: number;
   private readonly validator: BridgeValidator;
+  private readonly ranker: RouteRanker;
   
   constructor(config: AggregatorConfig = {}) {
     this.timeout = config.timeout || 15000;
     this.adapters = config.adapters || [];
     this.validator = new BridgeValidator();
+    this.ranker = new RouteRanker(config.rankingWeights);
     
     // Initialize default adapters if not provided
     if (this.adapters.length === 0) {
@@ -112,7 +117,7 @@ export class BridgeAggregator {
     
     // Normalize and sort routes
     const normalizedRoutes = this.normalizeRoutes(routes);
-    const sortedRoutes = this.sortRoutes(normalizedRoutes);
+    const sortedRoutes = this.ranker.rankRoutes(normalizedRoutes);
     
     return {
       routes: sortedRoutes,
@@ -153,6 +158,7 @@ export class BridgeAggregator {
         fee: route.fee || '0',
         feePercentage: route.feePercentage ?? 0,
         estimatedTime: route.estimatedTime ?? 0,
+        reliability: route.reliability ?? this.calculateReliability(route),
         minAmountOut: route.minAmountOut || route.outputAmount || '0',
         maxAmountOut: route.maxAmountOut || route.outputAmount || '0',
         deadline: route.deadline,
@@ -175,28 +181,7 @@ export class BridgeAggregator {
     });
   }
   
-  /**
-   * Sort routes by best option (lowest fee percentage, then fastest time)
-   */
-  private sortRoutes(routes: BridgeRoute[]): BridgeRoute[] {
-    return [...routes].sort((a, b) => {
-      // Primary sort: fee percentage (lower is better)
-      const feeDiff = a.feePercentage - b.feePercentage;
-      if (Math.abs(feeDiff) > 0.01) {
-        return feeDiff;
-      }
-      
-      // Secondary sort: estimated time (faster is better)
-      const timeDiff = a.estimatedTime - b.estimatedTime;
-      if (timeDiff !== 0) {
-        return timeDiff;
-      }
-      
-      // Tertiary sort: output amount (higher is better)
-      const outputDiff = BigInt(b.outputAmount) - BigInt(a.outputAmount);
-      return outputDiff > 0n ? 1 : outputDiff < 0n ? -1 : 0;
-    });
-  }
+
   
   /**
    * Calculate fee percentage
@@ -215,6 +200,30 @@ export class BridgeAggregator {
     } catch {
       return 0;
     }
+  }
+  
+  /**
+   * Calculate reliability score based on provider and metadata
+   */
+  private calculateReliability(route: BridgeRoute): number {
+    // Base reliability by provider (can be adjusted based on real data)
+    const providerReliability: Record<string, number> = {
+      stellar: 0.95,  // High reliability for established protocol
+      layerzero: 0.90, // Good reliability
+      hop: 0.85,      // Slightly lower due to optimism-specific
+    };
+    
+    let reliability = providerReliability[route.provider] || 0.8;
+    
+    // Adjust based on risk level if available
+    if (route.metadata?.riskLevel) {
+      // Risk level 1-5, where 1 is safest
+      // Convert to reliability: risk 1 = 0.95, risk 5 = 0.75
+      const riskAdjustment = (6 - route.metadata.riskLevel) * 0.05;
+      reliability = Math.min(reliability, riskAdjustment);
+    }
+    
+    return Math.max(0, Math.min(1, reliability));
   }
   
   /**
@@ -258,11 +267,16 @@ export class BridgeAggregator {
   }
 
   /**
-   * Get compatible target chains for a source chain
-   * @param sourceChain The source chain
-   * @returns Array of compatible target chains
+   * Update ranking weights for route prioritization
    */
-  getCompatibleChains(sourceChain: string): string[] {
-    return this.validator.getCompatibleChains(sourceChain as any) || [];
+  updateRankingWeights(weights: Partial<RankingWeights>): void {
+    this.ranker.updateWeights(weights);
+  }
+
+  /**
+   * Get current ranking weights
+   */
+  getRankingWeights(): RankingWeights {
+    return this.ranker.getWeights();
   }
 }

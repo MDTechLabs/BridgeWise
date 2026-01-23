@@ -52,6 +52,8 @@ export interface BridgeRoute {
   feePercentage: number;
   /** Estimated time to complete bridge (in seconds) */
   estimatedTime: number;
+  /** Reliability score (0-1, where 1 is most reliable) */
+  reliability: number;
   /** Minimum amount out (for slippage protection) */
   minAmountOut: string;
   /** Maximum amount out */
