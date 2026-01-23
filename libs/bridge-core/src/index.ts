@@ -6,21 +6,32 @@
  * including Stellar/Soroban, LayerZero, and Hop Protocol.
  */
 
+import { BridgeAggregator } from './aggregator';
+import type { RouteRequest } from './types';
+
 // Types
 export * from './types';
 
 // Adapters
-export { BridgeAdapter, BaseBridgeAdapter } from './adapters/base';
+export type { BridgeAdapter } from './adapters/base';
+export { BaseBridgeAdapter } from './adapters/base';
 export { HopAdapter } from './adapters/hop';
 export { LayerZeroAdapter } from './adapters/layerzero';
 export { StellarAdapter } from './adapters/stellar';
 
+// Fee Estimation
+export * from './fee-estimation';
+
+// Error Codes and Mapping
+export * from './error-codes';
+
 // Aggregator
-export { BridgeAggregator, AggregatorConfig } from './aggregator';
+export { BridgeAggregator } from './aggregator';
+export type { AggregatorConfig } from './aggregator';
 
 // Validator
-export {
-  BridgeValidator,
+export { BridgeValidator } from './validator';
+export type {
   ValidationError,
   ValidationResult,
   BridgeExecutionRequest,
@@ -47,14 +58,7 @@ export {
  * ```
  */
 export async function getBridgeRoutes(
-  request: {
-    sourceChain: string;
-    targetChain: string;
-    assetAmount: string;
-    tokenAddress?: string;
-    slippageTolerance?: number;
-    recipientAddress?: string;
-  },
+  request: RouteRequest,
   config?: {
     providers?: {
       hop?: boolean;

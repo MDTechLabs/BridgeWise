@@ -19,6 +19,18 @@ export type ChainId =
 export type BridgeProvider = 'stellar' | 'layerzero' | 'hop';
 
 /**
+ * Fee breakdown components
+ */
+export interface FeeBreakdown {
+  /** Network fee (in smallest unit) */
+  networkFee: string;
+  /** Bridge protocol fee (in smallest unit) */
+  bridgeFee: string;
+  /** Slippage fee (in smallest unit) */
+  slippageFee?: string;
+}
+
+/**
  * Unified bridge route response
  */
 export interface BridgeRoute {
@@ -63,6 +75,8 @@ export interface BridgeRoute {
     description?: string;
     /** Risk level (1-5, 1 being safest) */
     riskLevel?: number;
+    /** Fee breakdown */
+    feeBreakdown?: FeeBreakdown;
     /** Bridge-specific data */
     [key: string]: unknown;
   };
@@ -107,4 +121,26 @@ export interface BridgeError {
   provider: BridgeProvider;
   error: string;
   code?: string;
+}
+
+/**
+ * API request for bridge provider
+ */
+export interface ApiRequest {
+  provider: {
+    name: BridgeProvider;
+  };
+  [key: string]: unknown;
+}
+
+/**
+ * API response from bridge provider
+ */
+export interface ApiResponse {
+  success: boolean;
+  data?: unknown;
+  error?: {
+    code: string;
+    message: string;
+  };
 }
