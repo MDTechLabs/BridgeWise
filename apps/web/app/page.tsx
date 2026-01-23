@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { TransactionHeartbeat, TransactionProvider, useTransaction } from '../components/ui-lib';
+import { TransactionHeartbeat, useTransaction } from '@bridgewise/ui-components';
 
 function TransactionDemo() {
   const { state, updateState, startTransaction, clearState } = useTransaction();
@@ -64,9 +64,5 @@ function TransactionDemo() {
 }
 
 export default function Home() {
-  return (
-    <TransactionProvider>
-      <TransactionDemo />
-    </TransactionProvider>
-  );
+  return <TransactionDemo />;
 }
