@@ -23,13 +23,15 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@stellar/freighter-api": "^6.0.1",
     "axios": "^1.13.2",
     "express": "^5.2.1",
     "opossum": "^9.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "stellar-sdk": "^13.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -39,7 +41,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.19.7",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/supertest": "^6.0.2",
