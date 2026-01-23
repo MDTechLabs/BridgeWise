@@ -1,0 +1,19 @@
+/**
+ * Import Tailwind CSS
+ */
+@import "tailwindcss";
+
+/**
+ * Import BridgeWise UI Components theme variables
+ */
+@import "@bridgewise/ui-components/styles/globals.css";
+
+/**
+ * Application-specific styles
+ * Use BridgeWise theme variables for consistency
+ */
+body {
+  background: var(--bw-colors-background-primary);
+  color: var(--bw-colors-foreground-primary);
+  font-family: var(--bw-typography-font-family-sans);
+}

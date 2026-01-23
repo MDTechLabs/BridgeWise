@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core'; 
 import { ThrottlerModule } from '@nestjs/throttler'; 
+import { ConfigModule } from './config/config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard'; 
@@ -16,6 +17,7 @@ import { ThrottlerExceptionFilter } from './common/filters/throttler-exception.f
       },
     ]),
   ],
+  imports: [ConfigModule],
   controllers: [AppController],
   providers: [
     {

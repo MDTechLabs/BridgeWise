@@ -18,6 +18,14 @@ export { StellarAdapter } from './adapters/stellar';
 // Aggregator
 export { BridgeAggregator, AggregatorConfig } from './aggregator';
 
+// Validator
+export {
+  BridgeValidator,
+  ValidationError,
+  ValidationResult,
+  BridgeExecutionRequest,
+} from './validator';
+
 /**
  * Main function to get aggregated bridge routes
  * 

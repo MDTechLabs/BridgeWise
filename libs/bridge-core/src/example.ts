@@ -5,7 +5,7 @@
  * to fetch and compare routes from multiple bridge providers.
  */
 
-import { getBridgeRoutes, BridgeAggregator } from './index';
+import { getBridgeRoutes, BridgeAggregator, BridgeValidator } from './index';
 
 /**
  * Example 1: Simple route discovery
@@ -33,10 +33,50 @@ async function exampleSimple() {
 }
 
 /**
- * Example 2: Using the Aggregator class with custom configuration
+ * Example 2: Validation before bridge execution
+ */
+async function exampleValidation() {
+  console.log('=== Example 2: Validation Before Bridge Execution ===\n');
+  
+  const aggregator = new BridgeAggregator();
+  const validator = new BridgeValidator();
+  
+  // Prepare execution request with user details
+  const executionRequest = {
+    sourceChain: 'ethereum' as const,
+    targetChain: 'polygon' as const,
+    assetAmount: '1000000000000000000', // 1 ETH
+    walletAddress: '0x1234...',
+    userBalance: '500000000000000000', // 0.5 ETH (insufficient)
+    tokenAllowance: '0', // No allowance
+    connectedChain: 'ethereum' as const,
+  };
+  
+  // Validate the request before fetching routes
+  const validationResult = aggregator.validateRequest(executionRequest);
+  
+  if (!validationResult.isValid) {
+    console.log('Validation Failed:');
+    validationResult.errors.forEach(error => {
+      console.log(`  ❌ [${error.code}] ${error.message}`);
+    });
+  } else {
+    console.log('✅ Validation passed! Safe to proceed with route fetching.');
+  }
+  
+  if (validationResult.warnings.length > 0) {
+    console.log('\nWarnings:');
+    validationResult.warnings.forEach(warning => {
+      console.log(`  ⚠️  [${warning.code}] ${warning.message}`);
+    });
+  }
+}
+
+/**
+ * Example 3: Using the Aggregator class with custom configuration
  */
 async function exampleAdvanced() {
-  console.log('=== Example 2: Advanced Configuration ===\n');
+  console.log('=== Example 3: Advanced Configuration ===\n');
   
   const aggregator = new BridgeAggregator({
     providers: {
@@ -73,10 +113,56 @@ async function exampleAdvanced() {
 }
 
 /**
- * Example 3: Filtering routes by criteria
+ * Example 4: Validate selected route before execution
+ */
+async function exampleRouteValidation() {
+  console.log('=== Example 4: Route Validation Before Execution ===\n');
+  
+  const aggregator = new BridgeAggregator();
+  
+  // Get routes
+  const routes = await aggregator.getRoutes({
+    sourceChain: 'ethereum',
+    targetChain: 'polygon',
+    assetAmount: '1000000000000000000',
+  });
+  
+  if (routes.routes.length === 0) {
+    console.log('No routes available');
+    return;
+  }
+  
+  const selectedRoute = routes.routes[0];
+  const executionRequest = {
+    sourceChain: 'ethereum' as const,
+    targetChain: 'polygon' as const,
+    assetAmount: '1000000000000000000',
+    walletAddress: '0x1234...',
+    userBalance: '2000000000000000000',
+    tokenAllowance: '1000000000000000000',
+    connectedChain: 'ethereum' as const,
+  };
+  
+  // Validate the selected route
+  const routeValidation = aggregator.validateRoute(selectedRoute, executionRequest);
+  
+  if (routeValidation.isValid) {
+    console.log('✅ Route validated successfully!');
+    console.log(`Provider: ${selectedRoute.provider}`);
+    console.log(`Fee: ${selectedRoute.feePercentage}%`);
+  } else {
+    console.log('❌ Route validation failed:');
+    routeValidation.errors.forEach(error => {
+      console.log(`  [${error.code}] ${error.message}`);
+    });
+  }
+}
+
+/**
+ * Example 5: Filtering routes by criteria
  */
 async function exampleFiltering() {
-  console.log('=== Example 3: Filtering Routes ===\n');
+  console.log('=== Example 5: Filtering Routes ===\n');
   
   const routes = await getBridgeRoutes({
     sourceChain: 'arbitrum',
@@ -103,5 +189,7 @@ async function exampleFiltering() {
 // Run examples (commented out to avoid execution during build)
 // Uncomment to run:
 // exampleSimple().catch(console.error);
+// exampleValidation().catch(console.error);
 // exampleAdvanced().catch(console.error);
+// exampleRouteValidation().catch(console.error);
 // exampleFiltering().catch(console.error);

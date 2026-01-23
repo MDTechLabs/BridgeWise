@@ -1,0 +1,170 @@
+/**
+ * BridgeWise UI Components Global Styles
+ * Theme system base styles and CSS variables
+ *
+ * Note: This file does NOT import Tailwind CSS.
+ * The consuming application should import Tailwind separately.
+ */
+
+/**
+ * CSS Variable Fallbacks
+ * These provide defaults before JavaScript loads the theme
+ */
+:root {
+  /* Colors - Light mode fallbacks */
+  --bw-colors-background-primary: #ffffff;
+  --bw-colors-background-secondary: #f8fafc;
+  --bw-colors-background-tertiary: #f1f5f9;
+  --bw-colors-foreground-primary: #0f172a;
+  --bw-colors-foreground-secondary: #475569;
+  --bw-colors-foreground-tertiary: #94a3b8;
+  --bw-colors-foreground-link: #2563eb;
+
+  /* Borders */
+  --bw-colors-border-default: #e2e8f0;
+  --bw-colors-border-focus: #3b82f6;
+  --bw-colors-border-error: #ef4444;
+
+  /* Status */
+  --bw-colors-status-success: #22c55e;
+  --bw-colors-status-error: #ef4444;
+  --bw-colors-status-warning: #eab308;
+  --bw-colors-status-info: #3b82f6;
+  --bw-colors-status-pending: #2563eb;
+
+  /* Transaction component */
+  --bw-colors-transaction-background: #ffffff;
+  --bw-colors-transaction-border: #e2e8f0;
+  --bw-colors-transaction-progress-bar-success: #22c55e;
+  --bw-colors-transaction-progress-bar-error: #ef4444;
+  --bw-colors-transaction-progress-bar-pending: #2563eb;
+
+  /* Spacing */
+  --bw-spacing-xs: 0.25rem;
+  --bw-spacing-sm: 0.5rem;
+  --bw-spacing-md: 1rem;
+  --bw-spacing-lg: 1.5rem;
+  --bw-spacing-xl: 2rem;
+  --bw-spacing-2xl: 3rem;
+
+  /* Typography */
+  --bw-typography-font-family-sans: var(--font-geist-sans, system-ui, sans-serif);
+  --bw-typography-font-family-mono: var(--font-geist-mono, ui-monospace, monospace);
+  --bw-typography-font-size-xs: 0.75rem;
+  --bw-typography-font-size-sm: 0.875rem;
+  --bw-typography-font-size-base: 1rem;
+  --bw-typography-font-size-lg: 1.125rem;
+  --bw-typography-font-size-xl: 1.25rem;
+  --bw-typography-font-size-2xl: 1.5rem;
+  --bw-typography-font-weight-normal: 400;
+  --bw-typography-font-weight-medium: 500;
+  --bw-typography-font-weight-semibold: 600;
+  --bw-typography-font-weight-bold: 700;
+  --bw-typography-line-height-tight: 1.25;
+  --bw-typography-line-height-normal: 1.5;
+  --bw-typography-line-height-relaxed: 1.75;
+
+  /* Shadows */
+  --bw-shadows-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --bw-shadows-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --bw-shadows-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --bw-shadows-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Radii */
+  --bw-radii-none: 0;
+  --bw-radii-sm: 0.125rem;
+  --bw-radii-md: 0.375rem;
+  --bw-radii-lg: 0.5rem;
+  --bw-radii-xl: 0.75rem;
+  --bw-radii-full: 9999px;
+
+  /* Transitions */
+  --bw-transitions-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --bw-transitions-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --bw-transitions-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/**
+ * Dark Mode Fallbacks
+ * Applied before JavaScript loads when system prefers dark
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Colors - Dark mode fallbacks */
+    --bw-colors-background-primary: #0f172a;
+    --bw-colors-background-secondary: #1e293b;
+    --bw-colors-background-tertiary: #334155;
+    --bw-colors-foreground-primary: #f8fafc;
+    --bw-colors-foreground-secondary: #94a3b8;
+    --bw-colors-foreground-tertiary: #64748b;
+    --bw-colors-foreground-link: #60a5fa;
+
+    /* Borders */
+    --bw-colors-border-default: #334155;
+    --bw-colors-border-focus: #60a5fa;
+    --bw-colors-border-error: #f87171;
+
+    /* Status */
+    --bw-colors-status-success: #4ade80;
+    --bw-colors-status-error: #f87171;
+    --bw-colors-status-warning: #facc15;
+    --bw-colors-status-info: #60a5fa;
+    --bw-colors-status-pending: #3b82f6;
+
+    /* Transaction component */
+    --bw-colors-transaction-background: #1e293b;
+    --bw-colors-transaction-border: #334155;
+  }
+}
+
+/**
+ * Tailwind v4 Theme Integration
+ * Maps CSS variables to Tailwind utilities using @theme inline directive
+ */
+@theme inline {
+  /* Colors */
+  --color-bw-bg-primary: var(--bw-colors-background-primary);
+  --color-bw-bg-secondary: var(--bw-colors-background-secondary);
+  --color-bw-bg-tertiary: var(--bw-colors-background-tertiary);
+  --color-bw-fg-primary: var(--bw-colors-foreground-primary);
+  --color-bw-fg-secondary: var(--bw-colors-foreground-secondary);
+  --color-bw-fg-tertiary: var(--bw-colors-foreground-tertiary);
+  --color-bw-fg-link: var(--bw-colors-foreground-link);
+  --color-bw-border: var(--bw-colors-border-default);
+  --color-bw-border-focus: var(--bw-colors-border-focus);
+  --color-bw-success: var(--bw-colors-status-success);
+  --color-bw-error: var(--bw-colors-status-error);
+  --color-bw-warning: var(--bw-colors-status-warning);
+  --color-bw-info: var(--bw-colors-status-info);
+
+  /* Spacing */
+  --spacing-bw-xs: var(--bw-spacing-xs);
+  --spacing-bw-sm: var(--bw-spacing-sm);
+  --spacing-bw-md: var(--bw-spacing-md);
+  --spacing-bw-lg: var(--bw-spacing-lg);
+  --spacing-bw-xl: var(--bw-spacing-xl);
+  --spacing-bw-2xl: var(--bw-spacing-2xl);
+
+  /* Typography */
+  --font-bw-sans: var(--bw-typography-font-family-sans);
+  --font-bw-mono: var(--bw-typography-font-family-mono);
+  --text-bw-xs: var(--bw-typography-font-size-xs);
+  --text-bw-sm: var(--bw-typography-font-size-sm);
+  --text-bw-base: var(--bw-typography-font-size-base);
+  --text-bw-lg: var(--bw-typography-font-size-lg);
+  --text-bw-xl: var(--bw-typography-font-size-xl);
+  --text-bw-2xl: var(--bw-typography-font-size-2xl);
+
+  /* Shadows */
+  --shadow-bw-sm: var(--bw-shadows-sm);
+  --shadow-bw-md: var(--bw-shadows-md);
+  --shadow-bw-lg: var(--bw-shadows-lg);
+  --shadow-bw-xl: var(--bw-shadows-xl);
+
+  /* Radii */
+  --radius-bw-sm: var(--bw-radii-sm);
+  --radius-bw-md: var(--bw-radii-md);
+  --radius-bw-lg: var(--bw-radii-lg);
+  --radius-bw-xl: var(--bw-radii-xl);
+  --radius-bw-full: var(--bw-radii-full);
+}

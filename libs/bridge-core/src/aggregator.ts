@@ -3,6 +3,7 @@ import { HopAdapter } from './adapters/hop';
 import { LayerZeroAdapter } from './adapters/layerzero';
 import { StellarAdapter } from './adapters/stellar';
 import { RouteRequest, AggregatedRoutes, BridgeRoute, BridgeError } from './types';
+import { BridgeValidator, BridgeExecutionRequest, ValidationResult } from './validator';
 
 /**
  * Configuration for the bridge aggregator
@@ -28,10 +29,12 @@ export interface AggregatorConfig {
 export class BridgeAggregator {
   private adapters: BridgeAdapter[];
   private readonly timeout: number;
+  private readonly validator: BridgeValidator;
   
   constructor(config: AggregatorConfig = {}) {
     this.timeout = config.timeout || 15000;
     this.adapters = config.adapters || [];
+    this.validator = new BridgeValidator();
     
     // Initialize default adapters if not provided
     if (this.adapters.length === 0) {
@@ -233,5 +236,33 @@ export class BridgeAggregator {
    */
   removeAdapter(provider: string): void {
     this.adapters = this.adapters.filter(adapter => adapter.provider !== provider);
+  }
+
+  /**
+   * Validate a bridge execution request before fetching routes
+   * @param request Bridge execution request with user details
+   * @returns Validation result with detailed error messages
+   */
+  validateRequest(request: BridgeExecutionRequest): ValidationResult {
+    return this.validator.validateExecutionRequest(request);
+  }
+
+  /**
+   * Validate a specific route before execution
+   * @param route The route to validate
+   * @param request The original execution request
+   * @returns Validation result with detailed error messages
+   */
+  validateRoute(route: BridgeRoute, request: BridgeExecutionRequest): ValidationResult {
+    return this.validator.validateRoute(route, request);
+  }
+
+  /**
+   * Get compatible target chains for a source chain
+   * @param sourceChain The source chain
+   * @returns Array of compatible target chains
+   */
+  getCompatibleChains(sourceChain: string): string[] {
+    return this.validator.getCompatibleChains(sourceChain as any) || [];
   }
 }
