@@ -23,11 +23,12 @@ async function exampleSimple() {
   console.log(`Found ${routes.routes.length} routes from ${routes.providersResponded}/${routes.providersQueried} providers\n`);
   
   routes.routes.forEach((route, index) => {
-    console.log(`Route ${index + 1}: ${route.provider}`);
-    console.log(`  Fee: ${route.feePercentage}%`);
+    console.log(`Route ${index + 1}: ${route.adapter}`);
+    console.log(`  Total Fees: ${route.totalFees}`);
     console.log(`  Estimated Time: ${route.estimatedTime}s`);
-    console.log(`  Output Amount: ${route.outputAmount}`);
-    console.log(`  Min Amount Out: ${route.minAmountOut}`);
+    console.log(`  Token In: ${route.tokenIn}`);
+    console.log(`  Token Out: ${route.tokenOut}`);
+    console.log(`  Hops: ${route.hops.length}`);
     console.log('');
   });
 }
@@ -84,7 +85,7 @@ async function exampleAdvanced() {
       layerzero: true,
       stellar: true,
     },
-    layerZeroApiKey: process.env.LAYERZERO_API_KEY, // Optional
+    // layerZeroApiKey: process.env.LAYERZERO_API_KEY, // Optional
     timeout: 20000, // 20 seconds
   });
   
@@ -99,14 +100,10 @@ async function exampleAdvanced() {
   
   if (routes.routes.length > 0) {
     const bestRoute = routes.routes[0];
-    console.log(`Best Route: ${bestRoute.provider}`);
-    console.log(`  Fee: ${bestRoute.feePercentage}%`);
+    console.log(`Best Route: ${bestRoute.adapter}`);
+    console.log(`  Total Fees: ${bestRoute.totalFees}`);
     console.log(`  Time: ${bestRoute.estimatedTime}s`);
-    
-    if (bestRoute.transactionData) {
-      console.log(`  Contract: ${bestRoute.transactionData.contractAddress}`);
-      console.log(`  Gas Estimate: ${bestRoute.transactionData.gasEstimate}`);
-    }
+    console.log(`  Hops: ${bestRoute.hops.length}`);
   } else {
     console.log('No routes found');
   }
@@ -145,11 +142,11 @@ async function exampleRouteValidation() {
   
   // Validate the selected route
   const routeValidation = aggregator.validateRoute(selectedRoute, executionRequest);
-  
+
   if (routeValidation.isValid) {
     console.log('✅ Route validated successfully!');
-    console.log(`Provider: ${selectedRoute.provider}`);
-    console.log(`Fee: ${selectedRoute.feePercentage}%`);
+    console.log(`Adapter: ${selectedRoute.adapter}`);
+    console.log(`Total Fees: ${selectedRoute.totalFees}`);
   } else {
     console.log('❌ Route validation failed:');
     routeValidation.errors.forEach(error => {
@@ -170,20 +167,20 @@ async function exampleFiltering() {
     assetAmount: '500000000000000000', // 0.5 ETH
   });
   
-  // Filter routes with fee < 1%
-  const lowFeeRoutes = routes.routes.filter(route => route.feePercentage < 1);
-  console.log(`Routes with fee < 1%: ${lowFeeRoutes.length}`);
-  
+  // Filter routes with total fees < 0.01 (assuming wei units)
+  const lowFeeRoutes = routes.routes.filter(route => BigInt(route.totalFees) < BigInt('10000000000000000')); // 0.01 ETH in wei
+  console.log(`Routes with low fees: ${lowFeeRoutes.length}`);
+
   // Filter routes with time < 5 minutes
   const fastRoutes = routes.routes.filter(route => route.estimatedTime < 300);
   console.log(`Routes faster than 5 minutes: ${fastRoutes.length}`);
-  
-  // Find route with highest output amount
-  const bestOutputRoute = routes.routes.reduce((best, current) => {
-    return BigInt(current.outputAmount) > BigInt(best.outputAmount) ? current : best;
+
+  // Find route with fewest hops
+  const simplestRoute = routes.routes.reduce((best, current) => {
+    return current.hops.length < best.hops.length ? current : best;
   }, routes.routes[0]);
-  
-  console.log(`Best output route: ${bestOutputRoute.provider} with ${bestOutputRoute.outputAmount}`);
+
+  console.log(`Simplest route: ${simplestRoute.adapter} with ${simplestRoute.hops.length} hops`);
 }
 
 // Run examples (commented out to avoid execution during build)

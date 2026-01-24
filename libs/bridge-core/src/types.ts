@@ -31,6 +31,28 @@ export interface FeeBreakdown {
 }
 
 /**
+ * Hop in a multi-hop route
+ */
+export interface RouteHop {
+  /** Source chain for this hop */
+  sourceChain: ChainId;
+  /** Destination chain for this hop */
+  destinationChain: ChainId;
+  /** Input token address or symbol */
+  tokenIn: string;
+  /** Output token address or symbol */
+  tokenOut: string;
+  /** Fee for this hop (in smallest unit) */
+  fee: string;
+  /** Estimated time for this hop (in seconds) */
+  estimatedTime: number;
+  /** Bridge adapter used for this hop */
+  adapter: BridgeProvider;
+  /** Additional hop metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Unified bridge route response
  */
 export interface BridgeRoute {
@@ -80,6 +102,34 @@ export interface BridgeRoute {
     /** Bridge-specific data */
     [key: string]: unknown;
   };
+  /** Hops for multi-hop routes */
+  hops?: RouteHop[];
+}
+
+/**
+ * Normalized route schema for aggregation
+ */
+export interface NormalizedRoute {
+  /** Unique identifier for this route */
+  id: string;
+  /** Source chain identifier */
+  sourceChain: ChainId;
+  /** Destination chain identifier */
+  destinationChain: ChainId;
+  /** Input token address or symbol */
+  tokenIn: string;
+  /** Output token address or symbol */
+  tokenOut: string;
+  /** Total fees charged (in smallest unit) */
+  totalFees: string;
+  /** Estimated time to complete bridge (in seconds) */
+  estimatedTime: number;
+  /** Array of hops in the route */
+  hops: RouteHop[];
+  /** Primary adapter/source identifier */
+  adapter: BridgeProvider;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -105,7 +155,7 @@ export interface RouteRequest {
  */
 export interface AggregatedRoutes {
   /** Array of available routes, sorted by best option first */
-  routes: BridgeRoute[];
+  routes: NormalizedRoute[];
   /** Timestamp when routes were fetched */
   timestamp: number;
   /** Total number of providers queried */
