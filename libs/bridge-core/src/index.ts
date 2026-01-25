@@ -29,6 +29,10 @@ export * from './error-codes';
 export { BridgeAggregator } from './aggregator';
 export type { AggregatorConfig } from './aggregator';
 
+// Route Ranker
+export { RouteRanker, DEFAULT_RANKING_WEIGHTS } from './ranker';
+export type { RankingWeights } from './ranker';
+
 // Validator
 export { BridgeValidator } from './validator';
 export type {
@@ -49,11 +53,17 @@ export type {
  *   targetChain: 'polygon',
  *   assetAmount: '1000000000000000000', // 1 ETH in wei
  *   slippageTolerance: 0.5
+ * }, {
+ *   rankingWeights: {
+ *     costWeight: 0.5,      // Prioritize cheaper routes
+ *     latencyWeight: 0.3,   // Consider speed
+ *     reliabilityWeight: 0.2 // Consider reliability
+ *   }
  * });
  * 
  * console.log(`Found ${routes.routes.length} routes`);
  * routes.routes.forEach(route => {
- *   console.log(`${route.provider}: ${route.feePercentage}% fee, ${route.estimatedTime}s`);
+ *   console.log(`${route.provider}: ${route.feePercentage}% fee, ${route.estimatedTime}s, reliability: ${route.reliability}`);
  * });
  * ```
  */
@@ -67,6 +77,7 @@ export async function getBridgeRoutes(
     };
     layerZeroApiKey?: string;
     timeout?: number;
+    rankingWeights?: RankingWeights;
   }
 ) {
   const aggregator = new BridgeAggregator(config);
