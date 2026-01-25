@@ -1,0 +1,37 @@
+{
+  "name": "@bridgewise/stellar-adapter",
+  "version": "0.1.0",
+  "description": "Stellar/Soroban bridge adapter with Freighter wallet integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@bridgewise/bridge-core": "workspace:*",
+    "axios": "^1.13.2",
+    "freighter-api": "^2.4.0",
+    "stellar-sdk": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.7",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
+    "jest": "^30.0.0",
+    "ts-jest": "^30.0.0",
+    "typescript": "^5.6.3"
+  },
+  "keywords": [
+    "stellar",
+    "soroban",
+    "bridge",
+    "freighter",
+    "blockchain"
+  ],
+  "author": "BridgeWise",
+  "license": "MIT"
+}

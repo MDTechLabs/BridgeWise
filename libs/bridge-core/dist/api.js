@@ -48,9 +48,8 @@ async function callApi(request) {
         return {
             success: false,
             error: {
-                isTransient: err.isTransient !== false, // Assume transient unless specified
+                code: err.code || 'UNKNOWN_ERROR',
                 message: err.message || 'Circuit breaker opened',
-                details: err,
             },
         };
     }
@@ -61,10 +60,10 @@ async function callApi(request) {
  */
 async function mockApiCall(request) {
     console.log(`Calling API for provider: ${request.provider.name}`);
-    if (request.provider.name === 'Stellar') {
+    if (request.provider.name === 'stellar') {
         // Consistently fail for Stellar to test circuit breaker
         const err = new Error('Transient failure');
-        err.isTransient = true;
+        err.code = 'TRANSIENT_ERROR';
         throw err;
     }
     // LayerZero will have random failures

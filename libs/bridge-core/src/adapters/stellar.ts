@@ -1,6 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 import { BaseBridgeAdapter } from './base';
 import { BridgeRoute, RouteRequest, BridgeProvider, ChainId } from '../types';
+import { ErrorMapper, STELLAR_ERROR_MAPPING, BridgeErrorCode, StandardBridgeError } from '../error-codes';
+import { StellarFees, LatencyEstimation, LatencyEstimate } from '../fee-estimation';
 
 /**
  * Stellar/Soroban bridge adapter
@@ -10,6 +12,7 @@ export class StellarAdapter extends BaseBridgeAdapter {
   readonly provider: BridgeProvider = 'stellar';
   private readonly rpcClient: AxiosInstance;
   private readonly horizonClient: AxiosInstance;
+  private readonly errorMapper: ErrorMapper;
   
   // Stellar network configuration
   private readonly network: 'mainnet' | 'testnet';
@@ -21,6 +24,7 @@ export class StellarAdapter extends BaseBridgeAdapter {
   ) {
     super();
     this.network = network;
+    this.errorMapper = new ErrorMapper(STELLAR_ERROR_MAPPING);
     
     this.rpcClient = axios.create({
       baseURL: rpcUrl,
@@ -84,27 +88,45 @@ export class StellarAdapter extends BaseBridgeAdapter {
    */
   private async fetchRoutesFromStellar(request: RouteRequest): Promise<BridgeRoute[]> {
     try {
+      // Validate amount
+      const inputAmount = BigInt(request.assetAmount);
+      if (!StellarFees.isValidAmount(inputAmount, true)) {
+        return [];
+      }
+
       // Query Soroban bridge contract for quote
-      // In a real implementation, this would call the bridge contract's quote function
       const bridgeContractAddress = await this.getBridgeContractAddress(request.targetChain);
       
       if (!bridgeContractAddress) {
         return [];
       }
       
-      // Estimate fees and output amount
-      // Stellar bridges typically have very low fees
-      const inputAmount = BigInt(request.assetAmount);
-      
-      // Stellar fees are typically very low (~0.00001 XLM per operation)
-      // For cross-chain bridges, estimate ~0.1% fee
-      const fee = inputAmount / 1000n;
-      const outputAmount = inputAmount - fee;
-      
+      // Estimate fees using accurate Stellar fee model
+      const feeEstimate = StellarFees.estimateFees(
+        inputAmount,
+        true, // isFromStellar
+        request.slippageTolerance || 0.5
+      );
+
+      const outputAmount = inputAmount - feeEstimate.totalFee;
+
+      // Validate minimum output
+      if (outputAmount <= 0n) {
+        return [];
+      }
+
+      // Estimate latency
+      const latencyEstimate = LatencyEstimation.estimateLatency('stellar', request.targetChain);
+
       // Get current ledger info for deadline calculation
       const ledgerInfo = await this.getCurrentLedger();
       const deadline = ledgerInfo ? ledgerInfo.closeTime + 300 : undefined; // 5 minutes from now
-      
+
+      const minAmountOut = StellarFees.calculateMinAmountOut(
+        outputAmount,
+        request.slippageTolerance || 0.5
+      );
+
       const route: BridgeRoute = {
         id: this.generateRouteId(this.provider, request.sourceChain, request.targetChain, 0),
         provider: this.provider,
@@ -112,10 +134,10 @@ export class StellarAdapter extends BaseBridgeAdapter {
         targetChain: request.targetChain,
         inputAmount: inputAmount.toString(),
         outputAmount: outputAmount.toString(),
-        fee: fee.toString(),
-        feePercentage: this.calculateFeePercentage(inputAmount.toString(), outputAmount.toString()),
-        estimatedTime: this.estimateBridgeTime(request.targetChain),
-        minAmountOut: this.calculateMinAmountOut(outputAmount.toString(), request.slippageTolerance),
+        fee: feeEstimate.totalFee.toString(),
+        feePercentage: feeEstimate.feePercentage,
+        estimatedTime: latencyEstimate.estimatedSeconds,
+        minAmountOut: minAmountOut.toString(),
         maxAmountOut: outputAmount.toString(),
         deadline,
         transactionData: {
@@ -127,12 +149,20 @@ export class StellarAdapter extends BaseBridgeAdapter {
           riskLevel: 1, // Stellar is considered very safe
           network: this.network,
           bridgeContract: bridgeContractAddress,
+          feeBreakdown: {
+            networkFee: feeEstimate.networkFee.toString(),
+            bridgeFee: feeEstimate.bridgeFee.toString(),
+            slippageFee: feeEstimate.slippageFee.toString(),
+          },
+          latencyConfidence: latencyEstimate.confidence,
+          latencyBreakdown: latencyEstimate.breakdown,
         },
       };
       
       return [route];
     } catch (error) {
-      console.error(`[StellarAdapter] Error fetching routes from Stellar:`, error);
+      const mappedError = this.errorMapper.mapError(error);
+      console.error(`[StellarAdapter] Error fetching routes from Stellar:`, mappedError);
       return [];
     }
   }
@@ -142,15 +172,37 @@ export class StellarAdapter extends BaseBridgeAdapter {
    */
   private async fetchRoutesToStellar(request: RouteRequest): Promise<BridgeRoute[]> {
     try {
+      // Validate amount
+      const inputAmount = BigInt(request.assetAmount);
+      if (!StellarFees.isValidAmount(inputAmount, false)) {
+        return [];
+      }
+
       // For bridging TO Stellar, we need to query the source chain's bridge contract
       // This is a simplified implementation - in production, you'd query the actual bridge contract
       
-      const inputAmount = BigInt(request.assetAmount);
-      
-      // Estimate fees (typically 0.1-0.5% for cross-chain bridges)
-      const fee = inputAmount / 500n; // ~0.2% fee
-      const outputAmount = inputAmount - fee;
-      
+      // Estimate fees using accurate fee model
+      const feeEstimate = StellarFees.estimateFees(
+        inputAmount,
+        false, // isFromStellar (bridging TO Stellar)
+        request.slippageTolerance || 0.5
+      );
+
+      const outputAmount = inputAmount - feeEstimate.totalFee;
+
+      // Validate minimum output
+      if (outputAmount <= 0n) {
+        return [];
+      }
+
+      // Estimate latency
+      const latencyEstimate = LatencyEstimation.estimateLatency(request.sourceChain, 'stellar');
+
+      const minAmountOut = StellarFees.calculateMinAmountOut(
+        outputAmount,
+        request.slippageTolerance || 0.5
+      );
+
       const route: BridgeRoute = {
         id: this.generateRouteId(this.provider, request.sourceChain, request.targetChain, 0),
         provider: this.provider,
@@ -158,10 +210,10 @@ export class StellarAdapter extends BaseBridgeAdapter {
         targetChain: request.targetChain,
         inputAmount: inputAmount.toString(),
         outputAmount: outputAmount.toString(),
-        fee: fee.toString(),
-        feePercentage: this.calculateFeePercentage(inputAmount.toString(), outputAmount.toString()),
-        estimatedTime: this.estimateBridgeTime(request.sourceChain),
-        minAmountOut: this.calculateMinAmountOut(outputAmount.toString(), request.slippageTolerance),
+        fee: feeEstimate.totalFee.toString(),
+        feePercentage: feeEstimate.feePercentage,
+        estimatedTime: latencyEstimate.estimatedSeconds,
+        minAmountOut: minAmountOut.toString(),
         maxAmountOut: outputAmount.toString(),
         transactionData: {
           contractAddress: request.tokenAddress, // Bridge contract on source chain
@@ -171,12 +223,20 @@ export class StellarAdapter extends BaseBridgeAdapter {
           description: `Bridge from ${request.sourceChain} to Stellar via Soroban`,
           riskLevel: 1,
           network: this.network,
+          feeBreakdown: {
+            networkFee: feeEstimate.networkFee.toString(),
+            bridgeFee: feeEstimate.bridgeFee.toString(),
+            slippageFee: feeEstimate.slippageFee.toString(),
+          },
+          latencyConfidence: latencyEstimate.confidence,
+          latencyBreakdown: latencyEstimate.breakdown,
         },
       };
       
       return [route];
     } catch (error) {
-      console.error(`[StellarAdapter] Error fetching routes to Stellar:`, error);
+      const mappedError = this.errorMapper.mapError(error);
+      console.error(`[StellarAdapter] Error fetching routes to Stellar:`, mappedError);
       return [];
     }
   }
@@ -230,21 +290,24 @@ export class StellarAdapter extends BaseBridgeAdapter {
    * Estimate bridge time based on target chain
    */
   private estimateBridgeTime(chain: ChainId): number {
-    // Stellar bridges are typically fast (1-5 minutes)
-    // L2 chains are faster than L1
-    if (chain === 'ethereum') {
-      return 5 * 60; // 5 minutes for L1
-    }
-    return 2 * 60; // 2 minutes for L2 chains
+    const latencyEstimate = LatencyEstimation.estimateLatency('stellar', chain);
+    return latencyEstimate.estimatedSeconds;
   }
-  
+
+  /**
+   * Map Stellar RPC errors to standard error codes
+   */
+  mapError(error: unknown): StandardBridgeError {
+    return this.errorMapper.mapError(error);
+  }
+
   /**
    * Calculate minimum amount out with slippage
    */
   private calculateMinAmountOut(amountOut: string, slippageTolerance?: number): string {
-    const slippage = slippageTolerance || 0.5;
-    const amount = BigInt(amountOut);
-    const slippageAmount = (amount * BigInt(Math.floor(slippage * 100))) / 10000n;
-    return (amount - slippageAmount).toString();
+    return StellarFees.calculateMinAmountOut(
+      BigInt(amountOut),
+      slippageTolerance || 0.5
+    ).toString();
   }
 }

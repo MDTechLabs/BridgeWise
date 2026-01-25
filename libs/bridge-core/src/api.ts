@@ -26,7 +26,7 @@ function getBreaker(providerName: string): opossum {
     breaker.on('open', () => console.log(`[${providerName}] Circuit breaker opened.`));
     breaker.on('halfOpen', () => console.log(`[${providerName}] Circuit breaker is half-open.`));
     breaker.on('close', () => console.log(`[${providerName}] Circuit breaker closed.`));
-    breaker.on('fallback', (result) => console.log(`[${providerName}] Fallback executed with result:`, result));
+    breaker.on('fallback', (result: any) => console.log(`[${providerName}] Fallback executed with result:`, result));
 
     breakers.set(providerName, breaker);
   }
@@ -48,9 +48,8 @@ export async function callApi(request: ApiRequest): Promise<ApiResponse> {
     return {
       success: false,
       error: {
-        isTransient: err.isTransient !== false, // Assume transient unless specified
+        code: err.code || 'UNKNOWN_ERROR',
         message: err.message || 'Circuit breaker opened',
-        details: err,
       },
     };
   }
@@ -63,10 +62,10 @@ export async function callApi(request: ApiRequest): Promise<ApiResponse> {
 async function mockApiCall(request: ApiRequest): Promise<any> {
     console.log(`Calling API for provider: ${request.provider.name}`);
     
-    if (request.provider.name === 'Stellar') {
+    if (request.provider.name === 'stellar') {
         // Consistently fail for Stellar to test circuit breaker
         const err: any = new Error('Transient failure');
-        err.isTransient = true;
+        err.code = 'TRANSIENT_ERROR';
         throw err;
     }
 
