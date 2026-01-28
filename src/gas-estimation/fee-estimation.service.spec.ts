@@ -4,7 +4,7 @@ import { StellarAdapter } from './adapters/stellar.adapter';
 import { LayerZeroAdapter } from './adapters/layerzero.adapter';
 import { HopAdapter } from './adapters/hop.adapter';
 import { TokenService } from './token.service';
-import { NetworkType } from './interfaces/fee.interface';
+import { NetworkType } from './interfaces/fees.interface';
 
 describe('FeeEstimationService', () => {
   let service: FeeEstimationService;

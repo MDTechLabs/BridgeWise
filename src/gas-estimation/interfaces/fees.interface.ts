@@ -78,4 +78,9 @@ export interface HopFeeResponse {
   token: string;
   sourceChain: string;
   destinationChain: string;
+  // New fields for enhanced route normalization
+  estimatedReceived?: string;
+  amountOutMin?: string;
+  gasEstimate?: string;
+  deadline?: number;
 }

@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { LayerZeroModule } from '../src/layerzero.module';
-import { LayerZeroService } from '../src/services/layerzero.service';
+import { LayerZeroModule } from './modules/layerzero.module';
+import { LayerZeroService } from './services/layerzero.service';
 import { ConfigModule } from '@nestjs/config';
-import { LayerZeroChainId } from '../src/types/layerzero.types';
+import { LayerZeroChainId } from './types/layerzero.type';
 
 describe('LayerZero Adapter Integration Tests', () => {
   let app: INestApplication;

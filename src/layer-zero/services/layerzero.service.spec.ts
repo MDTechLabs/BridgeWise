@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { LayerZeroService } from '../src/services/layerzero.service';
-import { LayerZeroChainId } from '../src/types/layerzero.types';
+import { LayerZeroService } from './layerzero.service';
+import { LayerZeroChainId } from '../types/layerzero.type';
 
 describe('LayerZeroService Unit Tests', () => {
   let service: LayerZeroService;
@@ -170,10 +170,10 @@ describe('LayerZeroService Unit Tests', () => {
 
       expect(healthStatus.isHealthy).toBe(false);
       expect(healthStatus.errors).toBeDefined();
-      expect(healthStatus.errors.length).toBeGreaterThan(0);
+      expect(healthStatus.errors?.length).toBeGreaterThan(0);
 
       service['pingEndpoint'] = originalPing;
-    });
+    }, 10000); // 10 second timeout to accommodate the 6 second delay
 
     it('should handle endpoint errors gracefully', async () => {
       // Mock pingEndpoint to throw error

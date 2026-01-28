@@ -17,7 +17,7 @@ import {
   FeeEstimate,
   LatencyEstimate,
   HealthStatus,
-} from '../types/layerzero.types';
+} from '../types/layerzero.type';
 
 class EstimateDto {
   sourceChainId: LayerZeroChainId;

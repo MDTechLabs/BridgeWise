@@ -22,6 +22,10 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "jsx": "react-jsx",
-    "types": ["node"]
+    "types": ["node", "jest"],
+    "paths": {
+      "@bridgewise/bridge-core": ["libs/bridge-core/src"],
+      "@bridgewise/bridge-core/*": ["libs/bridge-core/src/*"]
+    }
   }
 }

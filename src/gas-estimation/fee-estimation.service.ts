@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { StellarAdapter } from './adapters/stellar.adapter';
 import { LayerZeroAdapter } from './adapters/layerzero.adapter';
 import { HopAdapter } from './adapters/hop.adapter';
-import { FeeEstimate, NormalizedFeeData, NetworkType } from './interfaces/fee.interface';
+import { FeeEstimate, NormalizedFeeData, NetworkType } from './interfaces/fees.interface';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -26,15 +26,23 @@ export class FeeEstimationService {
       this.getHopFees(),
     ]);
 
+    const stellarResult = this.extractResult(estimates[0], 'Stellar');
+    const layerzeroResult = this.extractResult(estimates[1], 'LayerZero');
+    const hopResult = this.extractResult(estimates[2], 'Hop');
+
+    // Count only providers that are actually available
+    const successfulProviders = [stellarResult, layerzeroResult, hopResult]
+      .filter(result => result.available).length;
+
     return {
       timestamp: Date.now(),
       networks: {
-        stellar: this.extractResult(estimates[0], 'Stellar'),
-        layerzero: this.extractResult(estimates[1], 'LayerZero'),
-        hop: this.extractResult(estimates[2], 'Hop'),
+        stellar: stellarResult,
+        layerzero: layerzeroResult,
+        hop: hopResult,
       },
       metadata: {
-        successfulProviders: estimates.filter(e => e.status === 'fulfilled').length,
+        successfulProviders,
         totalProviders: estimates.length,
       },
     };

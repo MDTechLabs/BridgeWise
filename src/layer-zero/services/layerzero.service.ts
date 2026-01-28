@@ -8,7 +8,7 @@ import {
   BridgeEstimate,
   HealthStatus,
   LayerZeroMessage,
-} from '../types/layerzero.types';
+} from '../types/layerzero.type';
 
 @Injectable()
 export class LayerZeroService implements OnModuleInit {
