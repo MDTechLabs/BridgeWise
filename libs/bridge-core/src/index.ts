@@ -8,6 +8,7 @@
 
 import { BridgeAggregator } from './aggregator';
 import type { RouteRequest } from './types';
+import type { RankingWeights } from './ranker';
 
 // Types
 export * from './types';

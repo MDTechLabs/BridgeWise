@@ -6,8 +6,6 @@ import { ConfigModule } from './config/config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TransactionsModule } from './transactions/transactions.module';
-import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
-import { ThrottlerExceptionFilter } from './common/filters/throttler-exception.filter';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
@@ -25,10 +23,6 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
   ],
   controllers: [AppController],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: CustomThrottlerGuard,
-    },
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,

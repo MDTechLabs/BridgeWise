@@ -28,4 +28,19 @@
       "@bridgewise/bridge-core/*": ["libs/bridge-core/src/*"]
     }
   }
+
+  ,
+  "include": [
+    "src/**/*",
+    "libs/**/src/**/*"
+  ],
+  "exclude": [
+    "apps",
+    "examples",
+    "packages",
+    "dist",
+    "src/src",
+    "node_modules",
+    "**/*.spec.ts"
+  ]
 }

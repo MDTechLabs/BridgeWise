@@ -96,6 +96,7 @@ export class HopAdapter extends BaseBridgeAdapter {
         outputAmount,
         fee: fee.toString(),
         feePercentage: this.calculateFeePercentage(inputAmount.toString(), outputAmount),
+        reliability: 0.98,
         estimatedTime,
         minAmountOut: quote.amountOutMin || outputAmount,
         maxAmountOut: estimatedReceived,

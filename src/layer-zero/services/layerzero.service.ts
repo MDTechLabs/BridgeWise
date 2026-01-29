@@ -67,12 +67,12 @@ export class LayerZeroService implements OnModuleInit {
    */
   async estimateLatency(route: BridgeRoute): Promise<LatencyEstimate> {
     const cacheKey = `${route.sourceChainId}-${route.destinationChainId}`;
-    
+
     // Check cache first
-    if (this.latencyCache.has(cacheKey)) {
-      const cached = this.latencyCache.get(cacheKey);
+    const cached = this.latencyCache.get(cacheKey);
+    if (cached) {
       const cacheAge = Date.now() - cached.lastUpdated.getTime();
-      
+
       // Return cached value if less than 5 minutes old
       if (cacheAge < 5 * 60 * 1000) {
         this.logger.debug(`Returning cached latency for ${cacheKey}`);
@@ -175,7 +175,7 @@ export class LayerZeroService implements OnModuleInit {
   /**
    * Get cached health status
    */
-  getHealthStatus(chainId?: LayerZeroChainId): HealthStatus | HealthStatus[] {
+  getHealthStatus(chainId?: LayerZeroChainId): HealthStatus | HealthStatus[] | undefined {
     if (chainId) {
       return this.healthStatus.get(chainId);
     }

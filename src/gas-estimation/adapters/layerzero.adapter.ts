@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
-import { LayerZeroFeeResponse } from '../interfaces/fee.interface';
+import { LayerZeroFeeResponse } from '../interfaces/fees.interface';
 
 @Injectable()
 export class LayerZeroAdapter {

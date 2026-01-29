@@ -1,6 +1,7 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import '../types/express-extend'; // Extend Express request types
 
 /**
  * Middleware that assigns a UUID v4 request id to each incoming request

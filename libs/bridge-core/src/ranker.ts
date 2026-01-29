@@ -43,10 +43,10 @@ export class RouteRanker {
   /**
    * Rank routes based on current weights
    */
-  rankRoutes(routes: BridgeRoute[]): BridgeRoute[] {
+  rankRoutes<T extends BridgeRoute | any>(routes: T[]): T[] {
     return [...routes].sort((a, b) => {
-      const scoreA = this.calculateScore(a);
-      const scoreB = this.calculateScore(b);
+      const scoreA = this.calculateScore(a as unknown as BridgeRoute);
+      const scoreB = this.calculateScore(b as unknown as BridgeRoute);
       return scoreB - scoreA; // Higher score first
     });
   }

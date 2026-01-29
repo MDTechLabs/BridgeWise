@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
-import { CacheModule } from '@nestjs/cache-manager';
 import { FeeEstimationController } from './fee-estimation.controller';
 import { FeeEstimationService } from './fee-estimation.service';
 import { TokenService } from './token.service';
@@ -17,10 +16,6 @@ import { HopAdapter } from './adapters/hop.adapter';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-    }),
-    CacheModule.register({
-      ttl: 10000, // 10 seconds default TTL
-      max: 100, // Maximum number of items in cache
     }),
   ],
   controllers: [FeeEstimationController],

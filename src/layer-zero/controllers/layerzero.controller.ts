@@ -10,9 +10,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { LayerZeroService } from '../services/layerzero.service';
-import {
+import { LayerZeroChainId } from '../types/layerzero.type';
+import type {
   BridgeRoute,
-  LayerZeroChainId,
   BridgeEstimate,
   FeeEstimate,
   LatencyEstimate,
@@ -115,6 +115,7 @@ export class LayerZeroController {
   @Get('status')
   getStatus(): HealthStatus[] {
     const status = this.layerZeroService.getHealthStatus();
+    if (!status) return [];
     return Array.isArray(status) ? status : [status];
   }
 
