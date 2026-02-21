@@ -33,7 +33,7 @@
   "include": [
     "src/**/*",
     "libs/**/src/**/*"
-  ],
+, "apps/web/services", "apps/web/components/ui-lib/hooks/useBridgeQuotes.ts"  ],
   "exclude": [
     "apps",
     "examples",

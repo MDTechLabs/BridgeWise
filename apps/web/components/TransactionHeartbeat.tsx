@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useTransactionPersistence } from './hooks/useTransactionPersistence';
+import { useTransactionPersistence } from './ui-lib/hooks/useTransactionPersistence';
 
 export const TransactionHeartbeat = () => {
     const { state, clearState } = useTransactionPersistence();
