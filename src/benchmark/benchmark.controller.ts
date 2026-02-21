@@ -17,7 +17,7 @@ export class BenchmarkController {
     sourceChain?: string,
     destinationChain?: string,
     token?: string,
-    limit: number = 50
+    limit: number = 50,
   ): Promise<FeeSlippageBenchmark[]> {
     const query = { bridgeName, sourceChain, destinationChain, token };
     return await this.benchmarkService.getBenchmarks(query, limit);
@@ -27,7 +27,7 @@ export class BenchmarkController {
     bridgeName: string,
     sourceChain: string,
     destinationChain: string,
-    token: string
+    token: string,
   ): Promise<FeeSlippageBenchmark | null> {
     const query = { bridgeName, sourceChain, destinationChain, token };
     return await this.benchmarkService.getLatestBenchmark(query);
@@ -37,8 +37,12 @@ export class BenchmarkController {
     bridgeName: string,
     sourceChain: string,
     destinationChain: string,
-    token: string
-  ): Promise<{ avgFee: number; avgSlippagePercent: number; sampleSize: number } | null> {
+    token: string,
+  ): Promise<{
+    avgFee: number;
+    avgSlippagePercent: number;
+    sampleSize: number;
+  } | null> {
     const query = { bridgeName, sourceChain, destinationChain, token };
     return await this.benchmarkService.getAverageBenchmark(query);
   }
