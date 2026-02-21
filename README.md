@@ -51,6 +51,23 @@ function HistoryPanel({ account }: { account: string }) {
 
 You can configure local-only storage (default) or optional backend tracking via `TransactionProvider`.
 
+## Multi-Bridge Liquidity Monitoring
+
+BridgeWise UI SDK includes liquidity monitoring across bridges for route viability checks.
+
+```tsx
+import { useBridgeLiquidity } from '@bridgewise/ui-components';
+
+const { liquidity, refreshLiquidity } = useBridgeLiquidity({
+  token: 'USDC',
+  sourceChain: 'Ethereum',
+  destinationChain: 'Stellar',
+  refreshIntervalMs: 30000,
+});
+```
+
+`BridgeCompare` uses this data to prioritize high-liquidity routes and warn on low-liquidity paths.
+
 ## Project setup
 
 ```bash

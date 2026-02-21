@@ -28,6 +28,7 @@ export interface TransactionState {
   fee?: number;
   slippagePercent?: number;
   account?: string;
+  liquidityAlert?: string;
   timestamp: number;
 }
 

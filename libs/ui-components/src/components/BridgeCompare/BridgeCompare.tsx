@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { useFeeSlippageBenchmark } from '../../hooks/useFeeSlippageBenchmark';
+import { useBridgeLiquidity } from '../../hooks/useBridgeLiquidity';
+import { prioritizeRoutesByLiquidity } from '../../liquidity/monitor';
 import type { BridgeRoute, ChainId } from '../../../../bridge-core/src/types';
 
 interface BridgeCompareProps {
@@ -9,6 +11,7 @@ interface BridgeCompareProps {
   sourceChain: string;
   destinationChain: string;
   showBenchmarkComparison?: boolean;
+  minLiquidityThreshold?: number;
   onRouteSelect?: (route: BridgeRoute) => void;
 }
 
@@ -24,6 +27,7 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
   sourceChain,
   destinationChain,
   showBenchmarkComparison = true,
+  minLiquidityThreshold = 0,
   onRouteSelect
 }: BridgeCompareProps) => {
   // Get benchmark data for comparison
@@ -37,6 +41,24 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
     sourceChain: sourceChain as ChainId,
     destinationChain: destinationChain as ChainId,
   });
+
+  const {
+    liquidity,
+    loading: liquidityLoading,
+    errors: liquidityErrors,
+    usedFallback,
+    refreshLiquidity,
+  } = useBridgeLiquidity({
+    token,
+    sourceChain,
+    destinationChain,
+    refreshIntervalMs: 30000,
+  });
+
+  const orderedRoutes = prioritizeRoutesByLiquidity(routes, liquidity);
+
+  const getLiquidityForProvider = (provider: string) =>
+    liquidity.find((item) => item.bridgeName.toLowerCase() === provider.toLowerCase());
 
   // Helper to get benchmark for a specific bridge
   const getBenchmarkForBridge = (provider: string) => {
@@ -82,11 +104,16 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
 
       {/* Routes List */}
       <div className="space-y-4">
-        {routes.map((route, index) => {
+        {orderedRoutes.map((route, index) => {
           const benchmark = getBenchmarkForBridge(route.provider);
           const feeDiff = benchmark 
             ? getFeeDifference(route.feePercentage, benchmark.avgFee) 
             : null;
+          const routeLiquidity = getLiquidityForProvider(route.provider);
+          const requiredAmount = parseFloat(route.inputAmount);
+          const threshold = requiredAmount + minLiquidityThreshold;
+          const hasInsufficientLiquidity =
+            !!routeLiquidity && routeLiquidity.availableAmount < threshold;
 
           return (
             <div 
@@ -151,9 +178,27 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
                 </div>
               </div>
 
+              <div className="mt-2 text-xs">
+                {routeLiquidity ? (
+                  <p className={hasInsufficientLiquidity ? 'text-red-600' : 'text-green-600'}>
+                    Liquidity: {routeLiquidity.availableAmount.toLocaleString()} {token}
+                    {hasInsufficientLiquidity ? ' (insufficient for this route)' : ''}
+                  </p>
+                ) : (
+                  <p className="text-amber-600">Liquidity unavailable for this route</p>
+                )}
+              </div>
+
               {onRouteSelect && (
                 <div className="mt-4">
-                  <button className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                  <button
+                    disabled={hasInsufficientLiquidity}
+                    className={`w-full py-2 px-4 text-white rounded-md transition-colors ${
+                      hasInsufficientLiquidity
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
                     Select Route
                   </button>
                 </div>
@@ -161,6 +206,17 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => void refreshLiquidity()}
+          className="text-xs text-blue-600 hover:text-blue-700"
+        >
+          Refresh liquidity
+        </button>
+        {usedFallback && <span className="text-xs text-amber-600">Using cached liquidity data</span>}
       </div>
 
       {/* Loading/Error States */}
@@ -173,6 +229,16 @@ const BridgeCompare: React.FC<BridgeCompareProps> = ({
       {benchmarkError && showBenchmarkComparison && (
         <div className="mt-4 text-center text-red-500">
           Error loading benchmark data: {benchmarkError}
+        </div>
+      )}
+
+      {liquidityLoading && (
+        <div className="mt-2 text-center text-gray-500 dark:text-gray-400">Loading liquidity data...</div>
+      )}
+
+      {liquidityErrors.length > 0 && (
+        <div className="mt-2 text-center text-amber-600">
+          Liquidity providers unavailable: {liquidityErrors.map((error) => error.bridgeName).join(', ')}
         </div>
       )}
 

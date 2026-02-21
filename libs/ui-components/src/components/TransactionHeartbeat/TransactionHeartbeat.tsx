@@ -155,6 +155,18 @@ export const TransactionHeartbeat: React.FC = () => {
               {state.step}
             </p>
 
+            {state.liquidityAlert && (
+              <p
+                style={{
+                  fontSize: 'var(--bw-typography-font-size-xs)',
+                  color: 'var(--bw-colors-status-warning, #f59e0b)',
+                  margin: '0.5rem 0 0',
+                }}
+              >
+                {state.liquidityAlert}
+              </p>
+            )}
+
             {/* Transaction hash link */}
             {state.txHash && (
               <div style={{ marginTop: 'var(--bw-spacing-sm)' }}>
@@ -210,3 +222,5 @@ export const TransactionHeartbeat: React.FC = () => {
     </TransactionHeartbeatHeadless>
   );
 };
+
+export const BridgeStatus = TransactionHeartbeat;

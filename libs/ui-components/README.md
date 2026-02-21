@@ -82,3 +82,30 @@ const historyBackend = createHttpTransactionHistoryBackend({
   {children}
 </TransactionProvider>;
 ```
+
+## Multi-Bridge Liquidity Monitoring
+
+Use `useBridgeLiquidity()` to fetch live liquidity per bridge, token, and chain pair.
+
+### Hook usage
+
+```tsx
+import { useBridgeLiquidity } from '@bridgewise/ui-components';
+
+const { liquidity, refreshLiquidity } = useBridgeLiquidity({
+  token: 'USDC',
+  sourceChain: 'Ethereum',
+  destinationChain: 'Stellar',
+});
+```
+
+### Integration examples
+
+- `BridgeCompare` prioritizes higher-liquidity routes and warns/disables low-liquidity options.
+- `BridgeStatus` (`TransactionHeartbeat`) can show liquidity alerts via `state.liquidityAlert`.
+
+### Fallback and errors
+
+- If provider APIs fail, the monitor returns last-known cached liquidity (when available).
+- Structured provider errors are returned as `{ bridgeName, message }[]`.
+- Manual refresh is supported through `refreshLiquidity()` and optional polling via `refreshIntervalMs`.
