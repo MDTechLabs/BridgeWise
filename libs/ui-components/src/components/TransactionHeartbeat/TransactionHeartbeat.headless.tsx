@@ -9,6 +9,7 @@
 import React from 'react';
 import { useTransaction } from './TransactionContext';
 import type { TransactionState } from './TransactionContext';
+import type { BridgeTransaction } from '../../transaction-history/types';
 
 export interface TransactionHeartbeatRenderProps {
   /** Full transaction state object */
@@ -18,7 +19,9 @@ export interface TransactionHeartbeatRenderProps {
   /** Update transaction state with partial updates */
   updateState: (updates: Partial<TransactionState>) => void;
   /** Start a new transaction */
-  startTransaction: (id: string) => void;
+  startTransaction: (id: string, initialState?: Partial<TransactionState>) => void;
+  /** Record a normalized transaction directly into history */
+  recordBridgeTransaction: (transaction: Partial<BridgeTransaction>) => Promise<void>;
   /** Convenience boolean: true if status is 'success' */
   isSuccess: boolean;
   /** Convenience boolean: true if status is 'failed' */
@@ -55,7 +58,7 @@ export interface TransactionHeartbeatHeadlessProps {
 export const TransactionHeartbeatHeadless: React.FC<TransactionHeartbeatHeadlessProps> = ({
   children,
 }) => {
-  const { state, clearState, updateState, startTransaction } = useTransaction();
+  const { state, clearState, updateState, startTransaction, recordBridgeTransaction } = useTransaction();
 
   // Don't render if transaction is idle
   if (state.status === 'idle') {
@@ -74,6 +77,7 @@ export const TransactionHeartbeatHeadless: React.FC<TransactionHeartbeatHeadless
         clearState,
         updateState,
         startTransaction,
+        recordBridgeTransaction,
         isSuccess,
         isFailed,
         isPending,

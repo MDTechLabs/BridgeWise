@@ -25,6 +25,49 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Transaction History
+
+BridgeWise UI SDK includes a multi-chain transaction history system for Stellar and EVM bridge flows.
+
+Usage example:
+
+```tsx
+import { useTransactionHistory, BridgeHistory } from '@bridgewise/ui-components';
+
+function HistoryPanel({ account }: { account: string }) {
+  const transactions = useTransactionHistory(account, {
+    filter: { status: 'confirmed' },
+    sortOrder: 'desc',
+  }).transactions;
+
+  return (
+    <>
+      <BridgeHistory account={account} />
+      <div>Total transactions: {transactions.length}</div>
+    </>
+  );
+}
+```
+
+You can configure local-only storage (default) or optional backend tracking via `TransactionProvider`.
+
+## Multi-Bridge Liquidity Monitoring
+
+BridgeWise UI SDK includes liquidity monitoring across bridges for route viability checks.
+
+```tsx
+import { useBridgeLiquidity } from '@bridgewise/ui-components';
+
+const { liquidity, refreshLiquidity } = useBridgeLiquidity({
+  token: 'USDC',
+  sourceChain: 'Ethereum',
+  destinationChain: 'Stellar',
+  refreshIntervalMs: 30000,
+});
+```
+
+`BridgeCompare` uses this data to prioritize high-liquidity routes and warn on low-liquidity paths.
+
 ## Project setup
 
 ```bash
