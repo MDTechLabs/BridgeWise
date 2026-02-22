@@ -110,9 +110,7 @@ export class StellarAdapter extends BaseBridgeAdapter {
       }
 
       // Query Soroban bridge contract for quote
-      const bridgeContractAddress = await this.getBridgeContractAddress(
-        request.targetChain,
-      );
+      const bridgeContractAddress = await this.getBridgeContractAddress();
 
       if (!bridgeContractAddress) {
         return [];

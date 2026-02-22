@@ -96,7 +96,6 @@ export class HopAdapter extends BaseBridgeAdapter {
       // Estimate time: Hop typically takes 2-5 minutes for L2->L2, 10-20 minutes for L1->L2
       const estimatedTime: number = this.estimateBridgeTime(
         sourceChain,
-        targetChain,
       );
 
       const route: BridgeRoute = {

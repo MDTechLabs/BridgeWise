@@ -44,7 +44,9 @@ async function callApi(request) {
     catch (err) {
         let code = 'UNKNOWN_ERROR';
         let message = 'Circuit breaker opened';
-        const safeErr = (err && typeof err === 'object' && 'code' in err) ? err : { code: 'UNKNOWN_ERROR', message: String(err) };
+        const safeErr = err && typeof err === 'object' && 'code' in err
+            ? err
+            : { code: 'UNKNOWN_ERROR', message: String(err) };
         if (typeof safeErr === 'object' && safeErr) {
             if ('code' in safeErr &&
                 typeof safeErr.code === 'string') {

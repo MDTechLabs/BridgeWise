@@ -8,6 +8,7 @@ import {
   BridgeRoute,
   NormalizedRoute,
   BridgeError,
+  toNormalizedRoute,
 } from './types';
 import {
   BridgeValidator,
@@ -83,9 +84,7 @@ export class BridgeAggregator {
       }
 
       if (providers.layerzero !== false) {
-        this.adapters.push(
-          new LayerZeroAdapter(undefined, undefined, config.layerZeroApiKey),
-        );
+        this.adapters.push(new LayerZeroAdapter());
       }
 
       if (providers.stellar !== false) {
@@ -157,7 +156,7 @@ export class BridgeAggregator {
     });
 
     // Normalize and sort routes
-    const normalizedRoutes = this.normalizeRoutes(routes);
+    const normalizedRoutes = routes.map(toNormalizedRoute);
     const sortedRoutes = this.ranker.rankRoutes(normalizedRoutes);
 
     // Log route selection if logger is available

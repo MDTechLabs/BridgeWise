@@ -1,4 +1,4 @@
-import { BridgeRoute } from './types';
+import { NormalizedRoute } from './types';
 
 /**
  * Configuration for route ranking weights
@@ -43,7 +43,7 @@ export class RouteRanker {
   /**
    * Rank routes based on current weights
    */
-  rankRoutes(routes: BridgeRoute[]): BridgeRoute[] {
+  rankRoutes(routes: NormalizedRoute[]): NormalizedRoute[] {
     return [...routes].sort((a, b) => {
       const scoreA = this.calculateScore(a);
       const scoreB = this.calculateScore(b);
@@ -54,10 +54,10 @@ export class RouteRanker {
   /**
    * Calculate composite score for a route
    */
-  private calculateScore(route: BridgeRoute): number {
-    const costScore = this.normalizeCost(route.feePercentage);
+  private calculateScore(route: NormalizedRoute): number {
+    const costScore = this.normalizeCost(Number(route.metadata?.feePercentage ?? 0));
     const latencyScore = this.normalizeLatency(route.estimatedTime);
-    const reliabilityScore = route.reliability;
+    const reliabilityScore = Number(route.metadata?.reliability ?? 0);
 
     return (
       this.weights.costWeight * costScore +

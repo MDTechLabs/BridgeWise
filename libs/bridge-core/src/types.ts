@@ -1,4 +1,32 @@
 /**
+ * Mapper: BridgeRoute → NormalizedRoute
+ */
+export function toNormalizedRoute(route: BridgeRoute): NormalizedRoute {
+  return {
+    id: route.id,
+    sourceChain: route.sourceChain,
+    destinationChain: route.targetChain,
+    tokenIn: (route.metadata?.tokenIn as string) || 'native',
+    tokenOut: (route.metadata?.tokenOut as string) || 'native',
+    totalFees: route.fee,
+    estimatedTime: route.estimatedTime,
+    hops: route.hops || [],
+    adapter: route.provider,
+    metadata: {
+      ...route.metadata,
+      inputAmount: route.inputAmount,
+      outputAmount: route.outputAmount,
+      fee: route.fee,
+      feePercentage: route.feePercentage,
+      reliability: route.reliability,
+      minAmountOut: route.minAmountOut,
+      maxAmountOut: route.maxAmountOut,
+      deadline: route.deadline,
+      transactionData: route.transactionData,
+    },
+  };
+}
+/**
  * Supported chain identifiers
  */
 export type ChainId =

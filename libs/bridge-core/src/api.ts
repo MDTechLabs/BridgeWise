@@ -3,6 +3,9 @@ import opossum from 'opossum';
 
 // Removed unused constants to resolve lint warnings
 
+
+// Mock API call function must be defined before getBreaker
+
 // In-memory store for circuit breakers.
 const breakers = new Map<string, opossum>();
 
@@ -48,26 +51,16 @@ export async function callApi(request: ApiRequest): Promise<ApiResponse> {
   try {
     const data = await breaker.fire(request);
     return { success: true, data };
-  } catch (err) {
-    let code: string | undefined = 'UNKNOWN_ERROR';
-    let message: string | undefined = 'Circuit breaker opened';
-    const safeErr =
-      err && typeof err === 'object' && 'code' in err
-        ? err
-        : { code: 'UNKNOWN_ERROR', message: String(err) };
-    if (typeof safeErr === 'object' && safeErr) {
-      if (
-        'code' in safeErr &&
-        typeof (safeErr as { code?: string }).code === 'string'
-      ) {
-        code = (safeErr as { code?: string }).code;
-      }
-      if (
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string'
-      ) {
-        message = (err as { message?: string }).message;
-      }
+  } catch (err: unknown) {
+    let code = 'UNKNOWN_ERROR';
+    let message = 'Circuit breaker opened';
+    if (isApiError(err)) {
+      code = err.code ?? 'UNKNOWN_ERROR';
+      message = err.message ?? 'An unknown error occurred.';
+    } else if (err instanceof Error) {
+      message = err.message;
+    } else {
+      message = String(err);
     }
     return {
       success: false,
@@ -77,6 +70,15 @@ export async function callApi(request: ApiRequest): Promise<ApiResponse> {
       },
     };
   }
+}
+
+
+function isApiError(err: unknown): err is { code?: string; message?: string } {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    ('code' in err || 'message' in err)
+  );
 }
 
 /**

@@ -1,3 +1,14 @@
+// Compatibility wrappers for legacy object usage
+export const StellarFees = {
+  estimateFees,
+  calculateMinAmountOut,
+  isValidAmount
+};
+
+export const LatencyEstimation = {
+  estimateLatency,
+  formatEstimate
+};
 /**
  * Fee calculation and latency estimation utilities for bridge operations
  */
