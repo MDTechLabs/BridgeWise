@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
@@ -10,30 +9,27 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2023",
+    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
+    "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "jsx": "react-jsx",
-    "types": ["node", "jest"],
+    "lib": ["ES2021", "DOM"],
     "paths": {
       "@bridgewise/bridge-core": ["libs/bridge-core/src"],
       "@bridgewise/bridge-core/*": ["libs/bridge-core/src/*"]
     }
-  }
-
-  ,
+  },
   "include": [
     "src/**/*",
-    "libs/**/src/**/*"
-, "apps/web/services", "apps/web/components/ui-lib/hooks/useBridgeQuotes.ts"  ],
+    "libs/bridge-core/src/**/*"
+  ],
   "exclude": [
     "apps",
     "examples",

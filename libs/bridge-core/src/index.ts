@@ -45,6 +45,9 @@ export type {
   BridgeExecutionRequest,
 } from './validator';
 
+// Unified Adapter System
+export * from './unified-adapter';
+
 /**
  * Main function to get aggregated bridge routes
  *
