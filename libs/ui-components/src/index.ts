@@ -33,21 +33,39 @@ export type {
 // Components
 export {
   TransactionHeartbeat,
-  BridgeStatus,
+  BridgeStatus as BridgeStatusLegacy,
   TransactionProvider,
   useTransaction,
 } from './components/TransactionHeartbeat';
 export { BridgeHistory } from './components/BridgeHistory';
 export { BridgeCompare } from './components/BridgeCompare';
+export {
+  BridgeStatus,
+  BridgeStatusHeadless,
+} from './components/BridgeStatus';
 
 export type { TransactionState } from './components/TransactionHeartbeat';
 export type { BridgeHistoryProps } from './components/BridgeHistory';
+export type {
+  BridgeStatusProps,
+  BridgeStatusState,
+  BridgeStatusHeadlessProps,
+  BridgeStatusRenderProps,
+  BridgeTransactionStatus as BridgeStatusTransactionStatus,
+  TransactionStatusDetails,
+  TransactionError,
+} from './components/BridgeStatus';
 
 // Hooks
 export { useFeeSlippageBenchmark } from './hooks/useFeeSlippageBenchmark';
 export { useTransactionHistory } from './hooks/useTransactionHistory';
 export { useBridgeLiquidity } from './hooks/useBridgeLiquidity';
+export { useBridgeExecution } from './hooks/useBridgeExecution';
 export type { FeeSlippageBenchmarkHookProps, FeeSlippageBenchmarkHookReturn } from './hooks/useFeeSlippageBenchmark';
+export type {
+  UseBridgeExecutionOptions,
+  UseBridgeExecutionReturn,
+} from './hooks/useBridgeExecution';
 
 // Transaction history
 export { createHttpTransactionHistoryBackend } from './transaction-history/storage';
