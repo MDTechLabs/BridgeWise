@@ -19,6 +19,8 @@ export { BaseBridgeAdapter } from './adapters/base';
 export { HopAdapter } from './adapters/hop';
 export { LayerZeroAdapter } from './adapters/layerzero';
 export { StellarAdapter } from './adapters/stellar';
+export { MockBridgeAdapter, createMockAdapter } from './adapters/mock';
+export type { MockAdapterConfig } from './adapters/mock';
 
 // Fee Estimation
 export * from './fee-estimation';
