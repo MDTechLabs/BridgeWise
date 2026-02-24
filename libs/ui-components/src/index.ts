@@ -88,3 +88,31 @@ export type {
   BridgeLiquidityMonitorConfig,
 } from './liquidity/types';
 export type { UseBridgeLiquidityOptions, UseBridgeLiquidityResult } from './hooks/useBridgeLiquidity';
+
+// Wallet Integration
+export {
+  MetaMaskAdapter,
+  WalletConnectAdapter,
+  StellarAdapter,
+  useWallet,
+  WalletProvider,
+  useWalletContext,
+} from './wallet';
+
+export type {
+  WalletAdapter,
+  WalletAccount,
+  TokenBalance,
+  WalletError,
+  WalletErrorCode,
+  WalletEvent,
+  WalletState,
+  ChainId,
+  NetworkType,
+  WalletType,
+  WalletTransaction,
+  UseWalletReturn,
+  UseWalletOptions,
+  WalletProviderProps,
+  WalletContextValue,
+} from './wallet';
