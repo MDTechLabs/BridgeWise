@@ -118,12 +118,38 @@ export class BridgeBenchmarkService {
   ): Promise<BridgeBenchmark> {
     const benchmark = await this.findOneOrFail(id);
 
+    const previousStatus = benchmark.status;
     benchmark.status = dto.status;
     if (dto.transactionHash) {
       benchmark.transactionHash = dto.transactionHash;
     }
 
-    return this.benchmarkRepository.save(benchmark);
+    const saved = await this.benchmarkRepository.save(benchmark);
+
+    // Emit event if status changed to failed
+    if (dto.status === TransactionStatus.FAILED && previousStatus !== TransactionStatus.FAILED) {
+      const now = new Date();
+      const durationMs = benchmark.startTime
+        ? now.getTime() - benchmark.startTime.getTime()
+        : 0;
+
+      const event: BenchmarkCompletedEvent = {
+        id: saved.id,
+        bridgeName: saved.bridgeName,
+        sourceChain: saved.sourceChain,
+        destinationChain: saved.destinationChain,
+        token: saved.token,
+        status: 'failed',
+        durationMs,
+        amount: saved.amount || undefined,
+        completedAt: now,
+      };
+
+      this.eventEmitter.emit('benchmark.completed', event);
+      this.logger.debug(`Emitted benchmark.completed (failed) event for ${id}`);
+    }
+
+    return saved;
   }
 
   async getSpeedMetrics(
