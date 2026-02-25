@@ -6,48 +6,6 @@
 import type { ReactNode } from 'react';
 
 /**
- * Multi-wallet connection structure
- */
-export interface WalletConnection {
-  walletType: WalletType | string;
-  wallet: WalletAdapter;
-  accounts: WalletAccount[];
-  connected: boolean;
-  activeAccountIndex: number;
-}
-
-/**
- * Multi-wallet state
- */
-export interface MultiWalletState {
-  wallets: WalletConnection[];
-  activeWalletIndex: number | null;
-  activeAccount: WalletAccount | null;
-  error: WalletError | null;
-}
-
-/**
- * useWalletConnections hook return type
- */
-export interface UseWalletConnectionsReturn {
-  wallets: WalletConnection[];
-  connectWallet: (walletType: WalletType | string) => Promise<void>;
-  disconnectWallet: (walletType: WalletType | string) => Promise<void>;
-  switchAccount: (account: WalletAccount) => void;
-  activeAccount: WalletAccount | null;
-  activeWallet: WalletConnection | null;
-  error: WalletError | null;
-}
-
-/**
- * useActiveAccount hook return type
- */
-export interface UseActiveAccountReturn {
-  activeAccount: WalletAccount | null;
-  activeWallet: WalletConnection | null;
-}
-
-/**
  * Supported wallet types
  */
 export type WalletType = 'metamask' | 'walletconnect' | 'stellar' | 'custom';

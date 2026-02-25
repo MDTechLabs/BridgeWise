@@ -1,7 +1,6 @@
 // packages/react/src/hooks/useBridgeQuotes.ts
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { isTokenSupported } from '../../../../../../libs/ui-components/src/tokenValidation';
 import { QuoteRefreshEngine } from '@bridgewise/core';
 import { NormalizedQuote, QuoteRefreshConfig, RefreshState } from '@bridgewise/core/types';
 
@@ -63,20 +62,7 @@ export function useBridgeQuotes(
 
   // Initialize refresh engine
   useEffect(() => {
-
     const fetchQuotes = async (fetchParams: BridgeQuoteParams, options?: { signal?: AbortSignal }) => {
-      // Token compatibility validation
-      const validation = isTokenSupported(
-        fetchParams.sourceToken,
-        fetchParams.sourceChain,
-        fetchParams.destinationChain
-      );
-      if (!validation.isValid) {
-        const error = new Error(validation.errors.join('; '));
-        setError(error);
-        throw error;
-      }
-
       // Implement actual quote fetching logic here
       const response = await fetch('/api/quotes', {
         method: 'POST',

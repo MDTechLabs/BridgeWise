@@ -36,6 +36,3 @@ export { StellarAdapter } from './adapters/StellarAdapter';
 // Hooks and Provider
 export { useWallet } from './useWallet';
 export { WalletProvider, useWalletContext } from './WalletProvider';
-export { useWalletConnections, useActiveAccount } from './useWalletConnections';
-export { MultiWalletProvider, useMultiWalletContext } from './MultiWalletProvider';
-export { WalletConnector } from './WalletConnector';
