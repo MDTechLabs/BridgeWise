@@ -68,6 +68,59 @@ const { liquidity, refreshLiquidity } = useBridgeLiquidity({
 
 `BridgeCompare` uses this data to prioritize high-liquidity routes and warn on low-liquidity paths.
 
+## Next.js SSR Compatibility
+
+BridgeWise UI components now support server-side rendering (SSR) with Next.js App Router and Pages Router.
+
+### Basic Usage
+
+```tsx
+import { BridgeStatus, ClientOnly } from '@bridgewise/ui-components';
+
+// Safe for SSR - renders skeleton during server-side render
+export default function BridgePage() {
+  return (
+    <ClientOnly fallback={<div>Loading bridge...</div>}>
+      <BridgeStatus chainId={1} />
+    </ClientOnly>
+  );
+}
+```
+
+### Next.js Dynamic Import
+
+For maximum compatibility, use the Next.js adapter:
+
+```tsx
+import { BridgeStatusDynamic, BridgeCompareDynamic } from '@bridgewise/next-adapter';
+
+export default function BridgePage() {
+  return (
+    <div>
+      <BridgeStatusDynamic chainId={1} />
+      <BridgeCompareDynamic />
+    </div>
+  );
+}
+```
+
+### SSR Utilities
+
+Use built-in utilities for browser-only code:
+
+```tsx
+import { useIsClient, safeStorage, createBrowserGuard } from '@bridgewise/ui-components';
+
+function MyComponent() {
+  const isClient = useIsClient();
+  
+  if (!isClient) return <div>Server rendering...</div>;
+  
+  const stored = safeStorage.get('user-prefs', '{}');
+  return <div>Client ready: {stored}</div>;
+}
+```
+
 ## Project setup
 
 ```bash
