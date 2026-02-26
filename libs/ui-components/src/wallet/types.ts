@@ -401,3 +401,14 @@ export interface WindowWithStellar extends Window {
   albedo?: StellarProvider;
   xBull?: StellarProvider;
 }
+
+/**
+ * useNetworkSwitcher hook return type
+ */
+export interface UseNetworkSwitcherReturn {
+  currentNetwork: ChainId | null;
+  switchNetwork: (targetChain: ChainId) => Promise<void>;
+  isSwitching: boolean;
+  error: WalletError | null;
+  supportedNetworks: ChainId[];
+}

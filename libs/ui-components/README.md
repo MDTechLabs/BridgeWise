@@ -172,3 +172,85 @@ const { wallets, connectWallet, switchAccount, activeAccount } = useWalletConnec
 
 ### Testing
 - Unit tests cover connection, disconnection, account switching, and error handling
+
+## Headless Mode
+
+BridgeWise now supports a fully configurable headless mode for all core hooks and logic modules. Use the `HeadlessConfig` interface to control auto-refresh, slippage, network, and account context for your custom UI integrations.
+
+### HeadlessConfig
+
+```ts
+interface HeadlessConfig {
+  autoRefreshQuotes?: boolean;
+  slippageThreshold?: number;
+  network?: string;
+  account?: string;
+}
+```
+
+### Example Usage
+
+```tsx
+import { useBridgeQuotes, useTokenValidation, useNetworkSwitcher } from '@bridgewise/ui-components/hooks/headless';
+
+const { quotes, refresh } = useBridgeQuotes({
+  config: { autoRefreshQuotes: true, network: 'Ethereum', account: '0x123...' },
+  initialParams: { sourceChain: 'stellar', destinationChain: 'ethereum', sourceToken: 'USDC', destinationToken: 'USDC', amount: '100' },
+});
+
+const { isValid, errors } = useTokenValidation('USDC', 'Ethereum', 'Stellar');
+const { currentNetwork, switchNetwork } = useNetworkSwitcher();
+```
+
+### Features
+- All core hooks and logic modules are UI-independent
+- Hooks accept `HeadlessConfig` for custom integration
+- SSR-safe and compatible with Next.js
+- Full integration with fees, slippage, ranking, network switching, and transaction tracking
+- Strong TypeScript types exported
+
+### SSR & Error Handling
+- All hooks avoid DOM/window usage for SSR safety
+- Graceful error handling for unsupported or incomplete data
+- Clear error messages for unsupported headless operations
+
+### Testing
+- Hooks are unit-testable in headless mode
+- Event callbacks and state transitions are fully supported
+
+## Dynamic Network Switching
+
+BridgeWise supports dynamic network switching for seamless multi-chain UX. Use the provided hook to detect and switch networks programmatically or via UI, with automatic updates to dependent modules (fees, slippage, quotes).
+
+### useNetworkSwitcher Hook
+
+```tsx
+import { useNetworkSwitcher } from '@bridgewise/ui-components/hooks/headless';
+
+const { currentNetwork, switchNetwork, isSwitching, error, supportedNetworks } = useNetworkSwitcher();
+
+// Switch to Polygon
+switchNetwork('Polygon');
+```
+
+- `currentNetwork`: The currently active network/chain ID
+- `switchNetwork(targetChain)`: Switches to the specified chain
+- `isSwitching`: Boolean indicating if a switch is in progress
+- `error`: Structured error if switching fails
+- `supportedNetworks`: List of supported chain IDs for the active wallet
+
+### Features
+- SSR-safe and headless compatible
+- Automatic updates to fee, slippage, and quote hooks
+- Graceful error handling and fallback
+- UI components can reflect network changes automatically
+
+### Example Integration
+```tsx
+const { currentNetwork, switchNetwork } = useNetworkSwitcher();
+switchNetwork('Polygon');
+```
+
+### Error Handling
+- If the wallet does not support the target network, a structured error is returned
+- No UI or quote calculation is broken during network transitions
