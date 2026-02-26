@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./theme": "./src/theme/index.ts",
     "./headless": "./src/components/headless/index.ts",
+    "./ssr": "./src/ssr-utils/index.ts",
     "./styles/globals.css": "./src/styles/globals.css"
   },
   "peerDependencies": {
