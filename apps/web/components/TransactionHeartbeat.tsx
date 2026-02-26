@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTransactionPersistence } from './ui-lib/hooks/useTransactionPersistence';
+import { useIsMounted } from './ui-lib/utils/ssr';
 
 export const TransactionHeartbeat = () => {
+    const isMounted = useIsMounted();
     const { state, clearState } = useTransactionPersistence();
 
-    if (state.status === 'idle') {
+    if (!isMounted || state.status === 'idle') {
         return null;
     }
 

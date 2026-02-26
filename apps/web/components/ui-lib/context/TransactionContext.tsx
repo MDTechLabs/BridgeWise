@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { ssrLocalStorage } from '../utils/ssr';
 
 export interface TransactionState {
     id: string;
@@ -34,32 +35,30 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
 
     // Load from storage on mount
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
+        const stored = ssrLocalStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
                 const parsed = JSON.parse(stored);
                 if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
                     setState(parsed);
                 } else {
-                    localStorage.removeItem(STORAGE_KEY);
+                    ssrLocalStorage.removeItem(STORAGE_KEY);
                 }
+            } catch (e) {
+                console.error('Failed to load transaction state', e);
             }
-        } catch (e) {
-            console.error('Failed to load transaction state', e);
         }
     }, []);
 
     // Save to storage on change
     useEffect(() => {
-        if (typeof window === 'undefined') return;
         if (state.status !== 'idle') {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            ssrLocalStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         }
     }, [state]);
 
     const updateState = useCallback((updates: Partial<TransactionState>) => {
-        setState((prev) => ({ ...prev, ...updates, timestamp: Date.now() }));
+        setState((prev: TransactionState) => ({ ...prev, ...updates, timestamp: Date.now() }));
     }, []);
 
     const clearState = useCallback(() => {
@@ -70,7 +69,7 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
             step: '',
             timestamp: 0,
         });
-        localStorage.removeItem(STORAGE_KEY);
+        ssrLocalStorage.removeItem(STORAGE_KEY);
     }, []);
 
     const startTransaction = useCallback((id: string) => {

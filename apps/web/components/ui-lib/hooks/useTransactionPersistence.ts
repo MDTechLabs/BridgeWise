@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ssrLocalStorage } from '../utils/ssr';
 
 export interface TransactionState {
   id: string;
@@ -22,26 +23,24 @@ export const useTransactionPersistence = () => {
 
   // Load from storage on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
+    const stored = ssrLocalStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
         const parsed = JSON.parse(stored);
         // Optional: Expiry check (e.g. 24h)
         if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
           setState(parsed);
         } else {
-          localStorage.removeItem(STORAGE_KEY);
+          ssrLocalStorage.removeItem(STORAGE_KEY);
         }
+      } catch (e) {
+        console.error('Failed to load transaction state', e);
       }
-    } catch (e) {
-      console.error('Failed to load transaction state', e);
     }
   }, []);
 
   // Save to storage whenever state changes
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     if (state.status === 'idle') {
       // We might want to clear it if it's explicitly idle, or keep it if it's "history"
       // For now, let's only clear if we explicitly want to reset.
@@ -51,7 +50,7 @@ export const useTransactionPersistence = () => {
 
     // If completed/failed, we might want to keep it generic for a bit
     // But persistence is key.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    ssrLocalStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
   const updateState = useCallback((updates: Partial<TransactionState>) => {
@@ -66,7 +65,7 @@ export const useTransactionPersistence = () => {
       step: '',
       timestamp: 0,
     });
-    localStorage.removeItem(STORAGE_KEY);
+    ssrLocalStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const startTransaction = useCallback((id: string) => {
