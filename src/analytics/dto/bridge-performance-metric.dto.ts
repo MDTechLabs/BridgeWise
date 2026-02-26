@@ -43,12 +43,12 @@ export class BridgePerformanceMetricQueryDto {
 
   @ApiPropertyOptional({
     description: 'Time interval for aggregation',
-    enum: TimeInterval,
-    default: TimeInterval.DAILY,
+    enum: TimeIntervalEnum,
+    default: TimeIntervalEnum.DAILY,
   })
   @IsOptional()
-  @IsEnum(TimeInterval)
-  timeInterval?: TimeInterval = TimeInterval.DAILY;
+  @IsEnum(TimeIntervalEnum)
+  timeInterval?: TimeInterval = TimeIntervalEnum.DAILY;
 
   @ApiPropertyOptional({ description: 'Start date for time range (ISO 8601)' })
   @IsOptional()
