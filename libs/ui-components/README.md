@@ -157,6 +157,34 @@ import { BridgeHistory } from '@bridgewise/ui-components';
 <BridgeHistory account={account} status="confirmed" />;
 ```
 
+### Real-Time Transaction Status
+
+In addition to viewing historical records, you can subscribe to live updates for a specific transaction. This is useful when you need to show a spinner, send notifications or update other parts of your UI as the bridge work progresses (e.g. refresh quotes, run slippage checks).
+
+```tsx
+import { useTransactionStatus } from '@bridgewise/ui-components';
+
+function TransactionTracker({ txId }: { txId: string }) {
+  const { status, loading, error, lastUpdate } = useTransactionStatus(txId, {
+    pollingIntervalMs: 3000,
+    notifications: true, // browser notification when status changes
+    onStatusChange: (s) => console.log('status:', s),
+  });
+
+  return (
+    <div>
+      {loading && <span>Connecting...</span>}
+      <div>Status: {status || 'unknown'}</div>
+      {error && <div className="error">{error.message}</div>}
+      {lastUpdate && <small>Updated {lastUpdate.toISOString()}</small>}
+    </div>
+  );
+}
+```
+
+Support also exists for storing status updates in the same history used by `useTransactionHistory` via the `historyConfig`/`account` options.
+
+### Storage configuration
 ### Storage configuration
 
 By default, history is persisted in browser local storage.
