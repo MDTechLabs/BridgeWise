@@ -65,7 +65,12 @@ async function scenarioTestingExample() {
   console.log('\n=== Example 2: Scenario Testing ===\n');
 
   // Test different scenarios using the factory function
-  const scenarios = ['happy-path', 'slow-network', 'unreliable', 'empty-routes'] as const;
+  const scenarios = [
+    'happy-path',
+    'slow-network',
+    'unreliable',
+    'empty-routes',
+  ] as const;
 
   for (const scenario of scenarios) {
     console.log(`\n--- Testing ${scenario} scenario ---`);
@@ -87,7 +92,9 @@ async function scenarioTestingExample() {
       console.log(`  Time elapsed: ${elapsed}ms`);
     } catch (error) {
       const elapsed = Date.now() - startTime;
-      console.log(`  Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.log(
+        `  Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       console.log(`  Time elapsed: ${elapsed}ms`);
     }
 
@@ -128,8 +135,14 @@ async function customConfigurationExample() {
   await adapter.initialize();
 
   // Test supported chain
-  console.log('Supports ethereum -> arbitrum:', adapter.supportsChainPair('ethereum', 'arbitrum'));
-  console.log('Supports ethereum -> polygon:', adapter.supportsChainPair('ethereum', 'polygon'));
+  console.log(
+    'Supports ethereum -> arbitrum:',
+    adapter.supportsChainPair('ethereum', 'arbitrum'),
+  );
+  console.log(
+    'Supports ethereum -> polygon:',
+    adapter.supportsChainPair('ethereum', 'polygon'),
+  );
 
   // Get supported tokens
   const ethTokens = await adapter.getSupportedTokens('ethereum');
@@ -264,7 +277,9 @@ async function runtimeUpdatesExample() {
       assetAmount: '1000000000000000000',
     });
   } catch (error) {
-    console.log(`  Error: ${error instanceof Error ? error.message : 'Unknown'}`);
+    console.log(
+      `  Error: ${error instanceof Error ? error.message : 'Unknown'}`,
+    );
   }
 
   await adapter.shutdown();
@@ -312,7 +327,9 @@ async function unitTestingPatternExample() {
     const unreliableResult = await testBridgeService(unreliableAdapter);
     console.log(`  Service available: ${unreliableResult}`);
   } catch (error) {
-    console.log(`  Service failed: ${error instanceof Error ? error.message : 'Unknown'}`);
+    console.log(
+      `  Service failed: ${error instanceof Error ? error.message : 'Unknown'}`,
+    );
   }
 
   await unreliableAdapter.shutdown();
@@ -335,9 +352,15 @@ async function runAllExamples() {
     await runtimeUpdatesExample();
     await unitTestingPatternExample();
 
-    console.log('\n╔════════════════════════════════════════════════════════════╗');
-    console.log('║              All examples completed!                       ║');
-    console.log('╚════════════════════════════════════════════════════════════╝\n');
+    console.log(
+      '\n╔════════════════════════════════════════════════════════════╗',
+    );
+    console.log(
+      '║              All examples completed!                       ║',
+    );
+    console.log(
+      '╚════════════════════════════════════════════════════════════╝\n',
+    );
   } catch (error) {
     console.error('Error running examples:', error);
     process.exit(1);

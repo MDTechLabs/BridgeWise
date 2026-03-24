@@ -37,7 +37,8 @@ export class AnalyticsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get bridge analytics data',
-    description: 'Returns aggregated analytics metrics for bridge routes with optional filtering by bridge, chain, token, and time range.',
+    description:
+      'Returns aggregated analytics metrics for bridge routes with optional filtering by bridge, chain, token, and time range.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -153,7 +154,10 @@ export class AnalyticsController {
     @Param('bridgeName') bridgeName: string,
     @Param('sourceChain') sourceChain: string,
     @Param('destinationChain') destinationChain: string,
-    @Query('granularity', new ParseEnumPipe(['hour', 'day', 'week', 'month'] as const))
+    @Query(
+      'granularity',
+      new ParseEnumPipe(['hour', 'day', 'week', 'month'] as const),
+    )
     granularity: 'hour' | 'day' | 'week' | 'month',
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -177,7 +181,8 @@ export class AnalyticsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get top performing bridges',
-    description: 'Returns top bridges ranked by volume, success rate, and speed.',
+    description:
+      'Returns top bridges ranked by volume, success rate, and speed.',
   })
   @ApiResponse({
     status: HttpStatus.OK,

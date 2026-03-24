@@ -2,12 +2,12 @@
 export const StellarFees = {
   estimateFees,
   calculateMinAmountOut,
-  isValidAmount
+  isValidAmount,
 };
 
 export const LatencyEstimation = {
   estimateLatency,
-  formatEstimate
+  formatEstimate,
 };
 /**
  * Fee calculation and latency estimation utilities for bridge operations
@@ -96,9 +96,7 @@ export function estimateFees(
   const totalFee = networkFee + bridgeFee + slippageFee;
 
   const feePercentage =
-    inputAmount > 0n
-      ? Number((totalFee * 10_000n) / inputAmount) / 100
-      : 0;
+    inputAmount > 0n ? Number((totalFee * 10_000n) / inputAmount) / 100 : 0;
 
   return {
     networkFee,
@@ -157,9 +155,7 @@ function getNetworkLatency(chain: string): number {
 }
 
 function getConfirmationTime(chain: string): number {
-  return chain === 'ethereum'
-    ? CONFIRMATION_TIME_L1
-    : CONFIRMATION_TIME_L2;
+  return chain === 'ethereum' ? CONFIRMATION_TIME_L1 : CONFIRMATION_TIME_L2;
 }
 
 /* =========================================================
@@ -174,28 +170,20 @@ export function estimateLatency(
   const loadFactor = 1 + baseLoad * 0.5;
 
   const networkLatency = Math.ceil(
-    (getNetworkLatency(sourceChain) +
-      getNetworkLatency(targetChain)) *
+    (getNetworkLatency(sourceChain) + getNetworkLatency(targetChain)) *
       loadFactor,
   );
 
   const confirmationTime = Math.ceil(
-    (getConfirmationTime(sourceChain) +
-      getConfirmationTime(targetChain)) *
+    (getConfirmationTime(sourceChain) + getConfirmationTime(targetChain)) *
       loadFactor,
   );
 
-  const bridgeProcessing = Math.ceil(
-    BRIDGE_PROCESSING_BASE * loadFactor,
-  );
+  const bridgeProcessing = Math.ceil(BRIDGE_PROCESSING_BASE * loadFactor);
 
-  const estimatedSeconds =
-    networkLatency + confirmationTime + bridgeProcessing;
+  const estimatedSeconds = networkLatency + confirmationTime + bridgeProcessing;
 
-  const confidence = Math.max(
-    40,
-    95 - Math.floor(baseLoad * 30),
-  );
+  const confidence = Math.max(40, 95 - Math.floor(baseLoad * 30));
 
   return {
     estimatedSeconds,
@@ -209,9 +197,7 @@ export function estimateLatency(
   };
 }
 
-export function formatEstimate(
-  estimate: LatencyEstimate,
-): string {
+export function formatEstimate(estimate: LatencyEstimate): string {
   const { estimatedSeconds, confidence } = estimate;
 
   if (estimatedSeconds < 60) {

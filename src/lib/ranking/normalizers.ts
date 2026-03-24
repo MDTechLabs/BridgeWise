@@ -41,10 +41,10 @@ export function normalizeSpeedScores(timesSeconds: number[]): number[] {
  */
 export function normalizeReliabilityScores(
   reliabilityScores: number[],
-  failureRates: number[]
+  failureRates: number[],
 ): number[] {
   const combined = reliabilityScores.map(
-    (score, i) => score * (1 - clamp(failureRates[i], 0, 1))
+    (score, i) => score * (1 - clamp(failureRates[i], 0, 1)),
   );
   const min = Math.min(...combined);
   const max = Math.max(...combined);

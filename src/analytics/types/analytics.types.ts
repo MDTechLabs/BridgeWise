@@ -163,7 +163,11 @@ export interface TopPerformingRoutes {
  * Analytics event for real-time updates
  */
 export interface AnalyticsEvent {
-  type: 'transfer_initiated' | 'transfer_completed' | 'transfer_failed' | 'metrics_updated';
+  type:
+    | 'transfer_initiated'
+    | 'transfer_completed'
+    | 'transfer_failed'
+    | 'metrics_updated';
   timestamp: number;
   route: RouteIdentifier;
   data?: Record<string, unknown>;

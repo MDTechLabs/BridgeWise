@@ -8,9 +8,9 @@ export class ReliabilityService {
   // Weights for composite reliability score
   private readonly WEIGHTS = {
     uptime: 0.35,
-    successRate: 0.40,
+    successRate: 0.4,
     delayPenalty: 0.15,
-    incidentPenalty: 0.10,
+    incidentPenalty: 0.1,
   } as const;
 
   // Simulated historical metrics — in production, fetched from monitoring DB
@@ -59,7 +59,9 @@ export class ReliabilityService {
     const metrics = this.MOCK_METRICS[bridgeId.toLowerCase()];
 
     if (!metrics) {
-      this.logger.warn(`No reliability metrics for bridge: ${bridgeId}, using default score`);
+      this.logger.warn(
+        `No reliability metrics for bridge: ${bridgeId}, using default score`,
+      );
       return 70; // conservative default
     }
 

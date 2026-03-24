@@ -8,7 +8,10 @@ import {
   IsPositive,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChainType, TransactionStatus } from '../entities/bridge-benchmark.entity';
+import {
+  ChainType,
+  TransactionStatus,
+} from '../entities/bridge-benchmark.entity';
 
 export class InitiateBenchmarkDto {
   @ApiProperty({ example: 'Stargate' })
@@ -47,7 +50,9 @@ export class InitiateBenchmarkDto {
   @IsPositive()
   amount?: number;
 
-  @ApiPropertyOptional({ description: 'ISO timestamp when quote was requested' })
+  @ApiPropertyOptional({
+    description: 'ISO timestamp when quote was requested',
+  })
   @IsOptional()
   @IsDateString()
   quoteRequestedAt?: string;

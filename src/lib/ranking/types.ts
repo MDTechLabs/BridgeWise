@@ -3,8 +3,8 @@ export interface BridgeRouteInput {
   bridgeName: string;
   feeCostUSD: number;
   estimatedTimeSeconds: number;
-  reliabilityScore: number;   // 0–100, sourced from benchmark data
-  failureRate: number;        // 0–1 (e.g. 0.05 = 5% failure rate)
+  reliabilityScore: number; // 0–100, sourced from benchmark data
+  failureRate: number; // 0–1 (e.g. 0.05 = 5% failure rate)
   liquidityUSD: number;
   outputAmount: string;
   inputAmount: string;

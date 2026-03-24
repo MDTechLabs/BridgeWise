@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsDateString, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -26,17 +32,24 @@ export class BridgeAnalyticsQueryDto {
   @IsString()
   token?: string;
 
-  @ApiPropertyOptional({ description: 'Start date for time range filter (ISO 8601)' })
+  @ApiPropertyOptional({
+    description: 'Start date for time range filter (ISO 8601)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'End date for time range filter (ISO 8601)' })
+  @ApiPropertyOptional({
+    description: 'End date for time range filter (ISO 8601)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -82,13 +95,19 @@ export class RouteAnalyticsDto {
   @ApiProperty({ description: 'Failure rate percentage' })
   failureRate: number;
 
-  @ApiPropertyOptional({ description: 'Average settlement time in milliseconds' })
+  @ApiPropertyOptional({
+    description: 'Average settlement time in milliseconds',
+  })
   averageSettlementTimeMs?: number;
 
-  @ApiPropertyOptional({ description: 'Minimum settlement time in milliseconds' })
+  @ApiPropertyOptional({
+    description: 'Minimum settlement time in milliseconds',
+  })
   minSettlementTimeMs?: number;
 
-  @ApiPropertyOptional({ description: 'Maximum settlement time in milliseconds' })
+  @ApiPropertyOptional({
+    description: 'Maximum settlement time in milliseconds',
+  })
   maxSettlementTimeMs?: number;
 
   @ApiPropertyOptional({ description: 'Average fee amount' })
@@ -152,7 +171,10 @@ export class TimeSeriesAnalyticsDto {
   @ApiProperty({ description: 'Time granularity (hour, day, week, month)' })
   granularity: 'hour' | 'day' | 'week' | 'month';
 
-  @ApiProperty({ description: 'Time series data points', type: [TimeSeriesDataPointDto] })
+  @ApiProperty({
+    description: 'Time series data points',
+    type: [TimeSeriesDataPointDto],
+  })
   data: TimeSeriesDataPointDto[];
 }
 
@@ -183,13 +205,22 @@ export class BridgeAnalyticsResponseDto {
  * DTO for top performing bridges response
  */
 export class TopPerformingBridgesDto {
-  @ApiProperty({ description: 'Top bridges by volume', type: [RouteAnalyticsDto] })
+  @ApiProperty({
+    description: 'Top bridges by volume',
+    type: [RouteAnalyticsDto],
+  })
   byVolume: RouteAnalyticsDto[];
 
-  @ApiProperty({ description: 'Top bridges by success rate', type: [RouteAnalyticsDto] })
+  @ApiProperty({
+    description: 'Top bridges by success rate',
+    type: [RouteAnalyticsDto],
+  })
   bySuccessRate: RouteAnalyticsDto[];
 
-  @ApiProperty({ description: 'Top bridges by speed', type: [RouteAnalyticsDto] })
+  @ApiProperty({
+    description: 'Top bridges by speed',
+    type: [RouteAnalyticsDto],
+  })
   bySpeed: RouteAnalyticsDto[];
 
   @ApiProperty({ description: 'Response generation timestamp' })
@@ -251,7 +282,10 @@ export class UserActivityInsightsDto {
     transferCount: number;
   };
 
-  @ApiProperty({ description: 'Most popular routes', type: [RouteAnalyticsDto] })
+  @ApiProperty({
+    description: 'Most popular routes',
+    type: [RouteAnalyticsDto],
+  })
   popularRoutes: RouteAnalyticsDto[];
 
   @ApiProperty({ description: 'Response generation timestamp' })

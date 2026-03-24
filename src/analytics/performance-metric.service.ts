@@ -171,21 +171,19 @@ export class PerformanceMetricService {
 
       const settlementTimes = metrics
         .filter((m) => m.averageSettlementTimeMs)
-        .map((m) => m.averageSettlementTimeMs as number);
+        .map((m) => m.averageSettlementTimeMs);
       const avgSettlementTimeMs =
         settlementTimes.length > 0
           ? settlementTimes.reduce((a, b) => a + b, 0) / settlementTimes.length
           : 0;
 
-      const fees = metrics
-        .filter((m) => m.averageFee)
-        .map((m) => m.averageFee as number);
+      const fees = metrics.filter((m) => m.averageFee).map((m) => m.averageFee);
       const avgFee =
         fees.length > 0 ? fees.reduce((a, b) => a + b, 0) / fees.length : 0;
 
       const slippages = metrics
         .filter((m) => m.averageSlippagePercent)
-        .map((m) => m.averageSlippagePercent as number);
+        .map((m) => m.averageSlippagePercent);
       const avgSlippagePercent =
         slippages.length > 0
           ? slippages.reduce((a, b) => a + b, 0) / slippages.length
@@ -199,12 +197,21 @@ export class PerformanceMetricService {
       );
       let trendDirection: 'improving' | 'declining' | 'stable' = 'stable';
       if (sortedByTime.length >= 2) {
-        const firstHalf = sortedByTime.slice(0, Math.floor(sortedByTime.length / 2));
-        const secondHalf = sortedByTime.slice(Math.floor(sortedByTime.length / 2));
-        
-        const firstRate = firstHalf.reduce((sum, m) => sum + m.successRate, 0) / firstHalf.length;
-        const secondRate = secondHalf.reduce((sum, m) => sum + m.successRate, 0) / secondHalf.length;
-        
+        const firstHalf = sortedByTime.slice(
+          0,
+          Math.floor(sortedByTime.length / 2),
+        );
+        const secondHalf = sortedByTime.slice(
+          Math.floor(sortedByTime.length / 2),
+        );
+
+        const firstRate =
+          firstHalf.reduce((sum, m) => sum + m.successRate, 0) /
+          firstHalf.length;
+        const secondRate =
+          secondHalf.reduce((sum, m) => sum + m.successRate, 0) /
+          secondHalf.length;
+
         if (secondRate > firstRate + 2) trendDirection = 'improving';
         else if (secondRate < firstRate - 2) trendDirection = 'declining';
       }
@@ -273,7 +280,7 @@ export class PerformanceMetricService {
 
     for (const [key, group] of grouped.entries()) {
       const metric = this.calculateMetrics(group, timeInterval, startTime);
-      
+
       // Check for existing metric
       const existing = await this.metricRepository.findOne({
         where: {
@@ -317,7 +324,10 @@ export class PerformanceMetricService {
 
     const current = new Date(startDate);
     while (current < endDate) {
-      const result = await this.aggregateMetrics(timeInterval, new Date(current));
+      const result = await this.aggregateMetrics(
+        timeInterval,
+        new Date(current),
+      );
       totalProcessed += result.processed;
       totalInserted += result.inserted;
 
@@ -387,7 +397,10 @@ export class PerformanceMetricService {
     if (metrics.length === 0) return null;
 
     const timestamps = metrics.map((m) => m.timestamp);
-    const totalTransfers = metrics.reduce((sum, m) => sum + m.totalTransfers, 0);
+    const totalTransfers = metrics.reduce(
+      (sum, m) => sum + m.totalTransfers,
+      0,
+    );
     const successfulTransfers = metrics.reduce(
       (sum, m) => sum + m.successfulTransfers,
       0,
@@ -395,11 +408,11 @@ export class PerformanceMetricService {
 
     const settlementTimes = metrics
       .filter((m) => m.averageSettlementTimeMs)
-      .map((m) => m.averageSettlementTimeMs as number);
-    const fees = metrics.filter((m) => m.averageFee).map((m) => m.averageFee as number);
+      .map((m) => m.averageSettlementTimeMs);
+    const fees = metrics.filter((m) => m.averageFee).map((m) => m.averageFee);
     const slippages = metrics
       .filter((m) => m.averageSlippagePercent)
-      .map((m) => m.averageSlippagePercent as number);
+      .map((m) => m.averageSlippagePercent);
 
     return {
       totalDataPoints: metrics.length,
@@ -413,7 +426,8 @@ export class PerformanceMetricService {
           totalTransfers > 0 ? (successfulTransfers / totalTransfers) * 100 : 0,
         avgSettlementTimeMs:
           settlementTimes.length > 0
-            ? settlementTimes.reduce((a, b) => a + b, 0) / settlementTimes.length
+            ? settlementTimes.reduce((a, b) => a + b, 0) /
+              settlementTimes.length
             : 0,
         avgFee:
           fees.length > 0 ? fees.reduce((a, b) => a + b, 0) / fees.length : 0,
@@ -453,7 +467,7 @@ export class PerformanceMetricService {
       if (!grouped.has(key)) {
         grouped.set(key, []);
       }
-      grouped.get(key)!.push(benchmark);
+      grouped.get(key).push(benchmark);
     }
 
     return grouped;
@@ -477,7 +491,7 @@ export class PerformanceMetricService {
     // Settlement times
     const settlementTimes = benchmarks
       .filter((b) => b.durationMs && b.status === 'confirmed')
-      .map((b) => b.durationMs as number);
+      .map((b) => b.durationMs);
 
     // Amounts for volume
     const amounts = benchmarks
@@ -535,7 +549,7 @@ export class PerformanceMetricService {
         end.setHours(0, 0, 0, 0);
         end.setDate(end.getDate() + 1);
         break;
-      case 'weekly':
+      case 'weekly': {
         // Start of week (Sunday)
         const dayOfWeek = start.getDay();
         start.setDate(start.getDate() - dayOfWeek);
@@ -543,6 +557,7 @@ export class PerformanceMetricService {
         end.setTime(start.getTime());
         end.setDate(end.getDate() + 7);
         break;
+      }
       case 'monthly':
         start.setDate(1);
         start.setHours(0, 0, 0, 0);
@@ -557,7 +572,9 @@ export class PerformanceMetricService {
   /**
    * Map entity to DTO
    */
-  private mapToMetricDto(entity: BridgePerformanceMetric): BridgePerformanceMetricDto {
+  private mapToMetricDto(
+    entity: BridgePerformanceMetric,
+  ): BridgePerformanceMetricDto {
     return {
       bridgeName: entity.bridgeName,
       sourceChain: entity.sourceChain,

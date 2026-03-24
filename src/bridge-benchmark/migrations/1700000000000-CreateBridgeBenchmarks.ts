@@ -57,12 +57,24 @@ export class CreateBridgeBenchmarks1700000000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_bridge_benchmarks_completion_time"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_bridge_benchmarks_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_bridge_benchmarks_route"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_bridge_benchmarks_completion_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_bridge_benchmarks_status"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_bridge_benchmarks_route"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "bridge_benchmarks"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "bridge_benchmarks_status_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "bridge_benchmarks_destination_chain_type_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "bridge_benchmarks_source_chain_type_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "bridge_benchmarks_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "bridge_benchmarks_destination_chain_type_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "bridge_benchmarks_source_chain_type_enum"`,
+    );
   }
 }

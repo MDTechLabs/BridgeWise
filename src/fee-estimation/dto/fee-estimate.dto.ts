@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, Min, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  Min,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -89,13 +96,18 @@ export class FeeEstimateDto {
   @ApiPropertyOptional({ description: 'Total fee in USD' })
   totalFeeUsd?: number;
 
-  @ApiProperty({ description: 'Whether this is a fallback estimate', default: false })
+  @ApiProperty({
+    description: 'Whether this is a fallback estimate',
+    default: false,
+  })
   isFallback: boolean;
 
   @ApiPropertyOptional({ description: 'Reason for fallback if applicable' })
   fallbackReason?: string;
 
-  @ApiPropertyOptional({ description: 'Estimated transaction duration in seconds' })
+  @ApiPropertyOptional({
+    description: 'Estimated transaction duration in seconds',
+  })
   estimatedDurationSeconds?: number;
 
   @ApiProperty({ description: 'Last update timestamp' })
@@ -131,7 +143,10 @@ export class BatchFeeEstimateQueryDto {
  * DTO for batch fee estimate response
  */
 export class BatchFeeEstimateResponseDto {
-  @ApiProperty({ description: 'Fee estimates for each route', type: [FeeEstimateDto] })
+  @ApiProperty({
+    description: 'Fee estimates for each route',
+    type: [FeeEstimateDto],
+  })
   estimates: FeeEstimateDto[];
 
   @ApiProperty({ description: 'Number of successful estimates' })

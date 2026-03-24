@@ -94,9 +94,7 @@ export class HopAdapter extends BaseBridgeAdapter {
       const fee: bigint = BigInt(bonderFee);
 
       // Estimate time: Hop typically takes 2-5 minutes for L2->L2, 10-20 minutes for L1->L2
-      const estimatedTime: number = this.estimateBridgeTime(
-        sourceChain,
-      );
+      const estimatedTime: number = this.estimateBridgeTime(sourceChain);
 
       const route: BridgeRoute = {
         id: this.generateRouteId(

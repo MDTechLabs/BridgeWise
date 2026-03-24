@@ -127,7 +127,10 @@ export class BridgeBenchmarkService {
     const saved = await this.benchmarkRepository.save(benchmark);
 
     // Emit event if status changed to failed
-    if (dto.status === TransactionStatus.FAILED && previousStatus !== TransactionStatus.FAILED) {
+    if (
+      dto.status === TransactionStatus.FAILED &&
+      previousStatus !== TransactionStatus.FAILED
+    ) {
       const now = new Date();
       const durationMs = benchmark.startTime
         ? now.getTime() - benchmark.startTime.getTime()

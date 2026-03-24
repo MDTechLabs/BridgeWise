@@ -31,13 +31,18 @@ export class BridgeService {
     payload: T,
   ): Promise<R[]> {
     const adapters = this.registry.getByCapability(capability);
-    return Promise.all(adapters.map((a) => a.execute<T, R>(operation, payload)));
+    return Promise.all(
+      adapters.map((a) => a.execute<T, R>(operation, payload)),
+    );
   }
 
   /**
    * Register a bridge adapter at runtime (plugin injection).
    */
-  async registerBridge(adapter: BridgeAdapter, options?: Record<string, unknown>): Promise<void> {
+  async registerBridge(
+    adapter: BridgeAdapter,
+    options?: Record<string, unknown>,
+  ): Promise<void> {
     await this.loader.registerAdapter(adapter, options);
   }
 

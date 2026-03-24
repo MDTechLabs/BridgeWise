@@ -12,7 +12,8 @@ import { GasPriceInfo, NetworkCongestion } from '../types/fee-estimate.types';
 @Injectable()
 export class GasPriceAdapter {
   private readonly logger = new Logger(GasPriceAdapter.name);
-  private cache: Map<string, { data: GasPriceInfo; timestamp: number }> = new Map();
+  private cache: Map<string, { data: GasPriceInfo; timestamp: number }> =
+    new Map();
   private readonly CACHE_TTL_MS = 30000; // 30 seconds
 
   // Fallback gas prices by chain (in Gwei)
@@ -47,7 +48,7 @@ export class GasPriceAdapter {
    */
   async getGasPrice(chain: string): Promise<GasPriceInfo> {
     const normalizedChain = chain.toLowerCase();
-    
+
     // Check cache
     const cached = this.cache.get(normalizedChain);
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
@@ -57,7 +58,7 @@ export class GasPriceAdapter {
     try {
       const gasPrice = await this.fetchGasPrice(normalizedChain);
       const congestion = await this.fetchNetworkCongestion(normalizedChain);
-      
+
       const info: GasPriceInfo = {
         chain: normalizedChain,
         gasPriceGwei: gasPrice,
@@ -69,10 +70,12 @@ export class GasPriceAdapter {
 
       // Cache the result
       this.cache.set(normalizedChain, { data: info, timestamp: Date.now() });
-      
+
       return info;
     } catch (error) {
-      this.logger.warn(`Failed to fetch gas price for ${chain}: ${error.message}`);
+      this.logger.warn(
+        `Failed to fetch gas price for ${chain}: ${error.message}`,
+      );
       return this.getFallbackGasPrice(normalizedChain);
     }
   }
@@ -82,14 +85,14 @@ export class GasPriceAdapter {
    */
   async getNetworkCongestion(chain: string): Promise<NetworkCongestion> {
     const normalizedChain = chain.toLowerCase();
-    
+
     try {
       const gasPrice = await this.getGasPrice(normalizedChain);
-      
+
       // Determine congestion status based on gas price
       const basePrice = this.fallbackPrices[normalizedChain] || 10;
       const ratio = gasPrice.gasPriceGwei / basePrice;
-      
+
       let status: 'low' | 'moderate' | 'high' | 'severe';
       if (ratio < 0.5) status = 'low';
       else if (ratio < 1.5) status = 'moderate';
@@ -106,7 +109,9 @@ export class GasPriceAdapter {
         lastUpdated: new Date(),
       };
     } catch (error) {
-      this.logger.warn(`Failed to get congestion for ${chain}: ${error.message}`);
+      this.logger.warn(
+        `Failed to get congestion for ${chain}: ${error.message}`,
+      );
       return {
         chain: normalizedChain,
         congestionLevel: 50,
@@ -198,7 +203,8 @@ export class GasPriceAdapter {
     };
 
     const blockNativeChain = chainMapping[chain];
-    if (!blockNativeChain) throw new Error(`No BlockNative mapping for ${chain}`);
+    if (!blockNativeChain)
+      throw new Error(`No BlockNative mapping for ${chain}`);
 
     const response = await firstValueFrom(
       this.httpService.get(
@@ -278,7 +284,7 @@ export class GasPriceAdapter {
    */
   private getFallbackGasPrice(chain: string): GasPriceInfo {
     const fallbackPrice = this.fallbackPrices[chain] || 10;
-    
+
     return {
       chain,
       gasPriceGwei: fallbackPrice,

@@ -99,16 +99,60 @@ export class MockBridgeAdapter implements BridgeAdapter {
 
   // Default supported tokens
   private static readonly DEFAULT_TOKENS: Record<ChainId, string[]> = {
-    ethereum: ['0x0000000000000000000000000000000000000000', '0xA0b86a33E6441e6C7D3D4B4f6c7E8f9a0B1c2D3e', 'USDC', 'USDT', 'DAI', 'ETH'],
-    polygon: ['0x0000000000000000000000000000000000000000', '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', 'USDC', 'USDT', 'DAI', 'MATIC'],
-    arbitrum: ['0x0000000000000000000000000000000000000000', '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', 'USDC', 'USDT', 'DAI', 'ETH'],
-    optimism: ['0x0000000000000000000000000000000000000000', '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', 'USDC', 'USDT', 'DAI', 'ETH'],
-    base: ['0x0000000000000000000000000000000000000000', '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'USDC', 'USDT', 'ETH'],
-    gnosis: ['0x0000000000000000000000000000000000000000', 'USDC', 'USDT', 'XDAI'],
+    ethereum: [
+      '0x0000000000000000000000000000000000000000',
+      '0xA0b86a33E6441e6C7D3D4B4f6c7E8f9a0B1c2D3e',
+      'USDC',
+      'USDT',
+      'DAI',
+      'ETH',
+    ],
+    polygon: [
+      '0x0000000000000000000000000000000000000000',
+      '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+      'USDC',
+      'USDT',
+      'DAI',
+      'MATIC',
+    ],
+    arbitrum: [
+      '0x0000000000000000000000000000000000000000',
+      '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
+      'USDC',
+      'USDT',
+      'DAI',
+      'ETH',
+    ],
+    optimism: [
+      '0x0000000000000000000000000000000000000000',
+      '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+      'USDC',
+      'USDT',
+      'DAI',
+      'ETH',
+    ],
+    base: [
+      '0x0000000000000000000000000000000000000000',
+      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      'USDC',
+      'USDT',
+      'ETH',
+    ],
+    gnosis: [
+      '0x0000000000000000000000000000000000000000',
+      'USDC',
+      'USDT',
+      'XDAI',
+    ],
     nova: ['0x0000000000000000000000000000000000000000', 'USDC', 'ETH'],
     stellar: ['native', 'USDC', 'USDT'],
     bsc: ['0x0000000000000000000000000000000000000000', 'USDC', 'USDT', 'BNB'],
-    avalanche: ['0x0000000000000000000000000000000000000000', 'USDC', 'USDT', 'AVAX'],
+    avalanche: [
+      '0x0000000000000000000000000000000000000000',
+      'USDC',
+      'USDT',
+      'AVAX',
+    ],
   };
 
   constructor(config: MockAdapterConfig = {}) {
@@ -117,8 +161,10 @@ export class MockBridgeAdapter implements BridgeAdapter {
       failureRate: config.failureRate ?? 0,
       sandboxMode: config.sandboxMode ?? true,
       customResponses: config.customResponses ?? {},
-      supportedChainPairs: config.supportedChainPairs ?? MockBridgeAdapter.DEFAULT_CHAIN_PAIRS,
-      supportedTokens: config.supportedTokens ?? MockBridgeAdapter.DEFAULT_TOKENS,
+      supportedChainPairs:
+        config.supportedChainPairs ?? MockBridgeAdapter.DEFAULT_CHAIN_PAIRS,
+      supportedTokens:
+        config.supportedTokens ?? MockBridgeAdapter.DEFAULT_TOKENS,
     };
   }
 
@@ -185,7 +231,7 @@ export class MockBridgeAdapter implements BridgeAdapter {
    */
   supportsChainPair(sourceChain: ChainId, targetChain: ChainId): boolean {
     return this.config.supportedChainPairs.some(
-      ([s, t]) => s === sourceChain && t === targetChain
+      ([s, t]) => s === sourceChain && t === targetChain,
     );
   }
 
@@ -211,10 +257,10 @@ export class MockBridgeAdapter implements BridgeAdapter {
     const normalizedDest = this.normalizeToken(destinationToken);
 
     const sourceSupported = sourceTokens.some(
-      t => this.normalizeToken(t) === normalizedSource
+      (t) => this.normalizeToken(t) === normalizedSource,
     );
     const destSupported = destTokens.some(
-      t => this.normalizeToken(t) === normalizedDest
+      (t) => this.normalizeToken(t) === normalizedDest,
     );
 
     return sourceSupported && destSupported;
@@ -275,7 +321,8 @@ export class MockBridgeAdapter implements BridgeAdapter {
     // Generate mock route
     const inputAmount = BigInt(request.assetAmount);
     const feePercentage = 0.5; // 0.5% fee
-    const fee = (inputAmount * BigInt(Math.round(feePercentage * 100))) / 10000n;
+    const fee =
+      (inputAmount * BigInt(Math.round(feePercentage * 100))) / 10000n;
     const outputAmount = inputAmount - fee;
 
     const route: BridgeRoute = {
@@ -287,9 +334,12 @@ export class MockBridgeAdapter implements BridgeAdapter {
       outputAmount: outputAmount.toString(),
       fee: fee.toString(),
       feePercentage,
-      estimatedTime: this.estimateBridgeTime(request.sourceChain, request.targetChain),
+      estimatedTime: this.estimateBridgeTime(
+        request.sourceChain,
+        request.targetChain,
+      ),
       reliability: 0.98,
-      minAmountOut: (outputAmount * 995n / 1000n).toString(), // 0.5% slippage
+      minAmountOut: ((outputAmount * 995n) / 1000n).toString(), // 0.5% slippage
       maxAmountOut: outputAmount.toString(),
       deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
       transactionData: {
@@ -396,7 +446,9 @@ export class MockBridgeAdapter implements BridgeAdapter {
       healthy: this._isReady && !this.shouldFail(),
       uptime: 99.9,
       lastChecked: Date.now(),
-      message: this._isReady ? 'Mock adapter is healthy' : 'Mock adapter not initialized',
+      message: this._isReady
+        ? 'Mock adapter is healthy'
+        : 'Mock adapter not initialized',
     };
   }
 
@@ -428,7 +480,9 @@ export class MockBridgeAdapter implements BridgeAdapter {
 
   private async simulateDelay(): Promise<void> {
     if (this.config.networkDelay > 0) {
-      await new Promise(resolve => setTimeout(resolve, this.config.networkDelay));
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.config.networkDelay),
+      );
     }
   }
 
@@ -453,14 +507,20 @@ export class MockBridgeAdapter implements BridgeAdapter {
     return `mock-${sourceChain}-${targetChain}-${index}-${timestamp}-${random}`;
   }
 
-  private estimateBridgeTime(sourceChain: ChainId, targetChain: ChainId): number {
+  private estimateBridgeTime(
+    sourceChain: ChainId,
+    targetChain: ChainId,
+  ): number {
     const l1Chains = new Set(['ethereum']);
     const source = l1Chains.has(sourceChain) ? 'l1' : 'l2';
     const target = l1Chains.has(targetChain) ? 'l1' : 'l2';
 
     if (source === 'l1' && target === 'l1') {
       return 1200; // 20 minutes
-    } else if ((source === 'l1' && target === 'l2') || (source === 'l2' && target === 'l1')) {
+    } else if (
+      (source === 'l1' && target === 'l2') ||
+      (source === 'l2' && target === 'l1')
+    ) {
       return 300; // 5 minutes
     } else {
       return 180; // 3 minutes for L2->L2
@@ -470,12 +530,14 @@ export class MockBridgeAdapter implements BridgeAdapter {
   private getDestinationToken(sourceToken: string): string {
     // Simple mapping for common tokens
     const tokenMap: Record<string, string> = {
-      '0xa0b86a33e6441e6c7d3d4b4f6c7e8f9a0b1c2d3e': '0x2791bca1f2de4661ed88a30c99a7a9449aa84174', // USDC eth->poly
-      '0x2791bca1f2de4661ed88a30c99a7a9449aa84174': '0xa0b86a33e6441e6c7d3d4b4f6c7e8f9a0b1c2d3e', // USDC poly->eth
-      'usdc': 'usdc',
-      'usdt': 'usdt',
-      'dai': 'dai',
-      'native': 'native',
+      '0xa0b86a33e6441e6c7d3d4b4f6c7e8f9a0b1c2d3e':
+        '0x2791bca1f2de4661ed88a30c99a7a9449aa84174', // USDC eth->poly
+      '0x2791bca1f2de4661ed88a30c99a7a9449aa84174':
+        '0xa0b86a33e6441e6c7d3d4b4f6c7e8f9a0b1c2d3e', // USDC poly->eth
+      usdc: 'usdc',
+      usdt: 'usdt',
+      dai: 'dai',
+      native: 'native',
     };
 
     const normalized = this.normalizeToken(sourceToken);
@@ -487,7 +549,11 @@ export class MockBridgeAdapter implements BridgeAdapter {
  * Factory function to create a pre-configured mock adapter for testing
  */
 export function createMockAdapter(
-  scenario: 'happy-path' | 'slow-network' | 'unreliable' | 'empty-routes' = 'happy-path'
+  scenario:
+    | 'happy-path'
+    | 'slow-network'
+    | 'unreliable'
+    | 'empty-routes' = 'happy-path',
 ): MockBridgeAdapter {
   const scenarios: Record<string, MockAdapterConfig> = {
     'happy-path': {
@@ -500,7 +566,7 @@ export function createMockAdapter(
       failureRate: 0,
       sandboxMode: true,
     },
-    'unreliable': {
+    unreliable: {
       networkDelay: 100,
       failureRate: 0.3,
       sandboxMode: true,

@@ -51,7 +51,8 @@ export class TokenMappingRegistry {
   /**
    * Token metadata storage: Map<chain, Map<address, metadata>>
    */
-  private tokens: Map<ChainId, Map<string, CompatibilityTokenMetadata>> = new Map();
+  private tokens: Map<ChainId, Map<string, CompatibilityTokenMetadata>> =
+    new Map();
 
   /**
    * Symbol index: Map<symbol, Map<chain, address>>
@@ -66,12 +67,16 @@ export class TokenMappingRegistry {
   /**
    * Wrapped token mappings: Map<chain, Map<original, wrapped>>
    */
-  private wrappedTokens: Map<ChainId, Map<string, WrappedTokenMapping>> = new Map();
+  private wrappedTokens: Map<ChainId, Map<string, WrappedTokenMapping>> =
+    new Map();
 
   /**
    * Supported tokens per bridge: Map<bridge, Map<chain, Set<token>>>
    */
-  private bridgeSupportedTokens: Map<BridgeProvider, Map<ChainId, Set<string>>> = new Map();
+  private bridgeSupportedTokens: Map<
+    BridgeProvider,
+    Map<ChainId, Set<string>>
+  > = new Map();
 
   /**
    * Register a token for a specific chain
@@ -103,7 +108,11 @@ export class TokenMappingRegistry {
     // Update bridge supported tokens
     for (const bridge of metadata.supportedBridges) {
       this.addBridgeSupportedToken(bridge, chain, normalizedAddress);
-      this.addBridgeSupportedToken(bridge, chain, metadata.symbol.toLowerCase());
+      this.addBridgeSupportedToken(
+        bridge,
+        chain,
+        metadata.symbol.toLowerCase(),
+      );
     }
   }
 
@@ -265,12 +274,15 @@ export class TokenMappingRegistry {
 
       const mapping = mappings.find(
         (m) =>
-          this.normalizeAddress(m.sourceToken, sourceChain) === normalizedSource &&
-          m.isActive,
+          this.normalizeAddress(m.sourceToken, sourceChain) ===
+            normalizedSource && m.isActive,
       );
 
       if (mapping) {
-        const sourceTokenData = await this.getToken(sourceChain, mapping.sourceToken);
+        const sourceTokenData = await this.getToken(
+          sourceChain,
+          mapping.sourceToken,
+        );
         const destTokenData = await this.getToken(
           destinationChain,
           mapping.destinationToken,
@@ -422,7 +434,8 @@ export class TokenMappingRegistry {
 
     const normalizedSource = this.normalizeAddress(sourceToken, sourceChain);
     const mapping = mappings.find(
-      (m) => this.normalizeAddress(m.sourceToken, sourceChain) === normalizedSource,
+      (m) =>
+        this.normalizeAddress(m.sourceToken, sourceChain) === normalizedSource,
     );
 
     if (mapping) {
@@ -457,7 +470,9 @@ export class TokenMappingRegistry {
     if (!chainTokens) return false;
 
     const normalizedToken = this.normalizeAddress(token, chain);
-    return chainTokens.has(normalizedToken) || chainTokens.has(token.toLowerCase());
+    return (
+      chainTokens.has(normalizedToken) || chainTokens.has(token.toLowerCase())
+    );
   }
 
   /**

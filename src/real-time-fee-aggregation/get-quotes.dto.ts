@@ -1,4 +1,11 @@
-import { IsNumber, IsString, IsNotEmpty, IsOptional, IsIn, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsIn,
+  Min,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -21,7 +28,10 @@ export class GetQuotesDto {
   @Transform(({ value }) => value?.toUpperCase())
   token: string;
 
-  @ApiProperty({ example: '1000', description: 'Amount to bridge (in token units)' })
+  @ApiProperty({
+    example: '1000',
+    description: 'Amount to bridge (in token units)',
+  })
   @IsString()
   @IsNotEmpty()
   amount: string;

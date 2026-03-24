@@ -1,5 +1,9 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { RawBridgeQuote, BridgeProvider, QuoteRequestParams } from './interfaces';
+import {
+  RawBridgeQuote,
+  BridgeProvider,
+  QuoteRequestParams,
+} from './interfaces';
 import { BridgeStatus } from './enums';
 
 interface MockQuoteTemplate {
@@ -18,7 +22,14 @@ export class AggregationService {
       id: 'stargate',
       name: 'Stargate Finance',
       apiBaseUrl: 'https://api.stargate.finance',
-      supportedChains: ['ethereum', 'polygon', 'arbitrum', 'optimism', 'binance', 'avalanche'],
+      supportedChains: [
+        'ethereum',
+        'polygon',
+        'arbitrum',
+        'optimism',
+        'binance',
+        'avalanche',
+      ],
       supportedTokens: ['USDC', 'USDT', 'ETH', 'WBTC'],
       isActive: true,
     },
@@ -26,7 +37,13 @@ export class AggregationService {
       id: 'squid',
       name: 'Squid Router',
       apiBaseUrl: 'https://api.0xsquid.com',
-      supportedChains: ['ethereum', 'polygon', 'arbitrum', 'avalanche', 'stellar'],
+      supportedChains: [
+        'ethereum',
+        'polygon',
+        'arbitrum',
+        'avalanche',
+        'stellar',
+      ],
       supportedTokens: ['USDC', 'USDT', 'ETH', 'XLM'],
       isActive: true,
     },
@@ -42,7 +59,13 @@ export class AggregationService {
       id: 'cbridge',
       name: 'cBridge',
       apiBaseUrl: 'https://cbridge-prod2.celer.app',
-      supportedChains: ['ethereum', 'polygon', 'arbitrum', 'binance', 'avalanche'],
+      supportedChains: [
+        'ethereum',
+        'polygon',
+        'arbitrum',
+        'binance',
+        'avalanche',
+      ],
       supportedTokens: ['USDC', 'USDT', 'ETH', 'BNB'],
       isActive: true,
     },
@@ -57,11 +80,36 @@ export class AggregationService {
   ];
 
   private readonly MOCK_QUOTE_TEMPLATES: Record<string, MockQuoteTemplate> = {
-    stargate:  { feesUsd: 0.80, gasCostUsd: 1.20, estimatedTimeSeconds: 45,  outputRatio: 0.989 },
-    squid:     { feesUsd: 1.10, gasCostUsd: 0.90, estimatedTimeSeconds: 30,  outputRatio: 0.992 },
-    hop:       { feesUsd: 0.60, gasCostUsd: 1.50, estimatedTimeSeconds: 120, outputRatio: 0.985 },
-    cbridge:   { feesUsd: 0.70, gasCostUsd: 1.30, estimatedTimeSeconds: 90,  outputRatio: 0.987 },
-    soroswap:  { feesUsd: 0.30, gasCostUsd: 0.20, estimatedTimeSeconds: 15,  outputRatio: 0.997 },
+    stargate: {
+      feesUsd: 0.8,
+      gasCostUsd: 1.2,
+      estimatedTimeSeconds: 45,
+      outputRatio: 0.989,
+    },
+    squid: {
+      feesUsd: 1.1,
+      gasCostUsd: 0.9,
+      estimatedTimeSeconds: 30,
+      outputRatio: 0.992,
+    },
+    hop: {
+      feesUsd: 0.6,
+      gasCostUsd: 1.5,
+      estimatedTimeSeconds: 120,
+      outputRatio: 0.985,
+    },
+    cbridge: {
+      feesUsd: 0.7,
+      gasCostUsd: 1.3,
+      estimatedTimeSeconds: 90,
+      outputRatio: 0.987,
+    },
+    soroswap: {
+      feesUsd: 0.3,
+      gasCostUsd: 0.2,
+      estimatedTimeSeconds: 15,
+      outputRatio: 0.997,
+    },
   };
 
   /**
@@ -83,7 +131,7 @@ export class AggregationService {
 
     this.logger.log(
       `Fetching quotes from ${eligibleProviders.length} providers for ` +
-      `${params.sourceToken} ${params.sourceChain}→${params.destinationChain} amount=${params.amount}`,
+        `${params.sourceToken} ${params.sourceChain}→${params.destinationChain} amount=${params.amount}`,
     );
 
     const results = await Promise.allSettled(
@@ -118,8 +166,12 @@ export class AggregationService {
   getEligibleProviders(params: QuoteRequestParams): BridgeProvider[] {
     return this.MOCK_PROVIDERS.filter((provider) => {
       if (!provider.isActive) return false;
-      const supportsSourceChain = provider.supportedChains.includes(params.sourceChain);
-      const supportsDestChain = provider.supportedChains.includes(params.destinationChain);
+      const supportsSourceChain = provider.supportedChains.includes(
+        params.sourceChain,
+      );
+      const supportsDestChain = provider.supportedChains.includes(
+        params.destinationChain,
+      );
       const supportsToken = provider.supportedTokens.some(
         (t) => t.toUpperCase() === params.sourceToken.toUpperCase(),
       );
@@ -140,15 +192,16 @@ export class AggregationService {
     }
 
     const template = this.MOCK_QUOTE_TEMPLATES[provider.id] ?? {
-      feesUsd: 1.00,
-      gasCostUsd: 1.00,
+      feesUsd: 1.0,
+      gasCostUsd: 1.0,
       estimatedTimeSeconds: 60,
-      outputRatio: 0.990,
+      outputRatio: 0.99,
     };
 
     // Scale fees relative to amount
-    const scaledFees = template.feesUsd * (1 + Math.log10(Math.max(1, params.amount / 100)));
-    const scaledGas  = template.gasCostUsd;
+    const scaledFees =
+      template.feesUsd * (1 + Math.log10(Math.max(1, params.amount / 100)));
+    const scaledGas = template.gasCostUsd;
     const outputAmount = params.amount * template.outputRatio;
 
     return {

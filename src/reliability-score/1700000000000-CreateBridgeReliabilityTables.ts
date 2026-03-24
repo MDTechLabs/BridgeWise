@@ -71,9 +71,15 @@ export class CreateBridgeReliabilityTables1700000000000 implements MigrationInte
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "bridge_reliability_metrics"`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "bridge_reliability_metrics"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "bridge_transaction_events"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "public"."reliability_tier_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "public"."transaction_outcome_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "public"."reliability_tier_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "public"."transaction_outcome_enum"`,
+    );
   }
 }

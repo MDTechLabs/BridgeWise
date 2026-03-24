@@ -14,11 +14,36 @@ export class SlippageService {
 
   // Simulated liquidity pool data — in production, fetched from on-chain / oracles
   private readonly MOCK_POOLS: LiquidityPool[] = [
-    { token: 'USDC', chain: 'ethereum', tvlUsd: 50_000_000, dailyVolumeUsd: 10_000_000 },
-    { token: 'USDC', chain: 'stellar', tvlUsd: 5_000_000, dailyVolumeUsd: 1_000_000 },
-    { token: 'USDT', chain: 'ethereum', tvlUsd: 40_000_000, dailyVolumeUsd: 8_000_000 },
-    { token: 'ETH', chain: 'ethereum', tvlUsd: 200_000_000, dailyVolumeUsd: 50_000_000 },
-    { token: 'XLM', chain: 'stellar', tvlUsd: 2_000_000, dailyVolumeUsd: 500_000 },
+    {
+      token: 'USDC',
+      chain: 'ethereum',
+      tvlUsd: 50_000_000,
+      dailyVolumeUsd: 10_000_000,
+    },
+    {
+      token: 'USDC',
+      chain: 'stellar',
+      tvlUsd: 5_000_000,
+      dailyVolumeUsd: 1_000_000,
+    },
+    {
+      token: 'USDT',
+      chain: 'ethereum',
+      tvlUsd: 40_000_000,
+      dailyVolumeUsd: 8_000_000,
+    },
+    {
+      token: 'ETH',
+      chain: 'ethereum',
+      tvlUsd: 200_000_000,
+      dailyVolumeUsd: 50_000_000,
+    },
+    {
+      token: 'XLM',
+      chain: 'stellar',
+      tvlUsd: 2_000_000,
+      dailyVolumeUsd: 500_000,
+    },
   ];
 
   /**
@@ -31,11 +56,15 @@ export class SlippageService {
     amountUsd: number,
   ): SlippageEstimate {
     const pool = this.MOCK_POOLS.find(
-      (p) => p.token.toUpperCase() === sourceToken.toUpperCase() && p.chain === sourceChain,
+      (p) =>
+        p.token.toUpperCase() === sourceToken.toUpperCase() &&
+        p.chain === sourceChain,
     );
 
     if (!pool) {
-      this.logger.warn(`No liquidity data for ${sourceToken} on ${sourceChain}, using conservative estimate`);
+      this.logger.warn(
+        `No liquidity data for ${sourceToken} on ${sourceChain}, using conservative estimate`,
+      );
       return this.conservativeEstimate(amountUsd);
     }
 
@@ -62,7 +91,10 @@ export class SlippageService {
   ): Map<string, SlippageEstimate> {
     const results = new Map<string, SlippageEstimate>();
     for (const quote of quotes) {
-      results.set(quote.bridgeId, this.estimateSlippage(quote, sourceToken, sourceChain, amountUsd));
+      results.set(
+        quote.bridgeId,
+        this.estimateSlippage(quote, sourceToken, sourceChain, amountUsd),
+      );
     }
     return results;
   }
@@ -72,7 +104,10 @@ export class SlippageService {
     return (1 - 1 / Math.sqrt(1 + impactRatio)) * 100;
   }
 
-  private determineConfidence(pool: LiquidityPool, amountUsd: number): 'high' | 'medium' | 'low' {
+  private determineConfidence(
+    pool: LiquidityPool,
+    amountUsd: number,
+  ): 'high' | 'medium' | 'low' {
     const ratio = amountUsd / pool.tvlUsd;
     if (ratio < 0.001) return 'high';
     if (ratio < 0.01) return 'medium';

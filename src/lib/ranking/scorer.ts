@@ -1,4 +1,4 @@
-import { NormalizedScores, RankingWeights } from "./types";
+import { NormalizedScores, RankingWeights } from './types';
 
 /**
  * Computes the composite score (0–100) for a single bridge route
@@ -12,13 +12,13 @@ import { NormalizedScores, RankingWeights } from "./types";
  */
 export function computeFinalScore(
   scores: NormalizedScores,
-  weights: RankingWeights
+  weights: RankingWeights,
 ): number {
   const raw =
-    scores.costScore        * weights.cost        +
-    scores.speedScore       * weights.speed       +
+    scores.costScore * weights.cost +
+    scores.speedScore * weights.speed +
     scores.reliabilityScore * weights.reliability +
-    scores.liquidityScore   * weights.liquidity;
+    scores.liquidityScore * weights.liquidity;
 
   // Round to 2 decimal places, clamp to 0–100
   return Math.min(100, Math.max(0, parseFloat(raw.toFixed(2))));

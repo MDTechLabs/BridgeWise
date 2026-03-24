@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsEnum, IsDateString, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -60,7 +67,10 @@ export class BridgePerformanceMetricQueryDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -112,7 +122,9 @@ export class BridgePerformanceMetricDto {
   @ApiProperty({ description: 'Failure rate percentage' })
   failureRate: number;
 
-  @ApiPropertyOptional({ description: 'Average settlement time in milliseconds' })
+  @ApiPropertyOptional({
+    description: 'Average settlement time in milliseconds',
+  })
   averageSettlementTimeMs?: number;
 
   @ApiPropertyOptional({ description: 'Minimum settlement time' })
@@ -150,7 +162,10 @@ export class BridgePerformanceMetricDto {
  * DTO for paginated performance metrics response
  */
 export class BridgePerformanceMetricResponseDto {
-  @ApiProperty({ description: 'Performance metrics data', type: [BridgePerformanceMetricDto] })
+  @ApiProperty({
+    description: 'Performance metrics data',
+    type: [BridgePerformanceMetricDto],
+  })
   data: BridgePerformanceMetricDto[];
 
   @ApiProperty({ description: 'Total number of records' })
@@ -191,7 +206,10 @@ export class HistoricalTrendsDto {
   @ApiProperty({ description: 'Time interval', enum: TimeIntervalEnum })
   timeInterval: TimeInterval;
 
-  @ApiProperty({ description: 'Trend data points', type: [BridgePerformanceMetricDto] })
+  @ApiProperty({
+    description: 'Trend data points',
+    type: [BridgePerformanceMetricDto],
+  })
   trends: BridgePerformanceMetricDto[];
 
   @ApiProperty({ description: 'Response generation timestamp' })
@@ -243,7 +261,10 @@ export class BridgePerformanceComparisonDto {
  * DTO for performance comparison response
  */
 export class BridgePerformanceComparisonResponseDto {
-  @ApiProperty({ description: 'Comparison data', type: [BridgePerformanceComparisonDto] })
+  @ApiProperty({
+    description: 'Comparison data',
+    type: [BridgePerformanceComparisonDto],
+  })
   comparisons: BridgePerformanceComparisonDto[];
 
   @ApiProperty({ description: 'Time interval used' })
@@ -272,7 +293,9 @@ export class TriggerAggregationDto {
   @IsEnum(TimeIntervalEnum)
   timeInterval?: TimeIntervalEnum = TimeIntervalEnum.DAILY;
 
-  @ApiPropertyOptional({ description: 'Date to aggregate (defaults to previous period)' })
+  @ApiPropertyOptional({
+    description: 'Date to aggregate (defaults to previous period)',
+  })
   @IsOptional()
   @IsDateString()
   date?: string;

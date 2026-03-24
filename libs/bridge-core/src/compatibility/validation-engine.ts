@@ -59,7 +59,10 @@ export class RouteValidationEngine {
   /**
    * Bridge availability status
    */
-  private bridgeStatus: Map<BridgeProvider, { isAvailable: boolean; paused: boolean }> = new Map();
+  private bridgeStatus: Map<
+    BridgeProvider,
+    { isAvailable: boolean; paused: boolean }
+  > = new Map();
 
   constructor(
     tokenRegistry: TokenMappingRegistry,
@@ -97,7 +100,11 @@ export class RouteValidationEngine {
   /**
    * Update bridge availability status
    */
-  setBridgeStatus(provider: BridgeProvider, isAvailable: boolean, paused: boolean = false): void {
+  setBridgeStatus(
+    provider: BridgeProvider,
+    isAvailable: boolean,
+    paused: boolean = false,
+  ): void {
     this.bridgeStatus.set(provider, { isAvailable, paused });
   }
 
@@ -152,8 +159,10 @@ export class RouteValidationEngine {
     }
 
     // Check liquidity score
-    if (tokenPair.liquidityScore !== undefined &&
-        tokenPair.liquidityScore < this.config.minLiquidityScore) {
+    if (
+      tokenPair.liquidityScore !== undefined &&
+      tokenPair.liquidityScore < this.config.minLiquidityScore
+    ) {
       warnings.push({
         code: TokenPairErrorCode.INSUFFICIENT_LIQUIDITY,
         message: `Low liquidity detected for this route (score: ${tokenPair.liquidityScore})`,
@@ -191,7 +200,10 @@ export class RouteValidationEngine {
     sourceChain: ChainId,
     destinationChain: ChainId,
     bridge: BridgeProvider,
-  ): Promise<{ errors: TokenPairValidationError[]; warnings: TokenPairValidationError[] }> {
+  ): Promise<{
+    errors: TokenPairValidationError[];
+    warnings: TokenPairValidationError[];
+  }> {
     const errors: TokenPairValidationError[] = [];
     const warnings: TokenPairValidationError[] = [];
 
@@ -216,7 +228,9 @@ export class RouteValidationEngine {
           code: TokenPairErrorCode.UNSUPPORTED_CHAIN_PAIR,
           message: `Route from ${sourceChain} to ${destinationChain} is not supported by ${bridge}, but reverse route is available`,
           field: 'chainPair',
-          suggestions: [`Try bridging from ${destinationChain} to ${sourceChain} instead`],
+          suggestions: [
+            `Try bridging from ${destinationChain} to ${sourceChain} instead`,
+          ],
         });
       } else {
         errors.push({
@@ -233,9 +247,10 @@ export class RouteValidationEngine {
   /**
    * Validate token support for a bridge route
    */
-  private async validateTokenSupport(
-    tokenPair: TokenPair,
-  ): Promise<{ errors: TokenPairValidationError[]; warnings: TokenPairValidationError[] }> {
+  private async validateTokenSupport(tokenPair: TokenPair): Promise<{
+    errors: TokenPairValidationError[];
+    warnings: TokenPairValidationError[];
+  }> {
     const errors: TokenPairValidationError[] = [];
     const warnings: TokenPairValidationError[] = [];
 
@@ -307,7 +322,10 @@ export class RouteValidationEngine {
     tokenPair: TokenPair,
     sourceToken: NormalizedToken | null,
     destToken: NormalizedToken | null,
-  ): Promise<{ errors: TokenPairValidationError[]; warnings: TokenPairValidationError[] }> {
+  ): Promise<{
+    errors: TokenPairValidationError[];
+    warnings: TokenPairValidationError[];
+  }> {
     const errors: TokenPairValidationError[] = [];
     const warnings: TokenPairValidationError[] = [];
 
@@ -364,9 +382,10 @@ export class RouteValidationEngine {
   /**
    * Validate liquidity for a token pair
    */
-  private validateLiquidity(
-    tokenPair: TokenPair,
-  ): Promise<{ errors: TokenPairValidationError[]; warnings: TokenPairValidationError[] }> {
+  private validateLiquidity(tokenPair: TokenPair): Promise<{
+    errors: TokenPairValidationError[];
+    warnings: TokenPairValidationError[];
+  }> {
     const errors: TokenPairValidationError[] = [];
     const warnings: TokenPairValidationError[] = [];
 
@@ -457,13 +476,18 @@ export class RouteValidationEngine {
     const supportedPairs = this.supportedChainPairs.get(bridge);
     if (!supportedPairs) return false;
 
-    return supportedPairs.has(this.getChainPairKey(sourceChain, destinationChain));
+    return supportedPairs.has(
+      this.getChainPairKey(sourceChain, destinationChain),
+    );
   }
 
   /**
    * Calculate route priority (lower is better)
    */
-  private calculateRoutePriority(tokenPair: TokenPair, bridge: BridgeProvider): number {
+  private calculateRoutePriority(
+    tokenPair: TokenPair,
+    bridge: BridgeProvider,
+  ): number {
     let priority = 0;
 
     // Prefer higher liquidity
@@ -483,7 +507,9 @@ export class RouteValidationEngine {
   /**
    * Find alternative token pairs for a failed validation
    */
-  private async findAlternativePairs(originalPair: TokenPair): Promise<TokenPair[]> {
+  private async findAlternativePairs(
+    originalPair: TokenPair,
+  ): Promise<TokenPair[]> {
     const alternatives: TokenPair[] = [];
 
     // Try different bridges for the same pair
@@ -504,7 +530,8 @@ export class RouteValidationEngine {
 
     // Try wrapped token alternatives if allowed
     if (this.config.allowWrappedTokens) {
-      const wrappedAlternatives = await this.findWrappedTokenAlternatives(originalPair);
+      const wrappedAlternatives =
+        await this.findWrappedTokenAlternatives(originalPair);
       alternatives.push(...wrappedAlternatives);
     }
 
@@ -514,7 +541,9 @@ export class RouteValidationEngine {
   /**
    * Find wrapped token alternatives
    */
-  private async findWrappedTokenAlternatives(tokenPair: TokenPair): Promise<TokenPair[]> {
+  private async findWrappedTokenAlternatives(
+    tokenPair: TokenPair,
+  ): Promise<TokenPair[]> {
     const alternatives: TokenPair[] = [];
 
     // Check for wrapped versions of the tokens
@@ -532,7 +561,8 @@ export class RouteValidationEngine {
       const altPair: TokenPair = {
         ...tokenPair,
         sourceToken: wrappedSource?.wrappedToken || tokenPair.sourceToken,
-        destinationToken: wrappedDest?.wrappedToken || tokenPair.destinationToken,
+        destinationToken:
+          wrappedDest?.wrappedToken || tokenPair.destinationToken,
       };
 
       const validation = await this.validateTokenPair(altPair);
@@ -547,15 +577,18 @@ export class RouteValidationEngine {
   /**
    * Get suggestions for unsupported token pairs
    */
-  private async getTokenPairSuggestions(tokenPair: TokenPair): Promise<string[]> {
+  private async getTokenPairSuggestions(
+    tokenPair: TokenPair,
+  ): Promise<string[]> {
     const suggestions: string[] = [];
 
     // Get supported tokens for this bridge on both chains
-    const supportedSourceTokens = await this.tokenRegistry.getSupportedTokensForBridge(
-      tokenPair.sourceChain,
-      tokenPair.destinationChain,
-      tokenPair.bridgeName,
-    );
+    const supportedSourceTokens =
+      await this.tokenRegistry.getSupportedTokensForBridge(
+        tokenPair.sourceChain,
+        tokenPair.destinationChain,
+        tokenPair.bridgeName,
+      );
 
     if (supportedSourceTokens.length > 0) {
       suggestions.push(

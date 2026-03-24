@@ -77,7 +77,9 @@ export class FeeAggregationService {
     request: QuoteRequest,
   ): Promise<NormalizedQuote> {
     // Check route support before querying
-    if (!adapter.supportsRoute(request.fromChain, request.toChain, request.token)) {
+    if (
+      !adapter.supportsRoute(request.fromChain, request.toChain, request.token)
+    ) {
       return {
         bridgeName: adapter.name,
         totalFeeUSD: 0,
@@ -98,7 +100,12 @@ export class FeeAggregationService {
   private timeoutReject(adapterName: string): Promise<never> {
     return new Promise((_, reject) =>
       setTimeout(
-        () => reject(new Error(`Timeout fetching quote from "${adapterName}" after ${QUOTE_TIMEOUT_MS}ms`)),
+        () =>
+          reject(
+            new Error(
+              `Timeout fetching quote from "${adapterName}" after ${QUOTE_TIMEOUT_MS}ms`,
+            ),
+          ),
         QUOTE_TIMEOUT_MS,
       ),
     );

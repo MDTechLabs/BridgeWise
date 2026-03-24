@@ -55,7 +55,9 @@ export class RouteRanker {
    * Calculate composite score for a route
    */
   private calculateScore(route: NormalizedRoute): number {
-    const costScore = this.normalizeCost(Number(route.metadata?.feePercentage ?? 0));
+    const costScore = this.normalizeCost(
+      Number(route.metadata?.feePercentage ?? 0),
+    );
     const latencyScore = this.normalizeLatency(route.estimatedTime);
     const reliabilityScore = Number(route.metadata?.reliability ?? 0);
 

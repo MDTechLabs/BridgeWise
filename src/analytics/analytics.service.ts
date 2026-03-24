@@ -292,7 +292,8 @@ export class AnalyticsService {
       distribution: distribution.map((d: any) => ({
         range: d.range,
         count: parseInt(d.count, 10),
-        percentage: totalCount > 0 ? (parseInt(d.count, 10) / totalCount) * 100 : 0,
+        percentage:
+          totalCount > 0 ? (parseInt(d.count, 10) / totalCount) * 100 : 0,
       })),
     };
   }
@@ -392,8 +393,7 @@ export class AnalyticsService {
         analytics.averageFee = fee;
       } else {
         const n = analytics.totalTransfers;
-        analytics.averageFee =
-          (analytics.averageFee * (n - 1) + fee) / n;
+        analytics.averageFee = (analytics.averageFee * (n - 1) + fee) / n;
       }
     }
 

@@ -41,7 +41,9 @@ export class BridgeRegistry {
       metadata,
     });
 
-    this.logger.log(`Registered bridge adapter: "${adapter.name}" v${adapter.version}`);
+    this.logger.log(
+      `Registered bridge adapter: "${adapter.name}" v${adapter.version}`,
+    );
   }
 
   /**
@@ -70,7 +72,9 @@ export class BridgeRegistry {
     const matches = Array.from(this.adapters.values())
       .map((entry) => entry.adapter)
       .filter((adapter) =>
-        adapter.capabilities.some((cap: BridgeCapability) => cap.name === capabilityName),
+        adapter.capabilities.some(
+          (cap: BridgeCapability) => cap.name === capabilityName,
+        ),
       );
 
     if (matches.length === 0) {

@@ -1,7 +1,4 @@
-
-
 import { ChainId, BridgeProvider } from '../types';
-
 
 export interface TokenPair {
   sourceChain: ChainId;

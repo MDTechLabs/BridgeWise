@@ -1,4 +1,4 @@
-import { RankingWeights } from "./types";
+import { RankingWeights } from './types';
 
 /**
  * Load ranking weights from environment variables with fallback defaults.
@@ -19,10 +19,10 @@ function parseWeight(envKey: string, fallback: number): number {
 
 export function getRankingWeights(): RankingWeights {
   const raw = {
-    cost: parseWeight("NEXT_PUBLIC_RANKING_WEIGHT_COST", 0.35),
-    speed: parseWeight("NEXT_PUBLIC_RANKING_WEIGHT_SPEED", 0.30),
-    reliability: parseWeight("NEXT_PUBLIC_RANKING_WEIGHT_RELIABILITY", 0.25),
-    liquidity: parseWeight("NEXT_PUBLIC_RANKING_WEIGHT_LIQUIDITY", 0.10),
+    cost: parseWeight('NEXT_PUBLIC_RANKING_WEIGHT_COST', 0.35),
+    speed: parseWeight('NEXT_PUBLIC_RANKING_WEIGHT_SPEED', 0.3),
+    reliability: parseWeight('NEXT_PUBLIC_RANKING_WEIGHT_RELIABILITY', 0.25),
+    liquidity: parseWeight('NEXT_PUBLIC_RANKING_WEIGHT_LIQUIDITY', 0.1),
   };
 
   // Normalize weights so they always sum to 1

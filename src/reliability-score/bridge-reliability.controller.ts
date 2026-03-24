@@ -7,12 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BridgeReliabilityService } from './bridge-reliability.service';
 import {
   BridgeReliabilityResponseDto,
@@ -66,7 +61,8 @@ export class BridgeReliabilityController {
   @Get('ranking-factors')
   @ApiOperation({
     summary: 'Get reliability ranking factors for a route',
-    description: 'Returns reliability-adjusted scores for all bridges on a route.',
+    description:
+      'Returns reliability-adjusted scores for all bridges on a route.',
   })
   async getRankingFactors(
     @Query('sourceChain') sourceChain: string,

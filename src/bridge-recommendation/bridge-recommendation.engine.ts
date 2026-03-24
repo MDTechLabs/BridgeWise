@@ -21,11 +21,17 @@ export interface RecommendationInput {
 }
 
 export interface RecommendationResult {
-  rankedRoutes: Array<{ route: BridgeRoute; score: number; breakdown: Record<string, any> }>;
+  rankedRoutes: Array<{
+    route: BridgeRoute;
+    score: number;
+    breakdown: Record<string, any>;
+  }>;
   errors?: string[];
 }
 
-export function recommendBridgeRoutes(input: RecommendationInput): RecommendationResult {
+export function recommendBridgeRoutes(
+  input: RecommendationInput,
+): RecommendationResult {
   const errors: string[] = [];
   if (!input.routes || input.routes.length === 0) {
     errors.push('No bridge routes available');
@@ -33,9 +39,12 @@ export function recommendBridgeRoutes(input: RecommendationInput): Recommendatio
   }
 
   // Fallback: rank by fee if metrics missing
-  const hasMetrics = input.routes.some(r => r.reliabilityScore !== undefined && r.historicalSuccessRate !== undefined);
+  const hasMetrics = input.routes.some(
+    (r) =>
+      r.reliabilityScore !== undefined && r.historicalSuccessRate !== undefined,
+  );
 
-  const rankedRoutes = input.routes.map(route => {
+  const rankedRoutes = input.routes.map((route) => {
     // Score calculation
     let score = 0;
     const breakdown: Record<string, any> = {};

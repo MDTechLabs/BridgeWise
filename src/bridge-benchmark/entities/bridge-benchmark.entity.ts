@@ -71,7 +71,11 @@ export class BridgeBenchmark {
   @Column({ name: 'start_time', type: 'timestamptz' })
   startTime: Date;
 
-  @Column({ name: 'destination_confirmed_at', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'destination_confirmed_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
   destinationConfirmedAt: Date | null;
 
   @Column({ name: 'completion_time', type: 'timestamptz', nullable: true })
@@ -80,7 +84,13 @@ export class BridgeBenchmark {
   @Column({ name: 'duration_ms', type: 'bigint', nullable: true })
   durationMs: number | null;
 
-  @Column({ name: 'amount', type: 'decimal', precision: 30, scale: 10, nullable: true })
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    nullable: true,
+  })
   amount: number | null;
 
   @CreateDateColumn({ name: 'created_at' })

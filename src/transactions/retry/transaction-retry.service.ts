@@ -30,7 +30,9 @@ export class TransactionRetryService {
     this.retryPolicy = { ...this.retryPolicy, ...policy };
   }
 
-  async retryTransaction(transaction: Transaction): Promise<Transaction | null> {
+  async retryTransaction(
+    transaction: Transaction,
+  ): Promise<Transaction | null> {
     if (!this.isSafeToRetry(transaction)) return null;
     let attempt = 0;
     let lastError = '';
@@ -63,7 +65,11 @@ export class TransactionRetryService {
     );
   }
 
-  private logRetryAttempt(transactionId: string, attempt: number, error: string) {
+  private logRetryAttempt(
+    transactionId: string,
+    attempt: number,
+    error: string,
+  ) {
     this.retryLogs.push({
       transactionId,
       attempt,

@@ -3,7 +3,6 @@ import opossum from 'opossum';
 
 // Removed unused constants to resolve lint warnings
 
-
 // Mock API call function must be defined before getBreaker
 
 // In-memory store for circuit breakers.
@@ -71,7 +70,6 @@ export async function callApi(request: ApiRequest): Promise<ApiResponse> {
     };
   }
 }
-
 
 function isApiError(err: unknown): err is { code?: string; message?: string } {
   return (

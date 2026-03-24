@@ -12,8 +12,13 @@ import { BridgeRegistry } from './bridge.registry';
 import { BridgeLoader } from './bridge.loader';
 import { BridgeService } from './bridge.service';
 
-export interface BridgeModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory: (...args: unknown[]) => Promise<BridgeModuleConfig> | BridgeModuleConfig;
+export interface BridgeModuleAsyncOptions extends Pick<
+  ModuleMetadata,
+  'imports'
+> {
+  useFactory: (
+    ...args: unknown[]
+  ) => Promise<BridgeModuleConfig> | BridgeModuleConfig;
   inject?: FactoryProvider['inject'];
   extraProviders?: Provider[];
 }
@@ -35,7 +40,8 @@ export class BridgeModule {
         BridgeRegistry,
         {
           provide: BridgeLoader,
-          useFactory: (registry: BridgeRegistry) => new BridgeLoader(registry, config),
+          useFactory: (registry: BridgeRegistry) =>
+            new BridgeLoader(registry, config),
           inject: [BridgeRegistry],
         },
         BridgeService,

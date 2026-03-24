@@ -10,12 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { BridgeBenchmarkService } from './bridge-benchmark.service';
 import {
   InitiateBenchmarkDto,
@@ -29,9 +24,7 @@ import { BridgeBenchmark } from './entities/bridge-benchmark.entity';
 @ApiTags('Bridge Benchmarks')
 @Controller('api/v1/bridges')
 export class BridgeBenchmarkController {
-  constructor(
-    private readonly benchmarkService: BridgeBenchmarkService,
-  ) {}
+  constructor(private readonly benchmarkService: BridgeBenchmarkService) {}
 
   @Post('benchmarks')
   @HttpCode(HttpStatus.CREATED)
@@ -40,7 +33,11 @@ export class BridgeBenchmarkController {
     description:
       'Records the start of a bridge transaction lifecycle for speed tracking.',
   })
-  @ApiResponse({ status: 201, description: 'Benchmark initiated', type: BridgeBenchmark })
+  @ApiResponse({
+    status: 201,
+    description: 'Benchmark initiated',
+    type: BridgeBenchmark,
+  })
   initiate(@Body() dto: InitiateBenchmarkDto): Promise<BridgeBenchmark> {
     return this.benchmarkService.initiate(dto);
   }
@@ -52,7 +49,11 @@ export class BridgeBenchmarkController {
       'Records the completion timestamp and calculates total settlement duration.',
   })
   @ApiParam({ name: 'id', description: 'Benchmark UUID' })
-  @ApiResponse({ status: 200, description: 'Benchmark confirmed', type: BridgeBenchmark })
+  @ApiResponse({
+    status: 200,
+    description: 'Benchmark confirmed',
+    type: BridgeBenchmark,
+  })
   confirm(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ConfirmBenchmarkDto,
@@ -66,7 +67,11 @@ export class BridgeBenchmarkController {
     description: 'Update the status (pending, submitted, confirmed, failed).',
   })
   @ApiParam({ name: 'id', description: 'Benchmark UUID' })
-  @ApiResponse({ status: 200, description: 'Status updated', type: BridgeBenchmark })
+  @ApiResponse({
+    status: 200,
+    description: 'Status updated',
+    type: BridgeBenchmark,
+  })
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateBenchmarkStatusDto,

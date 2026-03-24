@@ -44,16 +44,38 @@ export class BridgeAnalytics {
   @Column({ name: 'failed_transfers', type: 'int', default: 0 })
   failedTransfers: number;
 
-  @Column({ name: 'average_settlement_time_ms', type: 'bigint', nullable: true })
+  @Column({
+    name: 'average_settlement_time_ms',
+    type: 'bigint',
+    nullable: true,
+  })
   averageSettlementTimeMs: number | null;
 
-  @Column({ name: 'average_fee', type: 'decimal', precision: 30, scale: 10, nullable: true })
+  @Column({
+    name: 'average_fee',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    nullable: true,
+  })
   averageFee: number | null;
 
-  @Column({ name: 'average_slippage_percent', type: 'decimal', precision: 10, scale: 4, nullable: true })
+  @Column({
+    name: 'average_slippage_percent',
+    type: 'decimal',
+    precision: 10,
+    scale: 4,
+    nullable: true,
+  })
   averageSlippagePercent: number | null;
 
-  @Column({ name: 'total_volume', type: 'decimal', precision: 30, scale: 10, default: 0 })
+  @Column({
+    name: 'total_volume',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    default: 0,
+  })
   totalVolume: number;
 
   @Column({ name: 'min_settlement_time_ms', type: 'bigint', nullable: true })

@@ -8,7 +8,11 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ReliabilityTier, TransactionOutcome, WindowMode } from './reliability.enum';
+import {
+  ReliabilityTier,
+  TransactionOutcome,
+  WindowMode,
+} from './reliability.enum';
 
 // ─── Record Event ────────────────────────────────────────────────────────────
 export class RecordBridgeEventDto {
@@ -65,7 +69,10 @@ export class GetReliabilityDto {
   @IsNotEmpty()
   destinationChain: string;
 
-  @ApiPropertyOptional({ enum: WindowMode, default: WindowMode.TRANSACTION_COUNT })
+  @ApiPropertyOptional({
+    enum: WindowMode,
+    default: WindowMode.TRANSACTION_COUNT,
+  })
   @IsOptional()
   @IsEnum(WindowMode)
   windowMode?: WindowMode;
@@ -90,7 +97,8 @@ export class ReliabilityBadgeDto {
   color: string;
 
   @ApiProperty({
-    example: 'Score based on last 100 transactions. Excludes user-cancelled events.',
+    example:
+      'Score based on last 100 transactions. Excludes user-cancelled events.',
   })
   tooltip: string;
 }

@@ -4,10 +4,18 @@
 export { BridgeService } from './bridge.service';
 
 // Decorators
-export { BridgePlugin, InjectBridgeRegistry, BRIDGE_ADAPTER_METADATA } from './bridge.decorators';
+export {
+  BridgePlugin,
+  InjectBridgeRegistry,
+  BRIDGE_ADAPTER_METADATA,
+} from './bridge.decorators';
 
 // Tokens
-export { BRIDGE_MODULE_CONFIG, BRIDGE_ADAPTER_TOKEN, BRIDGE_REGISTRY_TOKEN } from './bridge.tokens';
+export {
+  BRIDGE_MODULE_CONFIG,
+  BRIDGE_ADAPTER_TOKEN,
+  BRIDGE_REGISTRY_TOKEN,
+} from './bridge.tokens';
 
 // Exceptions
 export {

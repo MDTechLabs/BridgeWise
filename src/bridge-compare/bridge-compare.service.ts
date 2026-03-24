@@ -4,7 +4,12 @@ import { SlippageService } from './slippage.service';
 import { ReliabilityService } from './reliability.service';
 import { RankingService } from './ranking.service';
 import { GetQuotesDto } from './dto';
-import { NormalizedQuote, QuoteResponse, QuoteRequestParams, RawBridgeQuote } from './interfaces';
+import {
+  NormalizedQuote,
+  QuoteResponse,
+  QuoteRequestParams,
+  RawBridgeQuote,
+} from './interfaces';
 import { BridgeStatus, RankingMode } from './enums';
 
 @Injectable()
@@ -35,10 +40,11 @@ export class BridgeCompareService {
 
     this.logger.log(
       `Getting quotes: ${dto.sourceToken} ${dto.sourceChain}→${dto.destinationChain} ` +
-      `amount=${dto.amount} mode=${params.rankingMode}`,
+        `amount=${dto.amount} mode=${params.rankingMode}`,
     );
 
-    const { quotes: rawQuotes, failedProviders } = await this.aggregationService.fetchRawQuotes(params);
+    const { quotes: rawQuotes, failedProviders } =
+      await this.aggregationService.fetchRawQuotes(params);
 
     const slippageMap = this.slippageService.batchEstimateSlippage(
       rawQuotes,
@@ -48,17 +54,23 @@ export class BridgeCompareService {
     );
 
     const bridgeIds = rawQuotes.map((q) => q.bridgeId);
-    const reliabilityMap = this.reliabilityService.batchCalculateScores(bridgeIds);
+    const reliabilityMap =
+      this.reliabilityService.batchCalculateScores(bridgeIds);
 
     const normalizedQuotes: NormalizedQuote[] = rawQuotes.map((raw) =>
       this.normalizeQuote(raw, params, slippageMap, reliabilityMap),
     );
 
-    const rankedQuotes = this.rankingService.rankQuotes(normalizedQuotes, params.rankingMode);
+    const rankedQuotes = this.rankingService.rankQuotes(
+      normalizedQuotes,
+      params.rankingMode,
+    );
 
     const bestRoute = rankedQuotes[0];
     if (!bestRoute) {
-      throw new NotFoundException('No valid routes found for the requested pair');
+      throw new NotFoundException(
+        'No valid routes found for the requested pair',
+      );
     }
 
     const response: QuoteResponse = {
@@ -73,7 +85,7 @@ export class BridgeCompareService {
 
     this.logger.log(
       `Returned ${rankedQuotes.length} quotes in ${response.fetchDurationMs}ms. ` +
-      `Best: ${bestRoute.bridgeName} score=${bestRoute.compositeScore}`,
+        `Best: ${bestRoute.bridgeName} score=${bestRoute.compositeScore}`,
     );
 
     return response;
@@ -82,7 +94,10 @@ export class BridgeCompareService {
   /**
    * Get a specific route's full details by bridgeId.
    */
-  async getRouteDetails(dto: GetQuotesDto, bridgeId: string): Promise<NormalizedQuote> {
+  async getRouteDetails(
+    dto: GetQuotesDto,
+    bridgeId: string,
+  ): Promise<NormalizedQuote> {
     const response = await this.getQuotes(dto);
     const route = response.quotes.find((q) => q.bridgeId === bridgeId);
 
@@ -128,8 +143,8 @@ export class BridgeCompareService {
       estimatedTimeSeconds: raw.estimatedTimeSeconds,
       slippagePercent: slippage?.expectedSlippage ?? 0,
       reliabilityScore,
-      compositeScore: 0,     // assigned by RankingService
-      rankingPosition: 0,    // assigned by RankingService
+      compositeScore: 0, // assigned by RankingService
+      rankingPosition: 0, // assigned by RankingService
       bridgeStatus,
       metadata: {
         feesBreakdown: { protocolFee: raw.feesUsd, gasFee: raw.gasCostUsd },

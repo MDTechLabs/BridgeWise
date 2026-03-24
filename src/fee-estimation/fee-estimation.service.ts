@@ -38,7 +38,7 @@ export class FeeEstimationService {
    */
   async getFeeEstimate(query: FeeEstimateQueryDto): Promise<FeeEstimateDto> {
     const cacheKey = this.buildCacheKey(query);
-    
+
     // Check cache
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
@@ -47,7 +47,7 @@ export class FeeEstimationService {
 
     try {
       const estimate = await this.calculateFeeEstimate(query);
-      
+
       // Cache the result
       this.cache.set(cacheKey, {
         estimate,
@@ -152,13 +152,15 @@ export class FeeEstimationService {
           savingsPercent: 0, // Will be calculated
         });
       } catch (error) {
-        this.logger.warn(`Failed to compare fee for ${bridgeName}: ${error.message}`);
+        this.logger.warn(
+          `Failed to compare fee for ${bridgeName}: ${error.message}`,
+        );
       }
     }
 
     // Sort by total fee and assign ranks
     comparisons.sort((a, b) => a.totalFee - b.totalFee);
-    
+
     const cheapest = comparisons[0];
     const mostExpensive = comparisons[comparisons.length - 1];
 
@@ -166,7 +168,8 @@ export class FeeEstimationService {
       comp.rank = index + 1;
       if (mostExpensive.totalFee > 0) {
         comp.savingsPercent =
-          ((mostExpensive.totalFee - comp.totalFee) / mostExpensive.totalFee) * 100;
+          ((mostExpensive.totalFee - comp.totalFee) / mostExpensive.totalFee) *
+          100;
       }
     });
 
@@ -190,7 +193,7 @@ export class FeeEstimationService {
 
     // Get gas price
     const gasPrice = await this.gasPriceAdapter.getGasPrice(sourceChain);
-    
+
     // Calculate gas fee
     const gasFee = this.gasPriceAdapter.calculateGasFee(
       sourceChain,
@@ -213,7 +216,9 @@ export class FeeEstimationService {
 
     // Calculate USD values (simplified - would need price oracle in production)
     const feeTokenPriceUsd = await this.getTokenPriceUsd(feeToken);
-    const totalFeeUsd = feeTokenPriceUsd ? totalFee * feeTokenPriceUsd : undefined;
+    const totalFeeUsd = feeTokenPriceUsd
+      ? totalFee * feeTokenPriceUsd
+      : undefined;
 
     // Create estimate entity
     const estimate = this.feeEstimateRepository.create({
@@ -235,9 +240,15 @@ export class FeeEstimationService {
       totalFeeUsd: totalFeeUsd || null,
       isFallback: false,
       fallbackReason: null,
-      estimatedDurationSeconds: this.estimateDuration(bridgeName, sourceChain, destinationChain),
+      estimatedDurationSeconds: this.estimateDuration(
+        bridgeName,
+        sourceChain,
+        destinationChain,
+      ),
       expiresAt: gasPrice.expiresAt,
-      cacheTtlSeconds: Math.floor((gasPrice.expiresAt.getTime() - Date.now()) / 1000),
+      cacheTtlSeconds: Math.floor(
+        (gasPrice.expiresAt.getTime() - Date.now()) / 1000,
+      ),
     });
 
     return estimate;
@@ -252,7 +263,7 @@ export class FeeEstimationService {
   ): FeeEstimateDto {
     const fallbackGasFee = 0.001; // Conservative fallback
     const fallbackBridgeFee = 0.0001;
-    
+
     const feeToken = query.sourceChain
       ? this.getNativeToken(query.sourceChain)
       : 'ETH';
@@ -348,7 +359,7 @@ export class FeeEstimationService {
     };
 
     const baseDuration = baseDurations[bridgeName.toLowerCase()] || 600;
-    
+
     // Add chain-specific delays
     const chainDelays: Record<string, number> = {
       ethereum: 60,

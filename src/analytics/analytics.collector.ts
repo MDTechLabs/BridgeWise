@@ -6,7 +6,12 @@ import { AnalyticsUpdatePayload } from './types/analytics.types';
 /**
  * Transaction status types
  */
-type TransactionStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'partial';
+type TransactionStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
+  | 'partial';
 
 /**
  * Transaction update event payload
@@ -67,7 +72,9 @@ export class AnalyticsCollector implements OnModuleInit {
    */
   @OnEvent('transaction.updated')
   async handleTransactionUpdate(event: TransactionUpdatedEvent): Promise<void> {
-    this.logger.debug(`Received transaction update: ${event.id} - ${event.status}`);
+    this.logger.debug(
+      `Received transaction update: ${event.id} - ${event.status}`,
+    );
 
     // Only process completed or failed transactions
     if (event.status !== 'completed' && event.status !== 'failed') {
@@ -84,7 +91,9 @@ export class AnalyticsCollector implements OnModuleInit {
    * Listen for benchmark completion events
    */
   @OnEvent('benchmark.completed')
-  async handleBenchmarkCompleted(event: BenchmarkCompletedEvent): Promise<void> {
+  async handleBenchmarkCompleted(
+    event: BenchmarkCompletedEvent,
+  ): Promise<void> {
     this.logger.debug(`Received benchmark completion: ${event.id}`);
 
     const payload: AnalyticsUpdatePayload = {
@@ -115,7 +124,9 @@ export class AnalyticsCollector implements OnModuleInit {
     slippage: string;
     threshold: string;
   }): Promise<void> {
-    this.logger.debug(`Received slippage alert: ${event.bridge} - ${event.slippage}%`);
+    this.logger.debug(
+      `Received slippage alert: ${event.bridge} - ${event.slippage}%`,
+    );
     // Could track high slippage events separately for alerting
   }
 
@@ -180,7 +191,9 @@ export class AnalyticsCollector implements OnModuleInit {
       }
     }
 
-    this.logger.debug(`Batch flush complete: ${batch.length} updates processed`);
+    this.logger.debug(
+      `Batch flush complete: ${batch.length} updates processed`,
+    );
   }
 
   /**
@@ -193,13 +206,16 @@ export class AnalyticsCollector implements OnModuleInit {
     const metadata = event.metadata || {};
     const state = event.state || {};
 
-    const bridgeName = (metadata.bridge as string) ||
+    const bridgeName =
+      (metadata.bridge as string) ||
       (metadata.bridgeName as string) ||
       (state.bridge as string);
-    const sourceChain = (metadata.sourceChain as string) ||
+    const sourceChain =
+      (metadata.sourceChain as string) ||
       (metadata.fromChain as string) ||
       (state.sourceChain as string);
-    const destinationChain = (metadata.destinationChain as string) ||
+    const destinationChain =
+      (metadata.destinationChain as string) ||
       (metadata.toChain as string) ||
       (state.destinationChain as string);
     const token = (metadata.token as string) || (state.token as string);

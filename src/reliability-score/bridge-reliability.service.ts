@@ -3,8 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { BridgeTransactionEvent } from './bridge-transaction-event.entity';
 import { BridgeReliabilityMetric } from './bridge-reliability-metric.entity';
-import { RawCounts, ReliabilityCalculatorService } from './reliability-calculator.service';
-import { BridgeReliabilityResponseDto, GetReliabilityDto, RecordBridgeEventDto, ReliabilityRankingFactorDto } from './reliability.dto';
+import {
+  RawCounts,
+  ReliabilityCalculatorService,
+} from './reliability-calculator.service';
+import {
+  BridgeReliabilityResponseDto,
+  GetReliabilityDto,
+  RecordBridgeEventDto,
+  ReliabilityRankingFactorDto,
+} from './reliability.dto';
 import { TransactionOutcome, WindowMode } from './reliability.enum';
 import { RELIABILITY_CONSTANTS } from './reliability.constants';
 
@@ -24,7 +32,9 @@ export class BridgeReliabilityService {
 
   // ─── Record Event ──────────────────────────────────────────────────────────
 
-  async recordEvent(dto: RecordBridgeEventDto): Promise<BridgeTransactionEvent> {
+  async recordEvent(
+    dto: RecordBridgeEventDto,
+  ): Promise<BridgeTransactionEvent> {
     const event = this.eventRepo.create({
       bridgeName: dto.bridgeName,
       sourceChain: dto.sourceChain.toLowerCase(),
@@ -41,7 +51,11 @@ export class BridgeReliabilityService {
     );
 
     // Invalidate cached metric so next query recalculates
-    await this.invalidateCachedMetric(dto.bridgeName, dto.sourceChain, dto.destinationChain);
+    await this.invalidateCachedMetric(
+      dto.bridgeName,
+      dto.sourceChain,
+      dto.destinationChain,
+    );
 
     return saved;
   }
@@ -76,7 +90,9 @@ export class BridgeReliabilityService {
         select: ['outcome'],
       });
 
-      return this.aggregateCounts(events.filter(e => !excludedOutcomes.includes(e.outcome)));
+      return this.aggregateCounts(
+        events.filter((e) => !excludedOutcomes.includes(e.outcome)),
+      );
     }
 
     // TRANSACTION_COUNT mode: last N non-cancelled events
@@ -88,13 +104,15 @@ export class BridgeReliabilityService {
     });
 
     const filtered = events
-      .filter(e => !excludedOutcomes.includes(e.outcome))
+      .filter((e) => !excludedOutcomes.includes(e.outcome))
       .slice(0, windowSize);
 
     return this.aggregateCounts(filtered);
   }
 
-  private aggregateCounts(events: Pick<BridgeTransactionEvent, 'outcome'>[]): RawCounts {
+  private aggregateCounts(
+    events: Pick<BridgeTransactionEvent, 'outcome'>[],
+  ): RawCounts {
     const counts: RawCounts = {
       totalAttempts: events.length,
       successfulTransfers: 0,
@@ -103,9 +121,12 @@ export class BridgeReliabilityService {
     };
 
     for (const event of events) {
-      if (event.outcome === TransactionOutcome.SUCCESS) counts.successfulTransfers++;
-      else if (event.outcome === TransactionOutcome.FAILED) counts.failedTransfers++;
-      else if (event.outcome === TransactionOutcome.TIMEOUT) counts.timeoutCount++;
+      if (event.outcome === TransactionOutcome.SUCCESS)
+        counts.successfulTransfers++;
+      else if (event.outcome === TransactionOutcome.FAILED)
+        counts.failedTransfers++;
+      else if (event.outcome === TransactionOutcome.TIMEOUT)
+        counts.timeoutCount++;
     }
 
     return counts;
@@ -113,7 +134,9 @@ export class BridgeReliabilityService {
 
   // ─── Compute & Cache Reliability ──────────────────────────────────────────
 
-  async getReliability(dto: GetReliabilityDto): Promise<BridgeReliabilityResponseDto> {
+  async getReliability(
+    dto: GetReliabilityDto,
+  ): Promise<BridgeReliabilityResponseDto> {
     const windowMode = dto.windowMode ?? WindowMode.TRANSACTION_COUNT;
     const windowSize =
       dto.windowSize ??
@@ -129,10 +152,15 @@ export class BridgeReliabilityService {
       windowSize,
     );
 
-    const reliabilityPercent = this.calculator.computeReliabilityPercent(counts);
+    const reliabilityPercent =
+      this.calculator.computeReliabilityPercent(counts);
     const reliabilityScore = this.calculator.computeReliabilityScore(counts);
     const tier = this.calculator.computeTier(reliabilityPercent);
-    const badge = this.calculator.buildBadge(reliabilityPercent, windowSize, windowMode);
+    const badge = this.calculator.buildBadge(
+      reliabilityPercent,
+      windowSize,
+      windowMode,
+    );
 
     // Upsert cached metric for ranking engine access
     const metric = await this.upsertMetric({
@@ -182,13 +210,15 @@ export class BridgeReliabilityService {
     });
 
     const reliabilityScore = metric?.reliabilityScore ?? 0;
-    const threshold = options.threshold ?? RELIABILITY_CONSTANTS.MEDIUM_THRESHOLD;
+    const threshold =
+      options.threshold ?? RELIABILITY_CONSTANTS.MEDIUM_THRESHOLD;
     const penaltyApplied =
       !options.ignoreReliability && reliabilityScore < threshold;
 
     const adjustedScore = options.ignoreReliability
       ? reliabilityScore
-      : reliabilityScore - (penaltyApplied ? RELIABILITY_CONSTANTS.PENALTY_BELOW_THRESHOLD : 0);
+      : reliabilityScore -
+        (penaltyApplied ? RELIABILITY_CONSTANTS.PENALTY_BELOW_THRESHOLD : 0);
 
     return {
       bridgeName,
@@ -217,7 +247,8 @@ export class BridgeReliabilityService {
     });
 
     return metrics.map((m) => {
-      const threshold = options.threshold ?? RELIABILITY_CONSTANTS.MEDIUM_THRESHOLD;
+      const threshold =
+        options.threshold ?? RELIABILITY_CONSTANTS.MEDIUM_THRESHOLD;
       const penaltyApplied =
         !options.ignoreReliability && Number(m.reliabilityScore) < threshold;
       return {
@@ -229,7 +260,9 @@ export class BridgeReliabilityService {
         adjustedScore: Math.max(
           0,
           Number(m.reliabilityScore) -
-            (penaltyApplied ? RELIABILITY_CONSTANTS.PENALTY_BELOW_THRESHOLD : 0),
+            (penaltyApplied
+              ? RELIABILITY_CONSTANTS.PENALTY_BELOW_THRESHOLD
+              : 0),
         ),
       };
     });

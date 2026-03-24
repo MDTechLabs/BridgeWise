@@ -5,7 +5,12 @@
  * Validates routes before fetching quotes and filters unsupported combinations.
  */
 
-import { ChainId, BridgeProvider, RouteRequest, AggregatedRoutes } from '../types';
+import {
+  ChainId,
+  BridgeProvider,
+  RouteRequest,
+  AggregatedRoutes,
+} from '../types';
 import {
   TokenPair,
   TokenPairValidationResult,
@@ -13,7 +18,10 @@ import {
   CompatibleRoute,
   TokenPairErrorCode,
 } from './types';
-import { RouteValidationEngine, ValidationEngineConfig } from './validation-engine';
+import {
+  RouteValidationEngine,
+  ValidationEngineConfig,
+} from './validation-engine';
 import { TokenMappingRegistry } from './token-mapping-registry';
 import { BridgeAggregator } from '../aggregator';
 
@@ -199,7 +207,9 @@ export class TokenPairCompatibilityService {
   /**
    * Validate a specific token pair
    */
-  async validateTokenPair(tokenPair: TokenPair): Promise<TokenPairValidationResult> {
+  async validateTokenPair(
+    tokenPair: TokenPair,
+  ): Promise<TokenPairValidationResult> {
     return this.validationEngine.validateTokenPair(tokenPair);
   }
 
@@ -235,9 +245,11 @@ export class TokenPairCompatibilityService {
       sourceChain: request.sourceChain,
       destinationChain: request.targetChain,
       sourceToken: request.tokenAddress || 'native',
-      destinationToken: request.destinationTokenAddress || request.tokenAddress || 'native',
+      destinationToken:
+        request.destinationTokenAddress || request.tokenAddress || 'native',
       amount: request.assetAmount,
-      preferredBridges: request.preferredBridges || this.config.defaultProviders,
+      preferredBridges:
+        request.preferredBridges || this.config.defaultProviders,
       allowWrappedTokens: request.allowWrappedTokens ?? true,
     };
 
@@ -263,7 +275,8 @@ export class TokenPairCompatibilityService {
     }
 
     // Step 2: Find compatible bridges
-    const compatibleRoutes = await this.findCompatibleRoutes(compatibilityRequest);
+    const compatibleRoutes =
+      await this.findCompatibleRoutes(compatibilityRequest);
 
     if (compatibleRoutes.length === 0) {
       return {
@@ -335,7 +348,8 @@ export class TokenPairCompatibilityService {
         filteredRoutes.push({
           bridge: route.adapter,
           reason: validation.errors[0]?.message || 'Validation failed',
-          code: validation.errors[0]?.code || TokenPairErrorCode.VALIDATION_FAILED,
+          code:
+            validation.errors[0]?.code || TokenPairErrorCode.VALIDATION_FAILED,
         });
       }
     }
@@ -350,7 +364,8 @@ export class TokenPairCompatibilityService {
 
     if (this.config.includeMetadata) {
       result.validationResults = validationResults;
-      result.filteredRoutes = filteredRoutes.length > 0 ? filteredRoutes : undefined;
+      result.filteredRoutes =
+        filteredRoutes.length > 0 ? filteredRoutes : undefined;
     }
 
     // Add alternatives if routes were filtered
@@ -374,7 +389,8 @@ export class TokenPairCompatibilityService {
       sourceChain: request.sourceChain,
       destinationChain: request.targetChain,
       sourceToken: request.tokenAddress || 'native',
-      destinationToken: request.destinationTokenAddress || request.tokenAddress || 'native',
+      destinationToken:
+        request.destinationTokenAddress || request.tokenAddress || 'native',
       amount: request.assetAmount,
       allowWrappedTokens: true, // Always allow wrapped for alternatives
     };
@@ -463,7 +479,9 @@ export class TokenPairCompatibilityService {
       name: symbol,
       decimals,
       addresses: { [chain]: address },
-      isStablecoin: ['USDC', 'USDT', 'DAI', 'BUSD'].includes(symbol.toUpperCase()),
+      isStablecoin: ['USDC', 'USDT', 'DAI', 'BUSD'].includes(
+        symbol.toUpperCase(),
+      ),
       isWrapped: options?.isWrapped ?? false,
       underlyingSymbol: options?.underlyingSymbol,
       supportedBridges,

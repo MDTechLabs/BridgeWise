@@ -42,10 +42,8 @@ const ERROR_MESSAGES: Record<TokenPairErrorCode, string> = {
     'Wrapped token configuration is invalid',
   [TokenPairErrorCode.INVALID_WRAPPED_MAPPING]:
     'Wrapped token mapping is not properly configured',
-  [TokenPairErrorCode.VALIDATION_FAILED]:
-    'Route validation failed',
-  [TokenPairErrorCode.UNKNOWN_ERROR]:
-    'An unexpected error occurred',
+  [TokenPairErrorCode.VALIDATION_FAILED]: 'Route validation failed',
+  [TokenPairErrorCode.UNKNOWN_ERROR]: 'An unexpected error occurred',
 };
 
 /**
@@ -73,7 +71,9 @@ export class CompatibilityErrorHandler {
   /**
    * Convert validation error to user-friendly format
    */
-  static toUserFriendlyError(error: TokenPairValidationError): UserFriendlyError {
+  static toUserFriendlyError(
+    error: TokenPairValidationError,
+  ): UserFriendlyError {
     const baseMessage = ERROR_MESSAGES[error.code] || error.message;
 
     return {
@@ -92,10 +92,12 @@ export class CompatibilityErrorHandler {
   private static getErrorTitle(code: TokenPairErrorCode): string {
     const titles: Record<TokenPairErrorCode, string> = {
       [TokenPairErrorCode.UNSUPPORTED_SOURCE_CHAIN]: 'Unsupported Source Chain',
-      [TokenPairErrorCode.UNSUPPORTED_DESTINATION_CHAIN]: 'Unsupported Destination Chain',
+      [TokenPairErrorCode.UNSUPPORTED_DESTINATION_CHAIN]:
+        'Unsupported Destination Chain',
       [TokenPairErrorCode.UNSUPPORTED_CHAIN_PAIR]: 'Route Not Available',
       [TokenPairErrorCode.UNSUPPORTED_SOURCE_TOKEN]: 'Unsupported Source Token',
-      [TokenPairErrorCode.UNSUPPORTED_DESTINATION_TOKEN]: 'Unsupported Destination Token',
+      [TokenPairErrorCode.UNSUPPORTED_DESTINATION_TOKEN]:
+        'Unsupported Destination Token',
       [TokenPairErrorCode.UNSUPPORTED_TOKEN_PAIR]: 'Token Pair Not Supported',
       [TokenPairErrorCode.TOKEN_NOT_REGISTERED]: 'Token Not Found',
       [TokenPairErrorCode.AMOUNT_BELOW_MINIMUM]: 'Amount Too Small',
@@ -116,15 +118,15 @@ export class CompatibilityErrorHandler {
   /**
    * Get error severity
    */
-  private static getErrorSeverity(code: TokenPairErrorCode): 'error' | 'warning' | 'info' {
+  private static getErrorSeverity(
+    code: TokenPairErrorCode,
+  ): 'error' | 'warning' | 'info' {
     const warningCodes = [
       TokenPairErrorCode.INSUFFICIENT_LIQUIDITY,
       TokenPairErrorCode.INVALID_WRAPPED_MAPPING,
     ];
 
-    const infoCodes = [
-      TokenPairErrorCode.BRIDGE_PAUSED,
-    ];
+    const infoCodes = [TokenPairErrorCode.BRIDGE_PAUSED];
 
     if (warningCodes.includes(code)) return 'warning';
     if (infoCodes.includes(code)) return 'info';
@@ -223,9 +225,7 @@ export class CompatibilityErrorHandler {
   /**
    * Format validation errors for API response
    */
-  static formatErrorsForApi(
-    errors: TokenPairValidationError[],
-  ): Array<{
+  static formatErrorsForApi(errors: TokenPairValidationError[]): Array<{
     code: string;
     message: string;
     field: string;
@@ -374,14 +374,19 @@ export class CompatibilityErrorHandler {
     const errorCodes = new Set(errors.map((e) => e.code));
 
     // Add bridge fallback recommendation
-    if (context.bridge && errorCodes.has(TokenPairErrorCode.UNSUPPORTED_CHAIN_PAIR)) {
+    if (
+      context.bridge &&
+      errorCodes.has(TokenPairErrorCode.UNSUPPORTED_CHAIN_PAIR)
+    ) {
       const fallback = this.getFallbackBridge(
         context.sourceChain,
         context.destinationChain,
         context.bridge,
       );
       if (fallback) {
-        recommendations.push(`Try using ${fallback} instead of ${context.bridge}.`);
+        recommendations.push(
+          `Try using ${fallback} instead of ${context.bridge}.`,
+        );
       }
     }
 
@@ -422,7 +427,8 @@ export class CompatibilityError extends Error {
     this.name = 'CompatibilityError';
     this.code = code;
     this.field = field;
-    this.suggestions = suggestions || CompatibilityErrorHandler['getDefaultSuggestions'](code);
+    this.suggestions =
+      suggestions || CompatibilityErrorHandler['getDefaultSuggestions'](code);
     this.context = context;
   }
 
@@ -443,6 +449,8 @@ export class CompatibilityError extends Error {
    * Convert to user-friendly format
    */
   toUserFriendly(): UserFriendlyError {
-    return CompatibilityErrorHandler.toUserFriendlyError(this.toValidationError());
+    return CompatibilityErrorHandler.toUserFriendlyError(
+      this.toValidationError(),
+    );
   }
 }

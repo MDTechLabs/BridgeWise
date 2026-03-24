@@ -136,13 +136,13 @@ export class BridgeFeeAdapter {
 
     // Apply chain adjustment
     const adjustment = this.chainAdjustments[sourceChain.toLowerCase()] || 1.0;
-    
+
     // Calculate percentage fee
     let fee = config.baseFee + amount * config.percentageFee;
-    
+
     // Apply min/max bounds
     fee = Math.max(config.minFee, Math.min(config.maxFee, fee));
-    
+
     // Apply chain adjustment
     fee *= adjustment;
 
@@ -165,10 +165,10 @@ export class BridgeFeeAdapter {
 
     // Calculate price impact
     const priceImpact = amount / (poolLiquidity + amount);
-    
+
     // Fee increases with price impact
     const impactMultiplier = 1 + priceImpact * 10;
-    
+
     return amount * feeTier * impactMultiplier;
   }
 

@@ -13,12 +13,20 @@ import { Type } from 'class-transformer';
 import { RankingMode, SupportedChain } from '../enums';
 
 export class GetQuotesDto {
-  @ApiProperty({ description: 'Source blockchain', enum: SupportedChain, example: 'stellar' })
+  @ApiProperty({
+    description: 'Source blockchain',
+    enum: SupportedChain,
+    example: 'stellar',
+  })
   @IsString()
   @IsNotEmpty()
   sourceChain: string;
 
-  @ApiProperty({ description: 'Destination blockchain', enum: SupportedChain, example: 'ethereum' })
+  @ApiProperty({
+    description: 'Destination blockchain',
+    enum: SupportedChain,
+    example: 'ethereum',
+  })
   @IsString()
   @IsNotEmpty()
   destinationChain: string;
@@ -28,7 +36,10 @@ export class GetQuotesDto {
   @IsNotEmpty()
   sourceToken: string;
 
-  @ApiPropertyOptional({ description: 'Destination token symbol (defaults to sourceToken)', example: 'USDC' })
+  @ApiPropertyOptional({
+    description: 'Destination token symbol (defaults to sourceToken)',
+    example: 'USDC',
+  })
   @IsOptional()
   @IsString()
   destinationToken?: string;
@@ -40,12 +51,19 @@ export class GetQuotesDto {
   @Min(0.000001)
   amount: number;
 
-  @ApiPropertyOptional({ description: 'Ranking mode for route comparison', enum: RankingMode, default: RankingMode.BALANCED })
+  @ApiPropertyOptional({
+    description: 'Ranking mode for route comparison',
+    enum: RankingMode,
+    default: RankingMode.BALANCED,
+  })
   @IsOptional()
   @IsEnum(RankingMode)
   rankingMode?: RankingMode = RankingMode.BALANCED;
 
-  @ApiPropertyOptional({ description: 'Max acceptable slippage %', example: 0.5 })
+  @ApiPropertyOptional({
+    description: 'Max acceptable slippage %',
+    example: 0.5,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

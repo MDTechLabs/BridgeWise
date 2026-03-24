@@ -13,7 +13,7 @@ export interface NormalizedQuote {
   estimatedTimeSeconds: number;
   slippagePercent: number;
   reliabilityScore: number; // 0-100
-  compositeScore: number;   // 0-100 (lower is better for cost, higher for balanced)
+  compositeScore: number; // 0-100 (lower is better for cost, higher for balanced)
   rankingPosition: number;
   bridgeStatus: BridgeStatus;
   metadata: Record<string, unknown>;

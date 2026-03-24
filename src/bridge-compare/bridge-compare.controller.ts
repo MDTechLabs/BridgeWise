@@ -24,7 +24,13 @@ import { QuoteResponse, NormalizedQuote } from './interfaces';
 
 @ApiTags('bridge-compare')
 @Controller('bridge-compare')
-@UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+@UsePipes(
+  new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }),
+)
 export class BridgeCompareController {
   constructor(private readonly bridgeCompareService: BridgeCompareService) {}
 
@@ -35,10 +41,15 @@ export class BridgeCompareController {
     description:
       'Returns normalized, ranked quotes from all supported bridge providers for the requested route.',
   })
-  @ApiResponse({ status: 200, description: 'Ranked quotes returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ranked quotes returned successfully',
+  })
   @ApiBadRequestResponse({ description: 'Invalid request parameters' })
   @ApiNotFoundResponse({ description: 'No routes found for the token pair' })
-  @ApiServiceUnavailableResponse({ description: 'All bridge providers unavailable' })
+  @ApiServiceUnavailableResponse({
+    description: 'All bridge providers unavailable',
+  })
   async getQuotes(@Query() dto: GetQuotesDto): Promise<QuoteResponse> {
     return this.bridgeCompareService.getQuotes(dto);
   }
@@ -47,9 +58,14 @@ export class BridgeCompareController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get specific bridge route details',
-    description: 'Returns the full normalized quote for a specific bridge provider.',
+    description:
+      'Returns the full normalized quote for a specific bridge provider.',
   })
-  @ApiParam({ name: 'bridgeId', description: 'Bridge provider identifier', example: 'stargate' })
+  @ApiParam({
+    name: 'bridgeId',
+    description: 'Bridge provider identifier',
+    example: 'stargate',
+  })
   @ApiResponse({ status: 200, description: 'Route details returned' })
   @ApiNotFoundResponse({ description: 'Route not found' })
   async getRouteDetails(
@@ -63,7 +79,8 @@ export class BridgeCompareController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'List all supported bridge providers',
-    description: 'Returns all configured bridge providers with their supported chains and tokens.',
+    description:
+      'Returns all configured bridge providers with their supported chains and tokens.',
   })
   @ApiResponse({ status: 200, description: 'Providers listed successfully' })
   getSupportedBridges() {

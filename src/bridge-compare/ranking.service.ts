@@ -7,9 +7,24 @@ export class RankingService {
   private readonly logger = new Logger(RankingService.name);
 
   private readonly RANKING_WEIGHTS: Record<RankingMode, RankingWeights> = {
-    [RankingMode.BALANCED]: { cost: 0.30, speed: 0.25, reliability: 0.30, slippage: 0.15 },
-    [RankingMode.LOWEST_COST]: { cost: 0.55, speed: 0.15, reliability: 0.20, slippage: 0.10 },
-    [RankingMode.FASTEST]: { cost: 0.15, speed: 0.55, reliability: 0.20, slippage: 0.10 },
+    [RankingMode.BALANCED]: {
+      cost: 0.3,
+      speed: 0.25,
+      reliability: 0.3,
+      slippage: 0.15,
+    },
+    [RankingMode.LOWEST_COST]: {
+      cost: 0.55,
+      speed: 0.15,
+      reliability: 0.2,
+      slippage: 0.1,
+    },
+    [RankingMode.FASTEST]: {
+      cost: 0.15,
+      speed: 0.55,
+      reliability: 0.2,
+      slippage: 0.1,
+    },
   };
 
   /**
@@ -26,10 +41,13 @@ export class RankingService {
     this.logger.debug(`Ranking ${quotes.length} quotes with mode: ${mode}`);
 
     const scored = quotes.map((quote) => {
-      const costScore = maxFee > 0 ? (1 - quote.totalFeeUsd / maxFee) * 100 : 100;
-      const speedScore = maxTime > 0 ? (1 - quote.estimatedTimeSeconds / maxTime) * 100 : 100;
+      const costScore =
+        maxFee > 0 ? (1 - quote.totalFeeUsd / maxFee) * 100 : 100;
+      const speedScore =
+        maxTime > 0 ? (1 - quote.estimatedTimeSeconds / maxTime) * 100 : 100;
       const reliabilityScore = quote.reliabilityScore;
-      const slippageScore = maxSlippage > 0 ? (1 - quote.slippagePercent / maxSlippage) * 100 : 100;
+      const slippageScore =
+        maxSlippage > 0 ? (1 - quote.slippagePercent / maxSlippage) * 100 : 100;
 
       const compositeScore =
         costScore * weights.cost +
@@ -55,7 +73,10 @@ export class RankingService {
   /**
    * Get the best quote for a given ranking mode.
    */
-  getBestQuote(quotes: NormalizedQuote[], mode: RankingMode): NormalizedQuote | null {
+  getBestQuote(
+    quotes: NormalizedQuote[],
+    mode: RankingMode,
+  ): NormalizedQuote | null {
     const ranked = this.rankQuotes(quotes, mode);
     return ranked[0] ?? null;
   }

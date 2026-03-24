@@ -31,7 +31,13 @@ export class FeeEstimate {
   @Column({ name: 'token', nullable: true })
   token: string | null;
 
-  @Column({ name: 'amount', type: 'decimal', precision: 30, scale: 10, nullable: true })
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    nullable: true,
+  })
   amount: number | null;
 
   @Column({ name: 'total_fee', type: 'decimal', precision: 30, scale: 10 })
@@ -43,28 +49,64 @@ export class FeeEstimate {
   @Column({ name: 'bridge_fee', type: 'decimal', precision: 30, scale: 10 })
   bridgeFee: number;
 
-  @Column({ name: 'liquidity_fee', type: 'decimal', precision: 30, scale: 10, default: 0 })
+  @Column({
+    name: 'liquidity_fee',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    default: 0,
+  })
   liquidityFee: number;
 
-  @Column({ name: 'protocol_fee', type: 'decimal', precision: 30, scale: 10, default: 0 })
+  @Column({
+    name: 'protocol_fee',
+    type: 'decimal',
+    precision: 30,
+    scale: 10,
+    default: 0,
+  })
   protocolFee: number;
 
-  @Column({ name: 'gas_price_gwei', type: 'decimal', precision: 20, scale: 4, nullable: true })
+  @Column({
+    name: 'gas_price_gwei',
+    type: 'decimal',
+    precision: 20,
+    scale: 4,
+    nullable: true,
+  })
   gasPriceGwei: number | null;
 
   @Column({ name: 'gas_limit', type: 'bigint', nullable: true })
   gasLimit: number | null;
 
-  @Column({ name: 'network_congestion', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'network_congestion',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   networkCongestion: number | null;
 
   @Column({ name: 'fee_token' })
   feeToken: string;
 
-  @Column({ name: 'fee_token_price_usd', type: 'decimal', precision: 20, scale: 8, nullable: true })
+  @Column({
+    name: 'fee_token_price_usd',
+    type: 'decimal',
+    precision: 20,
+    scale: 8,
+    nullable: true,
+  })
   feeTokenPriceUsd: number | null;
 
-  @Column({ name: 'total_fee_usd', type: 'decimal', precision: 20, scale: 8, nullable: true })
+  @Column({
+    name: 'total_fee_usd',
+    type: 'decimal',
+    precision: 20,
+    scale: 8,
+    nullable: true,
+  })
   totalFeeUsd: number | null;
 
   @Column({ name: 'is_fallback', default: false })
