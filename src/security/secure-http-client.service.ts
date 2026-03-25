@@ -115,7 +115,8 @@ export class SecureHttpClientService {
             let parsedBody: any;
             try {
               parsedBody =
-                data && res.headers['content-type']?.includes('application/json')
+                data &&
+                res.headers['content-type']?.includes('application/json')
                   ? JSON.parse(data)
                   : data;
             } catch {
@@ -198,22 +199,14 @@ export class SecureHttpClientService {
   /**
    * Make a POST request
    */
-  async post(
-    url: string,
-    body?: any,
-    options?: SecureRequestOptions,
-  ) {
+  async post(url: string, body?: any, options?: SecureRequestOptions) {
     return this.request(url, { ...options, method: 'POST', body });
   }
 
   /**
    * Make a PUT request
    */
-  async put(
-    url: string,
-    body?: any,
-    options?: SecureRequestOptions,
-  ) {
+  async put(url: string, body?: any, options?: SecureRequestOptions) {
     return this.request(url, { ...options, method: 'PUT', body });
   }
 
@@ -227,11 +220,7 @@ export class SecureHttpClientService {
   /**
    * Make a PATCH request
    */
-  async patch(
-    url: string,
-    body?: any,
-    options?: SecureRequestOptions,
-  ) {
+  async patch(url: string, body?: any, options?: SecureRequestOptions) {
     return this.request(url, { ...options, method: 'PATCH', body });
   }
 }

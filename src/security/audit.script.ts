@@ -64,9 +64,14 @@ class SecurityAudit {
 
       try {
         const content = fs.readFileSync(filePath, 'utf-8');
-        const hasApiKey = content.includes('API_KEY=') && !content.includes('API_KEY=your');
-        const hasSecret = content.includes('API_SECRET=') && !content.includes('API_SECRET=your');
-        const hasDbPassword = content.includes('DB_PASSWORD=') && !content.includes('DB_PASSWORD=your');
+        const hasApiKey =
+          content.includes('API_KEY=') && !content.includes('API_KEY=your');
+        const hasSecret =
+          content.includes('API_SECRET=') &&
+          !content.includes('API_SECRET=your');
+        const hasDbPassword =
+          content.includes('DB_PASSWORD=') &&
+          !content.includes('DB_PASSWORD=your');
         const hasVaultKey = content.includes('VAULT_ENCRYPTION_KEY=');
 
         if (hasApiKey || hasSecret || hasDbPassword) {
@@ -118,7 +123,9 @@ class SecurityAudit {
     try {
       const content = fs.readFileSync(gitignorePath, 'utf-8');
       const requiredPatterns = ['.env', '.env.local', '.env.*.local'];
-      const missingPatterns = requiredPatterns.filter((p) => !content.includes(p));
+      const missingPatterns = requiredPatterns.filter(
+        (p) => !content.includes(p),
+      );
 
       if (missingPatterns.length > 0) {
         this.results.push({
@@ -177,7 +184,7 @@ class SecurityAudit {
       /process\.env\.API_SECRET\s*\?/,
       /process\.env\.DB_PASSWORD\s*\?/,
       /hardcodedKey|hardcodedSecret/i,
-      /'[a-z0-9]{40,}'/i,  // Long string literals that might be keys
+      /'[a-z0-9]{40,}'/i, // Long string literals that might be keys
       /"[a-z0-9]{40,}"/i,
     ];
 
@@ -233,7 +240,10 @@ class SecurityAudit {
 
     try {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-      const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+      const deps = {
+        ...packageJson.dependencies,
+        ...packageJson.devDependencies,
+      };
 
       // Check for security-related packages
       const hasSecurityPackages = [
@@ -269,7 +279,10 @@ class SecurityAudit {
    * Check vault configuration
    */
   private async checkVaultConfiguration(): Promise<void> {
-    const vaultPath = path.join(this.projectRoot, 'src/security/api-key-vault.service.ts');
+    const vaultPath = path.join(
+      this.projectRoot,
+      'src/security/api-key-vault.service.ts',
+    );
 
     if (!fs.existsSync(vaultPath)) {
       this.results.push({
@@ -385,13 +398,19 @@ class SecurityAudit {
 
     // Summary
     console.log(`\n${'='.repeat(50)}`);
-    console.log(`Summary: ${passCount} PASS | ${warnCount} WARNING | ${failCount} FAIL`);
+    console.log(
+      `Summary: ${passCount} PASS | ${warnCount} WARNING | ${failCount} FAIL`,
+    );
 
     if (failCount > 0) {
-      console.log(`⛔ Security audit FAILED - Fix critical issues before deployment`);
+      console.log(
+        `⛔ Security audit FAILED - Fix critical issues before deployment`,
+      );
       process.exit(1);
     } else if (warnCount > 0) {
-      console.log(`⚠️  Security audit passed with warnings - Review before production`);
+      console.log(
+        `⚠️  Security audit passed with warnings - Review before production`,
+      );
       process.exit(0);
     } else {
       console.log(`🎉 Security audit PASSED - All checks successful!`);

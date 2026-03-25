@@ -26,8 +26,7 @@ export class EnvironmentLoader {
       return;
     }
 
-    const nodeEnv =
-      (process.env.NODE_ENV as Environment) || 'development';
+    const nodeEnv = (process.env.NODE_ENV as Environment) || 'development';
     const envFiles = this.getEnvFilesByPriority(nodeEnv);
 
     for (const envFile of envFiles) {
@@ -81,7 +80,9 @@ export class EnvironmentLoader {
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to load env file ${filePath}: ${error.message}`);
+      this.logger.error(
+        `Failed to load env file ${filePath}: ${error.message}`,
+      );
     }
   }
 
@@ -90,8 +91,10 @@ export class EnvironmentLoader {
    */
   private parseValue(value: string): string {
     // Handle quoted values
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       return value.slice(1, -1);
     }
 

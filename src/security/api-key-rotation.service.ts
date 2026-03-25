@@ -37,19 +37,16 @@ export class ApiKeyRotationService {
   private initializeDefaultPolicies(): void {
     // Default 90-day rotation for all keys
     this.setRotationPolicy('api-key-main', {
-      keyId: 'api-key-main',
       rotationIntervalDays: 90,
       autoRotate: true,
     });
 
     this.setRotationPolicy('api-secret-main', {
-      keyId: 'api-secret-main',
       rotationIntervalDays: 90,
       autoRotate: true,
     });
 
     this.setRotationPolicy('db-password', {
-      keyId: 'db-password',
       rotationIntervalDays: 180,
       autoRotate: true,
     });
@@ -63,7 +60,7 @@ export class ApiKeyRotationService {
     policy: Omit<RotationPolicy, 'keyId'>,
   ): void {
     this.rotationPolicies.set(keyId, { keyId, ...policy });
-    this.logger.info(
+    this.logger.log(
       `Rotation policy set for ${keyId}: ${policy.rotationIntervalDays} days`,
     );
   }
@@ -139,11 +136,9 @@ export class ApiKeyRotationService {
       };
 
       this.rotationLogs.push(log);
-      this.logger.info(`Key rotated manually: ${keyId}`);
+      this.logger.log(`Key rotated manually: ${keyId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to rotate key ${keyId}: ${error.message}`,
-      );
+      this.logger.error(`Failed to rotate key ${keyId}: ${error.message}`);
       throw error;
     }
   }
@@ -177,9 +172,7 @@ export class ApiKeyRotationService {
     });
 
     if (expiringKeys.length > 0) {
-      this.logger.warn(
-        `${expiringKeys.length} keys expiring within 14 days`,
-      );
+      this.logger.warn(`${expiringKeys.length} keys expiring within 14 days`);
       // TODO: Send notification emails
     }
 

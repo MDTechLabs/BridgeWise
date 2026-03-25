@@ -15,7 +15,7 @@ interface EnvironmentSecurityCheck {
 @Injectable()
 export class EnvironmentSecurityValidator {
   private readonly logger = new Logger(EnvironmentSecurityValidator.name);
-  private readonly checks: EnvironmentSecurityCheck[] = [];
+  private checks: EnvironmentSecurityCheck[] = [];
 
   constructor() {
     this.performSecurityChecks();
@@ -179,10 +179,7 @@ export class EnvironmentSecurityValidator {
     const logFormat = process.env.LOG_FORMAT || 'simple';
     const isProduction = process.env.NODE_ENV === 'production';
 
-    if (
-      isProduction &&
-      logLevel === 'debug'
-    ) {
+    if (isProduction && logLevel === 'debug') {
       return {
         name: 'Logging Security',
         isValid: false,

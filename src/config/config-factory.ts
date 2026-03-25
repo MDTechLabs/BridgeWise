@@ -56,6 +56,20 @@ export interface AppConfig {
   };
 }
 
+type AppConfigOverrides = Partial<
+  Omit<
+    AppConfig,
+    'database' | 'rpc' | 'server' | 'logging' | 'api' | 'features'
+  >
+> & {
+  database?: Partial<DatabaseConfig>;
+  rpc?: Partial<RpcConfig>;
+  server?: Partial<ServerConfig>;
+  logging?: Partial<LoggingConfig>;
+  api?: Partial<ApiConfig>;
+  features?: Partial<AppConfig['features']>;
+};
+
 /**
  * Configuration Factory
  * Creates environment-specific configurations
@@ -79,9 +93,7 @@ export class ConfigFactory {
       const errorMessages = validation.errors
         .map((e) => `  - ${e.key}: ${e.error}`)
         .join('\n');
-      throw new Error(
-        `Environment validation failed:\n${errorMessages}`,
-      );
+      throw new Error(`Environment validation failed:\n${errorMessages}`);
     }
 
     if (validation.warnings.length > 0) {
@@ -94,14 +106,9 @@ export class ConfigFactory {
     const baseConfig = this.createBaseConfig(environment);
 
     // Apply environment-specific overrides
-    const finalConfig = this.applyEnvironmentOverrides(
-      baseConfig,
-      environment,
-    );
+    const finalConfig = this.applyEnvironmentOverrides(baseConfig, environment);
 
-    this.logger.debug(
-      `Configuration loaded for environment: ${environment}`,
-    );
+    this.logger.debug(`Configuration loaded for environment: ${environment}`);
 
     return finalConfig;
   }
@@ -126,13 +133,10 @@ export class ConfigFactory {
         ethereum:
           process.env.RPC_ETHEREUM ||
           'https://mainnet.infura.io/v3/YOUR_PROJECT_ID',
-        polygon:
-          process.env.RPC_POLYGON || 'https://polygon-rpc.com',
+        polygon: process.env.RPC_POLYGON || 'https://polygon-rpc.com',
         bsc: process.env.RPC_BSC || 'https://bsc-dataseed.binance.org',
-        arbitrum:
-          process.env.RPC_ARBITRUM || 'https://arb1.arbitrum.io/rpc',
-        optimism:
-          process.env.RPC_OPTIMISM || 'https://mainnet.optimism.io',
+        arbitrum: process.env.RPC_ARBITRUM || 'https://arb1.arbitrum.io/rpc',
+        optimism: process.env.RPC_OPTIMISM || 'https://mainnet.optimism.io',
       },
       server: {
         port: parseInt(process.env.PORT || '3000', 10),
@@ -150,8 +154,7 @@ export class ConfigFactory {
         format: (process.env.LOG_FORMAT || 'simple') as LoggingConfig['format'],
       },
       api: {
-        baseUrl:
-          process.env.API_BASE_URL || 'https://api.bridgewise.com',
+        baseUrl: process.env.API_BASE_URL || 'https://api.bridgewise.com',
         timeout: parseInt(process.env.API_TIMEOUT || '30000', 10),
       },
       features: {
@@ -177,7 +180,7 @@ export class ConfigFactory {
    */
   private static getEnvironmentOverrides(
     environment: Environment,
-  ): Partial<AppConfig> {
+  ): AppConfigOverrides {
     switch (environment) {
       case 'development':
         return {
@@ -230,21 +233,28 @@ export class ConfigFactory {
    */
   private static mergeConfigs(
     base: AppConfig,
-    overrides: Partial<AppConfig>,
+    overrides: AppConfigOverrides,
   ): AppConfig {
+    const dbOverrides = overrides.database;
+    const rpcOverrides = overrides.rpc;
+    const apiOverrides = overrides.api;
+    const serverOverrides = overrides.server;
+    const loggingOverrides = overrides.logging;
+    const featuresOverrides = overrides.features;
+
     return {
       ...base,
       ...overrides,
-      database: { ...base.database, ...overrides.database },
-      rpc: { ...base.rpc, ...overrides.rpc },
-      api: { ...base.api, ...overrides.api },
+      database: { ...base.database, ...dbOverrides },
+      rpc: { ...base.rpc, ...rpcOverrides },
+      api: { ...base.api, ...apiOverrides },
       server: {
         ...base.server,
-        ...overrides.server,
-        cors: { ...base.server.cors, ...overrides.server?.cors },
+        ...serverOverrides,
+        cors: { ...base.server.cors, ...serverOverrides?.cors },
       },
-      logging: { ...base.logging, ...overrides.logging },
-      features: { ...base.features, ...overrides.features },
+      logging: { ...base.logging, ...loggingOverrides },
+      features: { ...base.features, ...featuresOverrides },
     };
   }
 

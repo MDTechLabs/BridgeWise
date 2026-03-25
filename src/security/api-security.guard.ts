@@ -41,9 +41,7 @@ export class ApiSecurityGuard implements CanActivate {
       // Validate token format
       const [scheme, credentials] = authHeader.split(' ');
       if (scheme.toLowerCase() !== 'bearer') {
-        this.logger.warn(
-          `Invalid auth scheme from ${request.ip}: ${scheme}`,
-        );
+        this.logger.warn(`Invalid auth scheme from ${request.ip}: ${scheme}`);
         throw new UnauthorizedException('Invalid authorization scheme');
       }
 
@@ -59,9 +57,7 @@ export class ApiSecurityGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      this.logger.error(
-        `Security guard error: ${error.message}`,
-      );
+      this.logger.error(`Security guard error: ${error.message}`);
       throw error;
     }
   }

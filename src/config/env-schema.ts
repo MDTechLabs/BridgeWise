@@ -103,7 +103,8 @@ export const ENV_SCHEMA: EnvironmentSchema = {
     type: 'string',
     required: false,
     requiredIn: ['production'],
-    description: 'Encryption key for API key vault - Generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+    description:
+      "Encryption key for API key vault - Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     example: 'abc123def456ghi789jkl012mno345pqr678stu901',
   },
 
@@ -182,7 +183,8 @@ export const ENV_SCHEMA: EnvironmentSchema = {
     type: 'string',
     required: false,
     default: 'http://localhost:3000',
-    description: 'Comma-separated list of allowed CORS origins (use specific domains in production, never use * in production)',
+    description:
+      'Comma-separated list of allowed CORS origins (use specific domains in production, never use * in production)',
     example: 'https://app.bridgewise.com,https://admin.bridgewise.com',
   },
   CORS_CREDENTIALS: {
@@ -390,7 +392,10 @@ export class EnvironmentValidator {
     }
 
     // Check LOG_LEVEL
-    if (process.env.LOG_LEVEL === 'debug' || process.env.LOG_LEVEL === 'verbose') {
+    if (
+      process.env.LOG_LEVEL === 'debug' ||
+      process.env.LOG_LEVEL === 'verbose'
+    ) {
       warnings.push({
         key: 'LOG_LEVEL',
         warning:

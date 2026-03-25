@@ -51,11 +51,7 @@ export class ApiKeyVaultService {
    * @param expiresAt Optional expiration date
    * @returns Encrypted key data
    */
-  storeKey(
-    keyId: string,
-    secretValue: string,
-    expiresAt?: Date,
-  ): EncryptedKey {
+  storeKey(keyId: string, secretValue: string, expiresAt?: Date): EncryptedKey {
     if (!secretValue || secretValue.trim() === '') {
       this.logger.warn(`Attempted to store empty key with ID: ${keyId}`);
       throw new Error('Cannot store empty API key');
@@ -129,9 +125,7 @@ export class ApiKeyVaultService {
         Buffer.from(encryptedKey.iv, 'hex'),
       );
 
-      decipher.setAuthTag(
-        Buffer.from(encryptedKey.authTag, 'hex'),
-      );
+      decipher.setAuthTag(Buffer.from(encryptedKey.authTag, 'hex'));
 
       let decrypted = decipher.update(encryptedKey.ciphered, 'hex', 'utf-8');
       decrypted += decipher.final('utf-8');
@@ -140,9 +134,7 @@ export class ApiKeyVaultService {
 
       return decrypted;
     } catch (error) {
-      this.logger.error(
-        `Failed to decrypt key ${keyId}: ${error.message}`,
-      );
+      this.logger.error(`Failed to decrypt key ${keyId}: ${error.message}`);
       throw new Error('Failed to decrypt key - possible tampering detected');
     }
   }
@@ -174,12 +166,14 @@ export class ApiKeyVaultService {
     const encryptedKey = this.keyStore.get(keyId);
 
     if (!encryptedKey) {
-      this.logger.warn(`Attempted to mark non-existent key for rotation: ${keyId}`);
+      this.logger.warn(
+        `Attempted to mark non-existent key for rotation: ${keyId}`,
+      );
       throw new Error(`Key not found: ${keyId}`);
     }
 
     encryptedKey.metadata.rotationRequired = true;
-    this.logger.info(`Key marked for rotation: ${keyId}`);
+    this.logger.log(`Key marked for rotation: ${keyId}`);
   }
 
   /**
@@ -193,7 +187,7 @@ export class ApiKeyVaultService {
 
     if (oldKey) {
       oldKey.metadata.isActive = false;
-      this.logger.info(`Key rotated, old key deactivated: ${keyId}`);
+      this.logger.log(`Key rotated, old key deactivated: ${keyId}`);
     }
 
     // Store new key with expiration 90 days from now

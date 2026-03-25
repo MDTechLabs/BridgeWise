@@ -178,7 +178,10 @@ export class ConfigService implements OnModuleInit {
       const productionRequired = [
         { key: 'API_KEY', value: process.env.API_KEY },
         { key: 'DB_PASSWORD', value: process.env.DB_PASSWORD },
-        { key: 'VAULT_ENCRYPTION_KEY', value: process.env.VAULT_ENCRYPTION_KEY },
+        {
+          key: 'VAULT_ENCRYPTION_KEY',
+          value: process.env.VAULT_ENCRYPTION_KEY,
+        },
       ];
 
       const missingProduction = productionRequired.filter(
