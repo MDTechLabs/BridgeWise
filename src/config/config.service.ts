@@ -1,14 +1,50 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AppConfig, Environment } from './config.interface';
+import { ApiKeyVaultService } from '../security/api-key-vault.service';
 
 @Injectable()
-export class ConfigService {
+export class ConfigService implements OnModuleInit {
   private readonly logger = new Logger(ConfigService.name);
   private readonly config: AppConfig;
+  private vaultInitialized = false;
 
-  constructor() {
+  constructor(private readonly apiKeyVault: ApiKeyVaultService) {
     this.config = this.createConfig();
     this.validateConfig();
+  }
+
+  async onModuleInit() {
+    // Initialize vault with keys from environment
+    this.initializeVault();
+    this.vaultInitialized = true;
+  }
+
+  private initializeVault(): void {
+    try {
+      // Store API key in vault
+      const apiKey = process.env.API_KEY;
+      if (apiKey) {
+        this.apiKeyVault.storeKey('api-key-main', apiKey);
+        this.logger.debug('API key stored in vault');
+      }
+
+      // Store API secret in vault if present
+      const apiSecret = process.env.API_SECRET;
+      if (apiSecret) {
+        this.apiKeyVault.storeKey('api-secret-main', apiSecret);
+        this.logger.debug('API secret stored in vault');
+      }
+
+      // Store database password in vault
+      const dbPassword = process.env.DB_PASSWORD;
+      if (dbPassword) {
+        this.apiKeyVault.storeKey('db-password', dbPassword);
+        this.logger.debug('Database password stored in vault');
+      }
+    } catch (error) {
+      this.logger.error(`Failed to initialize vault: ${error.message}`);
+      // Continue anyway - vault is optional for development
+    }
   }
 
   private createConfig(): AppConfig {
@@ -20,7 +56,7 @@ export class ConfigService {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432', 10),
         username: process.env.DB_USERNAME || 'postgres',
-        password: process.env.DB_PASSWORD || '',
+        password: '', // NEVER store password in config - use vault
         database: process.env.DB_NAME || 'bridgewise',
         ssl: nodeEnv === 'production' ? process.env.DB_SSL === 'true' : false,
       },
@@ -34,8 +70,8 @@ export class ConfigService {
         optimism: process.env.RPC_OPTIMISM || 'https://mainnet.optimism.io',
       },
       api: {
-        apiKey: process.env.API_KEY || '',
-        apiSecret: process.env.API_SECRET,
+        apiKey: '', // NEVER store in config - use vault
+        apiSecret: '', // NEVER store in config - use vault
         baseUrl: process.env.API_BASE_URL || 'https://api.bridgewise.com',
         timeout: parseInt(process.env.API_TIMEOUT || '30000', 10),
       },
@@ -124,12 +160,13 @@ export class ConfigService {
   }
 
   private validateConfig(): void {
-    const requiredFields = [
-      { key: 'API_KEY', value: this.config.api.apiKey },
-      { key: 'DB_PASSWORD', value: this.config.database.password },
+    // Check that environment variables are set, but don't store their values
+    const requiredEnvVars = [
+      { key: 'API_KEY', value: process.env.API_KEY },
+      { key: 'DB_PASSWORD', value: process.env.DB_PASSWORD },
     ];
 
-    const missing = requiredFields.filter((field) => !field.value);
+    const missing = requiredEnvVars.filter((field) => !field.value);
 
     if (missing.length > 0) {
       this.logger.warn(
@@ -139,8 +176,9 @@ export class ConfigService {
 
     if (this.config.nodeEnv === 'production') {
       const productionRequired = [
-        { key: 'API_KEY', value: this.config.api.apiKey },
-        { key: 'DB_PASSWORD', value: this.config.database.password },
+        { key: 'API_KEY', value: process.env.API_KEY },
+        { key: 'DB_PASSWORD', value: process.env.DB_PASSWORD },
+        { key: 'VAULT_ENCRYPTION_KEY', value: process.env.VAULT_ENCRYPTION_KEY },
       ];
 
       const missingProduction = productionRequired.filter(
@@ -173,5 +211,44 @@ export class ConfigService {
 
   get isProduction(): boolean {
     return this.config.nodeEnv === 'production';
+  }
+
+  /**
+   * Retrieve API key from vault
+   * Should only be used server-side
+   */
+  getApiKey(): string {
+    try {
+      return this.apiKeyVault.retrieveKey('api-key-main');
+    } catch (error) {
+      this.logger.warn('Failed to retrieve API key from vault');
+      return '';
+    }
+  }
+
+  /**
+   * Retrieve API secret from vault
+   * Should only be used server-side
+   */
+  getApiSecret(): string {
+    try {
+      return this.apiKeyVault.retrieveKey('api-secret-main');
+    } catch (error) {
+      this.logger.warn('Failed to retrieve API secret from vault');
+      return '';
+    }
+  }
+
+  /**
+   * Retrieve database password from vault
+   * Should only be used server-side
+   */
+  getDatabasePassword(): string {
+    try {
+      return this.apiKeyVault.retrieveKey('db-password');
+    } catch (error) {
+      this.logger.warn('Failed to retrieve database password from vault');
+      return this.config.database.password;
+    }
   }
 }
