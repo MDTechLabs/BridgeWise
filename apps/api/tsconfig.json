@@ -8,19 +8,21 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@bridgewise/bridge-core": ["../../libs/bridge-core/src"],
-      "@bridgewise/bridge-core/*": ["../../libs/bridge-core/src/*"],
-      "@/*": ["../../src/*"]
+      "@bridgewise/bridge-core": ["../../packages/utils/src"],
+      "@bridgewise/bridge-core/*": ["../../packages/utils/src/*"],
+      "@bridgewise/ui-components": ["../../packages/ui/src"],
+      "@bridgewise/ui-components/*": ["../../packages/ui/src/*"],
+      "@/*": ["./src/*"]
     }
   },
   "include": [
-    "../../src/**/*.ts",
-    "../../libs/bridge-core/src/**/*.ts"
+    "./src/**/*.ts",
+    "../../packages/utils/src/**/*.ts"
   ],
   "exclude": [
-    "../../src/**/*.spec.ts",
-    "../../src/**/*.e2e-spec.ts",
-    "../../libs/bridge-core/src/**/__tests__/**",
+    "./src/**/*.spec.ts",
+    "./src/**/*.e2e-spec.ts",
+    "../../packages/utils/src/**/__tests__/**",
     "../../apps/**",
     "../../examples/**",
     "../../packages/**",

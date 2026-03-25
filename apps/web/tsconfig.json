@@ -21,8 +21,10 @@
     ],
     "baseUrl": "./",
     "paths": {
-      "@bridgewise/bridge-core": ["../../libs/bridge-core/src"],
-      "@bridgewise/bridge-core/*": ["../../libs/bridge-core/src/*"],
+      "@bridgewise/bridge-core": ["../../packages/utils/src"],
+      "@bridgewise/bridge-core/*": ["../../packages/utils/src/*"],
+      "@bridgewise/ui-components": ["../../packages/ui/src"],
+      "@bridgewise/ui-components/*": ["../../packages/ui/src/*"],
       "@/*": ["./*"]
     }
   },
