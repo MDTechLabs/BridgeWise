@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConfidenceScore, ConfidenceLevel } from './bridge/ConfidenceScore';
+import { RouteRiskWarning, FailureRisk } from './bridge/RouteRiskWarning';
 
 // Define quote interface since the import is not available
 interface QuoteFees {
@@ -20,6 +21,8 @@ interface NormalizedQuote {
   fees?: QuoteFees;
   confidenceScore?: number;
   confidenceLevel?: ConfidenceLevel;
+  failureRisk?: FailureRisk;
+  riskFactors?: string[];
 }
 
 interface QuoteCardProps {
@@ -35,12 +38,19 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   onSelect,
   isRefreshing = false
 }) => {
+  const riskBorderClass =
+    !isSelected && quote.failureRisk === 'high'
+      ? 'border-red-300 hover:border-red-400'
+      : !isSelected && quote.failureRisk === 'medium'
+      ? 'border-yellow-300 hover:border-yellow-400'
+      : 'border-gray-200 hover:border-gray-300';
+
   return (
-    <div 
+    <div
       className={`bg-white rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer ${
-        isSelected 
-          ? 'border-blue-500 ring-2 ring-blue-200' 
-          : 'border-gray-200 hover:border-gray-300'
+        isSelected
+          ? 'border-blue-500 ring-2 ring-blue-200'
+          : riskBorderClass
       } ${isRefreshing ? 'opacity-75' : ''}`}
       onClick={onSelect}
     >
@@ -115,6 +125,16 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Failure Risk Warning */}
+      {quote.failureRisk && quote.failureRisk !== 'low' && (
+        <div className="mt-3">
+          <RouteRiskWarning
+            failureRisk={quote.failureRisk}
+            riskFactors={quote.riskFactors ?? []}
+          />
+        </div>
+      )}
 
       {/* Confidence Score */}
       {quote.confidenceScore !== undefined && quote.confidenceLevel && (

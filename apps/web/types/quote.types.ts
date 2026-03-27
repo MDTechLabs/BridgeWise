@@ -27,6 +27,8 @@ export interface NormalizedQuote {
   reliability: number; // 0-100
   confidenceScore: number; // 0-100, derived from fees + slippage + success rate
   confidenceLevel: 'high' | 'medium' | 'low';
+  failureRisk: 'high' | 'medium' | 'low';
+  riskFactors: string[]; // human-readable reasons driving the risk level
   timestamp: number;
   expiresAt: number;
 }

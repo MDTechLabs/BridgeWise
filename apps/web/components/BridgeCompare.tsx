@@ -5,6 +5,7 @@ import { useIsMounted } from './ui-lib/utils/ssr';
 import { RefreshIndicator } from './RefreshIndicator';
 import { QuoteCard } from './QuoteCard';
 import { SlippageWarning } from './SlippageWarning';
+import { RouteRiskWarning } from './bridge/RouteRiskWarning';
 import { QuoteSkeleton } from './ui-lib/skeleton';
 import { SortToggle, SortOption, sortQuotes, enhanceQuotesForSorting } from './ui-lib/sorting';
 
@@ -35,6 +36,8 @@ interface Quote {
   };
   reliability?: number;
   speed?: number;
+  failureRisk?: 'high' | 'medium' | 'low';
+  riskFactors?: string[];
 }
 
 // Mock hook since @bridgewise/react may not be available
@@ -158,6 +161,11 @@ export const BridgeCompare: React.FC<BridgeCompareProps> = (props) => {
   // Apply sorting to quotes
   const sortedQuotes = quotes.length > 0 ? sortQuotes(enhanceQuotesForSorting(quotes), sortBy) : quotes;
 
+  // Derive failure risk for the currently selected route
+  const selectedQuote = sortedQuotes.find((q: Quote) => q.id === selectedQuoteId) as Quote | undefined;
+  const selectedRisk = selectedQuote?.failureRisk;
+  const selectedRiskFactors = selectedQuote?.riskFactors ?? [];
+
   // Auto-select top-ranked route when quotes load or refresh
   // Only auto-select if user hasn't manually chosen a route
   useEffect(() => {
@@ -214,6 +222,16 @@ export const BridgeCompare: React.FC<BridgeCompareProps> = (props) => {
           </div>
         </div>
       </div>
+
+      {/* Selected route risk warning */}
+      {selectedRisk && selectedRisk !== 'low' && (
+        <div className="mb-4">
+          <RouteRiskWarning
+            failureRisk={selectedRisk}
+            riskFactors={selectedRiskFactors}
+          />
+        </div>
+      )}
 
       {/* Error state */}
       {error && (

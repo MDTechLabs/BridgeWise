@@ -98,6 +98,17 @@ export class ReliabilityService {
     return results;
   }
 
+  /**
+   * Batch fetch full reliability metrics for multiple bridges.
+   */
+  batchGetMetrics(bridgeIds: string[]): Map<string, ReliabilityMetrics> {
+    const results = new Map<string, ReliabilityMetrics>();
+    for (const id of bridgeIds) {
+      results.set(id, this.getMetrics(id));
+    }
+    return results;
+  }
+
   private computeScore(metrics: ReliabilityMetrics): number {
     const uptimeScore = metrics.uptime24h; // 0-100
     const successScore = metrics.successRate7d; // 0-100
