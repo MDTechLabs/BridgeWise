@@ -12,16 +12,12 @@ export default tseslint.config(
       '**/*.e2e-spec.ts',
       '**/dist/**',
       '**/node_modules/**',
+      // Frontend apps manage their own configs
       'apps/docs/**',
       'apps/web/**',
-      'libs/ui-components/**',
-      'libs/bridge-core/src/example.ts',
-      'libs/bridge-core/src/adapters/mock-rpc.ts',
-      'libs/bridge-core/src/adapters/*.integration.spec.ts',
-      'src/src/**',
-      'src/bridge-compare/mnt/**',
-      'libs/bridge-core/config.ts',
-      'libs/bridge-core/useSlippageAlert.ts',
+      // Stale generated paths inside api/src
+      'apps/api/src/**/mnt/**',
+      'apps/api/src/**/*.tsx',
     ],
   },
   eslint.configs.recommended,
@@ -42,21 +38,26 @@ export default tseslint.config(
   },
   {
     rules: {
+      // Type-safety rules — warn rather than error to keep things unblocking initially
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
+
+      // Turned off until stricter mode is adopted
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-enum-comparison': 'off',
       '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/prefer-promise-reject-errors': 'off',
       '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/no-redundant-type-constituents': 'off',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+
+      // Prettier — endOfLine: auto handles CRLF/LF across platforms
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
 );
