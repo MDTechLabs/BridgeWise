@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@bridgewise/bridge-core": "workspace:*",
+    "@stellar/freighter-api": "^6.0.1",
     "axios": "^1.13.2",
-    "freighter-api": "^2.4.0",
     "stellar-sdk": "^13.0.0"
   },
   "devDependencies": {
