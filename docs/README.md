@@ -5,6 +5,7 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
 ## 📚 Documentation Files
 
 ### Getting Started
+
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** ⭐ START HERE
   - Fastest way to get up and running
   - Common commands and examples
@@ -12,6 +13,7 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - ~200 lines
 
 ### Comprehensive Guides
+
 - **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - MAIN GUIDE
   - Complete API overview
   - All 11 endpoints documented
@@ -30,6 +32,7 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - ~500 lines
 
 ### Reference Materials
+
 - **[API_ERRORS.md](./API_ERRORS.md)** - ERROR REFERENCE
   - All error codes documented
   - HTTP status codes
@@ -46,27 +49,37 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Quality metrics
   - Next steps
 
+- **[NETWORK_TIMEOUT_HANDLING.md](./NETWORK_TIMEOUT_HANDLING.md)** - RELIABILITY
+  - Timeout limits for slow/unresponsive APIs
+  - Retry behavior on timeout failures
+  - Simulation/testing guidance
+
 ---
 
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Start Development Server
+
 ```bash
 npm run start:dev
 ```
 
 ### 3. Access Swagger UI
+
 Open your browser to:
+
 ```
 http://localhost:3000/api/docs
 ```
 
 ### 4. Make Your First Request
+
 ```bash
 # Create a transaction
 curl -X POST http://localhost:3000/transactions \
@@ -88,18 +101,21 @@ curl -X POST http://localhost:3000/transactions \
 ## 📖 Learning Path
 
 ### For API Users
+
 1. Read [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) (5 min)
 2. Try endpoints in Swagger UI at `/api/docs` (10 min)
 3. Review relevant sections in [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) (20 min)
 4. Check [API_ERRORS.md](./API_ERRORS.md) for error handling (10 min)
 
 ### For Developers
+
 1. Review [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) (10 min)
 2. Check [OPENAPI_SPECIFICATION.md](./OPENAPI_SPECIFICATION.md) (15 min)
 3. Examine controller decorators in source code (20 min)
 4. Review DTOs with Swagger annotations (10 min)
 
 ### For DevOps/Integrations
+
 1. Review [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) architecture section
 2. Check endpoints and rate limiting in [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)
 3. Review CORS and security in [OPENAPI_SPECIFICATION.md](./OPENAPI_SPECIFICATION.md)
@@ -110,24 +126,28 @@ curl -X POST http://localhost:3000/transactions \
 ## 🔑 Key Features
 
 ✅ **Complete OpenAPI/Swagger Documentation**
+
 - All 11 endpoints fully documented
 - Interactive Swagger UI for testing
 - Request/response examples for every endpoint
 - Real-world use cases
 
 ✅ **Comprehensive Error Documentation**
+
 - 20+ error codes documented
 - HTTP status code mappings
 - Example error responses
 - Resolution guidance for each error
 
 ✅ **Adapter-Specific Annotations**
+
 - Stellar-specific fields clearly marked
 - LayerZero omnichain details
 - Hop Protocol bridge parameters
 - Example data for each blockchain
 
 ✅ **Example Responses**
+
 - Multiple examples for different scenarios
 - Success and error cases
 - Real network data examples
@@ -138,15 +158,18 @@ curl -X POST http://localhost:3000/transactions \
 ## 🌐 API Overview
 
 ### Base URLs
+
 - **Development**: `http://localhost:3000`
 - **Production**: `https://api.bridgewise.example.com`
 
 ### Supported Networks
+
 - **Stellar** - Direct blockchain payments
 - **LayerZero** - Omnichain bridging
 - **Hop Protocol** - Multi-chain liquidity bridges
 
 ### Core Operations
+
 - **Transactions** - Create, manage, track
 - **Fee Estimation** - Network fees across all chains
 - **Real-time Updates** - SSE or polling
@@ -155,38 +178,44 @@ curl -X POST http://localhost:3000/transactions \
 
 ## 📊 Documentation Statistics
 
-| Category | Count | Lines |
-|----------|-------|-------|
-| Endpoints | 11 | ~300 |
-| Error Codes | 20+ | ~400 |
-| Examples | 20+ | ~200 |
-| Adapters | 3 | ~100 |
-| **Total** | **~** | **~2000** |
+| Category    | Count | Lines     |
+| ----------- | ----- | --------- |
+| Endpoints   | 11    | ~300      |
+| Error Codes | 20+   | ~400      |
+| Examples    | 20+   | ~200      |
+| Adapters    | 3     | ~100      |
+| **Total**   | **~** | **~2000** |
 
 ---
 
 ## 🎯 Common Tasks
 
 ### Access Interactive Swagger UI
+
 ```
 http://localhost:3000/api/docs
 ```
 
 ### Get All Fee Estimates
+
 ```bash
 curl http://localhost:3000/api/v1/fees
 ```
 
 ### Create a Transaction
+
 See [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) or [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
 ### Monitor Transaction with SSE
+
 See Transaction Monitoring section in [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
 ### Handle Errors
+
 See [API_ERRORS.md](./API_ERRORS.md) for error codes and solutions
 
 ### Check Service Health
+
 ```bash
 curl http://localhost:3000/api/v1/fees/health
 ```
@@ -196,6 +225,7 @@ curl http://localhost:3000/api/v1/fees/health
 ## 🔗 Related Files
 
 ### Source Code
+
 - `src/app.controller.ts` - Health check endpoint
 - `src/transactions/transactions.controller.ts` - Transaction endpoints (6 endpoints)
 - `src/gas-estimation/fee-estimation.controller.ts` - Fee endpoints (3 endpoints)
@@ -203,6 +233,7 @@ curl http://localhost:3000/api/v1/fees/health
 - `src/transactions/dto/update-transaction.dto.ts` - Transaction update schema
 
 ### Configuration
+
 - `src/main.ts` - Swagger/OpenAPI setup
 - `package.json` - Dependencies (@nestjs/swagger, swagger-ui-express)
 
@@ -211,27 +242,35 @@ curl http://localhost:3000/api/v1/fees/health
 ## ❓ FAQ
 
 ### Where do I start?
+
 → Begin with [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) for a 5-minute overview.
 
 ### How do I test the API?
+
 → Use the interactive Swagger UI at `/api/docs` or use curl commands in [QUICK_REFERENCE.md](./QUICK_REFERENCE.md).
 
 ### What are the supported networks?
+
 → Stellar, LayerZero, and Hop Protocol. See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for details.
 
 ### How do I handle errors?
+
 → See [API_ERRORS.md](./API_ERRORS.md) for all error codes and resolution steps.
 
 ### Where is the OpenAPI spec?
+
 → Automatically served at `http://localhost:3000/api/docs` or see [OPENAPI_SPECIFICATION.md](./OPENAPI_SPECIFICATION.md).
 
 ### How do I monitor transactions in real-time?
+
 → Use Server-Sent Events (SSE) at `/transactions/{id}/events` or polling at `/transactions/{id}/poll`.
 
 ### What are the rate limits?
+
 → 10 requests per 60 seconds per IP. See [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) for details.
 
 ### Is authentication required?
+
 → Currently no. Authentication may be added in future versions (see IMPLEMENTATION_SUMMARY.md).
 
 ---
@@ -239,15 +278,18 @@ curl http://localhost:3000/api/v1/fees/health
 ## 📞 Support
 
 ### Documentation
+
 - **Main Guide**: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 - **Quick Help**: [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)
 - **Errors**: [API_ERRORS.md](./API_ERRORS.md)
 
 ### Interactive Tools
+
 - **Swagger UI**: http://localhost:3000/api/docs (after starting server)
 - **OpenAPI JSON**: http://localhost:3000/api-json
 
 ### Contact
+
 - **Email**: support@bridgewise.example.com
 - **Docs Site**: https://docs.bridgewise.example.com
 - **Status**: https://status.bridgewise.example.com
@@ -272,6 +314,7 @@ curl http://localhost:3000/api/v1/fees/health
 ## 🎉 What's New (v1.0.0)
 
 ✅ **Initial Release Features**
+
 - Complete OpenAPI 3.0.0 specification
 - 11 fully documented endpoints
 - Server-Sent Events (SSE) support
@@ -285,14 +328,14 @@ curl http://localhost:3000/api/v1/fees/health
 
 ## 📝 Document Versions
 
-| Document | Version | Updated |
-|----------|---------|---------|
-| API_DOCUMENTATION.md | 1.0.0 | 2026-01-29 |
-| QUICK_REFERENCE.md | 1.0.0 | 2026-01-29 |
-| API_ERRORS.md | 1.0.0 | 2026-01-29 |
-| OPENAPI_SPECIFICATION.md | 1.0.0 | 2026-01-29 |
-| IMPLEMENTATION_SUMMARY.md | 1.0.0 | 2026-01-29 |
-| README.md (this file) | 1.0.0 | 2026-01-29 |
+| Document                  | Version | Updated    |
+| ------------------------- | ------- | ---------- |
+| API_DOCUMENTATION.md      | 1.0.0   | 2026-01-29 |
+| QUICK_REFERENCE.md        | 1.0.0   | 2026-01-29 |
+| API_ERRORS.md             | 1.0.0   | 2026-01-29 |
+| OPENAPI_SPECIFICATION.md  | 1.0.0   | 2026-01-29 |
+| IMPLEMENTATION_SUMMARY.md | 1.0.0   | 2026-01-29 |
+| README.md (this file)     | 1.0.0   | 2026-01-29 |
 
 ---
 
@@ -316,6 +359,6 @@ For error handling, check [API_ERRORS.md](./API_ERRORS.md).
 
 ---
 
-*Generated: 2026-01-29*  
-*API Version: 1.0.0*  
-*Documentation Version: 1.0.0*
+_Generated: 2026-01-29_  
+_API Version: 1.0.0_  
+_Documentation Version: 1.0.0_

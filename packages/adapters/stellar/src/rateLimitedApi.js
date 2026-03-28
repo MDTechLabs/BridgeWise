@@ -7,12 +7,12 @@
 
 const DEFAULT_CONFIG = {
   maxRetries: 3,
-  baseDelay: 1000,        // ms — base delay for exponential backoff
-  maxDelay: 30000,        // ms — cap on backoff delay
-  jitter: true,           // randomise delay to avoid thundering herd
-  rateLimitPerSecond: 5,  // max requests per second per endpoint group
+  baseDelay: 1000, // ms — base delay for exponential backoff
+  maxDelay: 30000, // ms — cap on backoff delay
+  jitter: true, // randomise delay to avoid thundering herd
+  rateLimitPerSecond: 5, // max requests per second per endpoint group
   rateLimitPerMinute: 100,
-  timeout: 10000,         // ms — per-request timeout
+  timeout: 10000, // ms — per-request timeout
   retryStatusCodes: [429, 500, 502, 503, 504],
 };
 
@@ -30,7 +30,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function computeBackoffDelay(attempt, config) {
   const exponential = Math.min(
     config.baseDelay * Math.pow(2, attempt),
-    config.maxDelay
+    config.maxDelay,
   );
   if (!config.jitter) return exponential;
   // Full jitter: random value in [0, exponential]
@@ -42,7 +42,7 @@ function computeBackoffDelay(attempt, config) {
  * Returns null if not available.
  */
 function parseRetryAfter(response) {
-  const header = response?.headers?.get?.("Retry-After");
+  const header = response?.headers?.get?.('Retry-After');
   if (!header) return null;
   const seconds = Number(header);
   if (!isNaN(seconds)) return seconds * 1000; // convert to ms
@@ -60,7 +60,7 @@ class TokenBucket {
    */
   constructor(capacity, refillRate) {
     this.capacity = capacity;
-    this.refillRate = refillRate;       // tokens / ms
+    this.refillRate = refillRate; // tokens / ms
     this.tokens = capacity;
     this.lastRefill = Date.now();
   }
@@ -122,7 +122,11 @@ class RequestQueue {
 
 // ─── Circuit Breaker ─────────────────────────────────────────────────────────
 
-const CircuitState = Object.freeze({ CLOSED: "CLOSED", OPEN: "OPEN", HALF_OPEN: "HALF_OPEN" });
+const CircuitState = Object.freeze({
+  CLOSED: 'CLOSED',
+  OPEN: 'OPEN',
+  HALF_OPEN: 'HALF_OPEN',
+});
 
 class CircuitBreaker {
   constructor({ failureThreshold = 5, recoveryTimeout = 30000 } = {}) {
@@ -199,9 +203,9 @@ export class RateLimitedApiClient {
       this._buckets.set(
         group,
         new TokenBucket(
-          this.config.rateLimitPerSecond,   // burst = per-second limit
-          this.config.rateLimitPerSecond    // refill = same
-        )
+          this.config.rateLimitPerSecond, // burst = per-second limit
+          this.config.rateLimitPerSecond, // refill = same
+        ),
       );
     }
     return this._buckets.get(group);
@@ -217,13 +221,42 @@ export class RateLimitedApiClient {
   /**
    * Perform a fetch with a per-request timeout.
    */
-  async _fetchWithTimeout(url, options) {
+  async _fetchWithTimeout(url, options, timeoutMs = this.config.timeout) {
+    const upstreamSignal = options?.signal;
+
+    if (upstreamSignal?.aborted) {
+      const abortError = new Error('Request aborted before fetch');
+      abortError.name = 'AbortError';
+      abortError.code = 'REQUEST_ABORTED';
+      throw abortError;
+    }
+
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.config.timeout);
+    const onUpstreamAbort = () => controller.abort();
+    upstreamSignal?.addEventListener('abort', onUpstreamAbort, { once: true });
+
+    let timer;
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        const timeoutError = new Error(
+          `Request timed out after ${timeoutMs}ms`,
+        );
+        timeoutError.name = 'TimeoutError';
+        timeoutError.code = 'REQUEST_TIMEOUT';
+        timeoutError.timeoutMs = timeoutMs;
+        reject(timeoutError);
+      }, timeoutMs);
+    });
+
     try {
-      return await fetch(url, { ...options, signal: controller.signal });
+      return await Promise.race([
+        fetch(url, { ...options, signal: controller.signal }),
+        timeoutPromise,
+      ]);
     } finally {
       clearTimeout(timer);
+      upstreamSignal?.removeEventListener('abort', onUpstreamAbort);
     }
   }
 
@@ -237,6 +270,7 @@ export class RateLimitedApiClient {
    * @param {object}  requestConfig
    * @param {string}  requestConfig.group        – logical group for rate limiting ("quotes"|"fees"|"liquidity")
    * @param {number}  requestConfig.maxRetries   – override global maxRetries
+   * @param {number}  requestConfig.timeout      – per-request timeout in ms (overrides global timeout)
    * @param {boolean} requestConfig.bypassQueue  – skip queue (use sparingly)
    * @returns {Promise<Response>}
    */
@@ -249,26 +283,39 @@ export class RateLimitedApiClient {
   /**
    * Convenience wrappers
    */
-  get(url, options, rc)    { return this.request(url, { ...options, method: "GET" },    rc); }
+  get(url, options, rc) {
+    return this.request(url, { ...options, method: 'GET' }, rc);
+  }
   post(url, body, options, rc) {
-    return this.request(url, { ...options, method: "POST", body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json", ...(options?.headers) } }, rc);
+    return this.request(
+      url,
+      {
+        ...options,
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+      },
+      rc,
+    );
   }
 
   // ── Execution with retry ───────────────────────────────────────────────────
 
   async _execute(url, options, requestConfig) {
-    const group      = requestConfig.group ?? "default";
+    const group = requestConfig.group ?? 'default';
     const maxRetries = requestConfig.maxRetries ?? this.config.maxRetries;
-    const bucket     = this._getBucket(group);
-    const breaker    = this._getBreaker(group);
+    const requestTimeout = requestConfig.timeout ?? this.config.timeout;
+    const bucket = this._getBucket(group);
+    const breaker = this._getBreaker(group);
 
     this.metrics.totalRequests++;
 
     // Circuit breaker check
     if (!breaker.canRequest()) {
-      const err = new Error(`Circuit OPEN for group "${group}". Requests suspended temporarily.`);
-      err.code = "CIRCUIT_OPEN";
+      const err = new Error(
+        `Circuit OPEN for group "${group}". Requests suspended temporarily.`,
+      );
+      err.code = 'CIRCUIT_OPEN';
       this.metrics.failedRequests++;
       throw err;
     }
@@ -283,7 +330,11 @@ export class RateLimitedApiClient {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        const response = await this._fetchWithTimeout(url, options);
+        const response = await this._fetchWithTimeout(
+          url,
+          options,
+          requestTimeout,
+        );
 
         // Success path
         if (response.ok) {
@@ -297,7 +348,9 @@ export class RateLimitedApiClient {
           // Non-retryable error (e.g. 400, 401, 403, 404)
           breaker.onFailure();
           this.metrics.failedRequests++;
-          const err = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const err = new Error(
+            `HTTP ${response.status}: ${response.statusText}`,
+          );
           err.status = response.status;
           err.response = response;
           throw err;
@@ -307,9 +360,12 @@ export class RateLimitedApiClient {
         if (response.status === 429) {
           this.metrics.rateLimitHits++;
           const serverWait = parseRetryAfter(response);
-          const backoff = serverWait ?? computeBackoffDelay(attempt, this.config);
+          const backoff =
+            serverWait ?? computeBackoffDelay(attempt, this.config);
           if (attempt < maxRetries) {
-            console.warn(`[BridgeWise] Rate limited (group=${group}). Waiting ${backoff}ms before retry ${attempt + 1}/${maxRetries}…`);
+            console.warn(
+              `[BridgeWise] Rate limited (group=${group}). Waiting ${backoff}ms before retry ${attempt + 1}/${maxRetries}…`,
+            );
             this.metrics.retriedRequests++;
             await sleep(backoff);
             continue;
@@ -319,25 +375,38 @@ export class RateLimitedApiClient {
         // 5xx: exponential backoff
         const backoff = computeBackoffDelay(attempt, this.config);
         if (attempt < maxRetries) {
-          console.warn(`[BridgeWise] HTTP ${response.status} (group=${group}). Retrying in ${backoff}ms (${attempt + 1}/${maxRetries})…`);
+          console.warn(
+            `[BridgeWise] HTTP ${response.status} (group=${group}). Retrying in ${backoff}ms (${attempt + 1}/${maxRetries})…`,
+          );
           this.metrics.retriedRequests++;
           await sleep(backoff);
           continue;
         }
 
         // Exhausted retries
-        lastError = new Error(`HTTP ${response.status} after ${maxRetries} retries`);
+        lastError = new Error(
+          `HTTP ${response.status} after ${maxRetries} retries`,
+        );
         lastError.status = response.status;
         lastError.response = response;
       } catch (err) {
         // Network / timeout error
-        if (err.code === "CIRCUIT_OPEN") throw err;
+        if (err.code === 'CIRCUIT_OPEN') throw err;
 
         lastError = err;
         if (attempt < maxRetries) {
-          const isAbort = err.name === "AbortError";
+          const isTimeout =
+            err.code === 'REQUEST_TIMEOUT' || err.name === 'TimeoutError';
+          const isAbort = err.name === 'AbortError';
           const backoff = computeBackoffDelay(attempt, this.config);
-          console.warn(`[BridgeWise] ${isAbort ? "Timeout" : "Network error"} (group=${group}). Retrying in ${backoff}ms (${attempt + 1}/${maxRetries})…`);
+          const errorKind = isTimeout
+            ? 'Timeout'
+            : isAbort
+              ? 'Abort'
+              : 'Network error';
+          console.warn(
+            `[BridgeWise] ${errorKind} (group=${group}). Retrying in ${backoff}ms (${attempt + 1}/${maxRetries})…`,
+          );
           this.metrics.retriedRequests++;
           await sleep(backoff);
         }
@@ -347,12 +416,12 @@ export class RateLimitedApiClient {
     // All retries exhausted
     breaker.onFailure();
     this.metrics.failedRequests++;
-    throw lastError ?? new Error("Request failed after maximum retries");
+    throw lastError ?? new Error('Request failed after maximum retries');
   }
 
   // ── Diagnostics ────────────────────────────────────────────────────────────
 
-  getCircuitStatus(group = "default") {
+  getCircuitStatus(group = 'default') {
     return this._breakers.get(group)?.status ?? CircuitState.CLOSED;
   }
 
@@ -360,7 +429,7 @@ export class RateLimitedApiClient {
     return { ...this.metrics };
   }
 
-  resetCircuit(group = "default") {
+  resetCircuit(group = 'default') {
     this._breakers.delete(group);
   }
 }
@@ -381,7 +450,7 @@ const sharedClient = new RateLimitedApiClient({
  */
 export async function fetchBridgeQuote(params) {
   const url = `/api/bridge/quote?${new URLSearchParams(params)}`;
-  const response = await sharedClient.get(url, {}, { group: "quotes" });
+  const response = await sharedClient.get(url, {}, { group: 'quotes' });
   return response.json();
 }
 
@@ -390,7 +459,11 @@ export async function fetchBridgeQuote(params) {
  * @param {string} chain
  */
 export async function fetchNetworkFees(chain) {
-  const response = await sharedClient.get(`/api/fees/${chain}`, {}, { group: "fees" });
+  const response = await sharedClient.get(
+    `/api/fees/${chain}`,
+    {},
+    { group: 'fees' },
+  );
   return response.json();
 }
 
@@ -400,7 +473,7 @@ export async function fetchNetworkFees(chain) {
  */
 export async function fetchLiquidityData(params) {
   const url = `/api/liquidity?${new URLSearchParams(params)}`;
-  const response = await sharedClient.get(url, {}, { group: "liquidity" });
+  const response = await sharedClient.get(url, {}, { group: 'liquidity' });
   return response.json();
 }
 
