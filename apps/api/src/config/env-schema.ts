@@ -251,6 +251,46 @@ export const ENV_SCHEMA: EnvironmentSchema = {
     description: 'Enable benchmarking features',
     example: 'false',
   },
+  ENABLE_BRIDGE_COMPARE: {
+    name: 'ENABLE_BRIDGE_COMPARE',
+    type: 'boolean',
+    required: false,
+    default: true,
+    description: 'Enable cross-chain bridge comparison features',
+    example: 'true',
+  },
+  ENABLE_GAS_ESTIMATION: {
+    name: 'ENABLE_GAS_ESTIMATION',
+    type: 'boolean',
+    required: false,
+    default: true,
+    description: 'Enable gas and fee estimation features',
+    example: 'true',
+  },
+  ENABLE_REAL_TIME_FEES: {
+    name: 'ENABLE_REAL_TIME_FEES',
+    type: 'boolean',
+    required: false,
+    default: true,
+    description: 'Enable real-time fee aggregation via WebSocket/SSE',
+    example: 'true',
+  },
+  ENABLE_BRIDGE_DISCOVERY: {
+    name: 'ENABLE_BRIDGE_DISCOVERY',
+    type: 'boolean',
+    required: false,
+    default: true,
+    description: 'Enable dynamic bridge discovery',
+    example: 'true',
+  },
+  ENABLE_RELIABILITY_SCORE: {
+    name: 'ENABLE_RELIABILITY_SCORE',
+    type: 'boolean',
+    required: false,
+    default: true,
+    description: 'Enable bridge reliability scoring',
+    example: 'true',
+  },
 };
 
 /**

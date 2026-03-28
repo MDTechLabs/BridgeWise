@@ -53,6 +53,11 @@ export interface AppConfig {
   features: {
     enableAnalytics: boolean;
     enableBenchmarking: boolean;
+    enableBridgeCompare: boolean;
+    enableGasEstimation: boolean;
+    enableRealTimeFees: boolean;
+    enableBridgeDiscovery: boolean;
+    enableReliabilityScore: boolean;
   };
 }
 
@@ -160,6 +165,11 @@ export class ConfigFactory {
       features: {
         enableAnalytics: process.env.ENABLE_ANALYTICS !== 'false',
         enableBenchmarking: process.env.ENABLE_BENCHMARKING === 'true',
+        enableBridgeCompare: process.env.ENABLE_BRIDGE_COMPARE !== 'false',
+        enableGasEstimation: process.env.ENABLE_GAS_ESTIMATION !== 'false',
+        enableRealTimeFees: process.env.ENABLE_REAL_TIME_FEES !== 'false',
+        enableBridgeDiscovery: process.env.ENABLE_BRIDGE_DISCOVERY !== 'false',
+        enableReliabilityScore: process.env.ENABLE_RELIABILITY_SCORE !== 'false',
       },
     };
   }

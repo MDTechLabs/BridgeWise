@@ -10,6 +10,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { BenchmarkModule } from './benchmark/benchmark.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TokenMetadataModule } from './token-metadata/token-metadata.module';
+import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { Transaction } from './transactions/entities/transaction.entity';
@@ -40,6 +41,7 @@ import { Transaction } from './transactions/entities/transaction.entity';
     BenchmarkModule,
     AnalyticsModule,
     TokenMetadataModule,
+    FeatureFlagsModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

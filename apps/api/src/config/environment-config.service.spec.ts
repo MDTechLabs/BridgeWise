@@ -130,12 +130,24 @@ describe('EnvironmentConfigService', () => {
 
       expect(features.enableAnalytics).toBeDefined();
       expect(features.enableBenchmarking).toBeDefined();
+      expect(features.enableBridgeCompare).toBeDefined();
+      expect(features.enableGasEstimation).toBeDefined();
+      expect(features.enableRealTimeFees).toBeDefined();
+      expect(features.enableBridgeDiscovery).toBeDefined();
+      expect(features.enableReliabilityScore).toBeDefined();
     });
 
     it('should check if specific feature is enabled', () => {
       const isAnalyticsEnabled = service.isFeatureEnabled('enableAnalytics');
-
       expect(typeof isAnalyticsEnabled).toBe('boolean');
+    });
+
+    it('should check bridge-specific feature flags', () => {
+      expect(typeof service.isFeatureEnabled('enableBridgeCompare')).toBe('boolean');
+      expect(typeof service.isFeatureEnabled('enableGasEstimation')).toBe('boolean');
+      expect(typeof service.isFeatureEnabled('enableRealTimeFees')).toBe('boolean');
+      expect(typeof service.isFeatureEnabled('enableBridgeDiscovery')).toBe('boolean');
+      expect(typeof service.isFeatureEnabled('enableReliabilityScore')).toBe('boolean');
     });
   });
 });

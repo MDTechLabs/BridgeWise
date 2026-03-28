@@ -150,5 +150,56 @@ describe('ConfigFactory', () => {
       expect(config.features.enableAnalytics).toBe(true);
       expect(config.features.enableBenchmarking).toBe(true);
     });
+
+    it('should enable bridge-specific flags by default', () => {
+      process.env.NODE_ENV = 'development';
+      process.env.DB_HOST = 'localhost';
+      process.env.DB_USERNAME = 'postgres';
+      process.env.DB_PASSWORD = 'password';
+      process.env.DB_NAME = 'test_db';
+      process.env.API_KEY = 'test_key';
+      process.env.RPC_ETHEREUM = 'https://eth.example.com';
+      process.env.RPC_POLYGON = 'https://polygon.example.com';
+      process.env.RPC_BSC = 'https://bsc.example.com';
+      process.env.RPC_ARBITRUM = 'https://arbitrum.example.com';
+      process.env.RPC_OPTIMISM = 'https://optimism.example.com';
+      // Leave bridge flags unset to confirm they default to true
+      delete process.env.ENABLE_BRIDGE_COMPARE;
+      delete process.env.ENABLE_GAS_ESTIMATION;
+      delete process.env.ENABLE_REAL_TIME_FEES;
+      delete process.env.ENABLE_BRIDGE_DISCOVERY;
+      delete process.env.ENABLE_RELIABILITY_SCORE;
+
+      const config = ConfigFactory.create();
+
+      expect(config.features.enableBridgeCompare).toBe(true);
+      expect(config.features.enableGasEstimation).toBe(true);
+      expect(config.features.enableRealTimeFees).toBe(true);
+      expect(config.features.enableBridgeDiscovery).toBe(true);
+      expect(config.features.enableReliabilityScore).toBe(true);
+    });
+
+    it('should disable bridge flags when set to false', () => {
+      process.env.NODE_ENV = 'development';
+      process.env.DB_HOST = 'localhost';
+      process.env.DB_USERNAME = 'postgres';
+      process.env.DB_PASSWORD = 'password';
+      process.env.DB_NAME = 'test_db';
+      process.env.API_KEY = 'test_key';
+      process.env.RPC_ETHEREUM = 'https://eth.example.com';
+      process.env.RPC_POLYGON = 'https://polygon.example.com';
+      process.env.RPC_BSC = 'https://bsc.example.com';
+      process.env.RPC_ARBITRUM = 'https://arbitrum.example.com';
+      process.env.RPC_OPTIMISM = 'https://optimism.example.com';
+      process.env.ENABLE_BRIDGE_COMPARE = 'false';
+      process.env.ENABLE_RELIABILITY_SCORE = 'false';
+
+      const config = ConfigFactory.create();
+
+      expect(config.features.enableBridgeCompare).toBe(false);
+      expect(config.features.enableReliabilityScore).toBe(false);
+      // Unaffected flags stay on
+      expect(config.features.enableGasEstimation).toBe(true);
+    });
   });
 });
