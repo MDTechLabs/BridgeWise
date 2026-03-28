@@ -47,6 +47,8 @@ async function bootstrap() {
         // Use 400 for validation errors
         errorHttpStatusCode: 400,
     }));
+
+      app.useGlobalFilters(new GlobalExceptionFilter());
     // ===== ENABLE CORS =====
     const corsOrigin = configService.get('CORS_ORIGIN');
     app.enableCors({
