@@ -1,12 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-<<<<<<< HEAD:src/dynamic-bridge-discovery/bridge.registry.ts
-import {
-  BridgeAdapter,
-  BridgeCapability,
-} from '../interfaces/bridge-adapter.interface';
-=======
 import { BridgeAdapter, BridgeCapability } from './bridge-adapter.interface';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/bridge.registry.ts
 import {
   BridgeCapabilityNotFoundException,
   BridgeDuplicateException,

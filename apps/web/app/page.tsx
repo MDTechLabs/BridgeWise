@@ -51,8 +51,6 @@ function TransactionDemo() {
     return () => clearInterval(interval);
   }, [state, updateState, t]);
 
-  const { t } = useTranslation();
-
   return (
     <BridgeWiseProvider theme={customTheme} defaultMode="dark">
       <div className="flex min-h-screen flex-col items-center justify-center gap-12 p-10 bg-zinc-50 dark:bg-black">

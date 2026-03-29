@@ -1,19 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-<<<<<<< HEAD:src/dynamic-bridge-discovery/bridge.loader.ts
-import {
-  BridgeAdapter,
-  BridgeAdapterConstructor,
-} from '../interfaces/bridge-adapter.interface';
-import { BridgeModuleConfig } from '../interfaces/bridge-config.interface';
-import {
-  BridgeInitializationException,
-  BridgeLoadException,
-} from '../exceptions/bridge.exceptions';
-import { BridgeRegistry } from '../registry/bridge.registry';
-import { BRIDGE_ADAPTER_METADATA } from '../decorators/bridge.decorators';
-=======
 import { BridgeRegistry } from './bridge.registry';
 import { BridgeModuleConfig } from './bridge-config.interface';
 import {
@@ -25,7 +12,6 @@ import {
   BridgeLoadException,
 } from './bridge.exceptions';
 import { BRIDGE_ADAPTER_METADATA } from './bridge.decorators';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/bridge.loader.ts
 
 @Injectable()
 export class BridgeLoader implements OnModuleInit {
@@ -141,25 +127,12 @@ export class BridgeLoader implements OnModuleInit {
         }
 
 <<<<<<< HEAD:src/dynamic-bridge-discovery/bridge.loader.ts
-        const mergedConfig = {
-          ...(this.config.globalConfig ?? {}),
-          ...(adapterConfig.options ?? {}),
-        };
-        const instance: BridgeAdapter = new AdapterClass(mergedConfig);
-
-        await this.initializeAdapter(instance);
-        this.registry.register(instance, {
-          source: resolvedPath,
-          configKey: name,
-        });
-=======
         await this.createAndRegisterAdapter(
           AdapterClass,
           resolvedPath,
           adapterConfig.options ?? {},
           name,
         );
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/bridge.loader.ts
       } catch (err) {
         throw new BridgeLoadException(resolvedPath, err as Error);
       }

@@ -1,13 +1,5 @@
-<<<<<<< HEAD:src/dynamic-bridge-discovery/websocket-bridge.adapter.ts
-import {
-  BridgeAdapter,
-  BridgeCapability,
-} from '../interfaces/bridge-adapter.interface';
-import { BridgePlugin } from '../decorators/bridge.decorators';
-=======
 import { BridgeAdapter, BridgeCapability } from './bridge-adapter.interface';
 import { BridgePlugin } from './bridge.decorators';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/websocket-bridge.adapter.ts
 
 @BridgePlugin({ name: 'ws-bridge', version: '1.0.0' })
 export class WebSocketBridgeAdapter implements BridgeAdapter {

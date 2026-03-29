@@ -1,13 +1,5 @@
-<<<<<<< HEAD:src/dynamic-bridge-discovery/http-bridge.adapter.ts
-import {
-  BridgeAdapter,
-  BridgeCapability,
-} from '../interfaces/bridge-adapter.interface';
-import { BridgePlugin } from '../decorators/bridge.decorators';
-=======
 import { BridgeAdapter, BridgeCapability } from './bridge-adapter.interface';
 import { BridgePlugin } from './bridge.decorators';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/http-bridge.adapter.ts
 
 @BridgePlugin({ name: 'http-bridge', version: '1.0.0' })
 export class HttpBridgeAdapter implements BridgeAdapter {

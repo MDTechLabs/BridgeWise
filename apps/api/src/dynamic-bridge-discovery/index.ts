@@ -29,3 +29,4 @@ export {
 // Example adapters (not for production use — illustrative only)
 export { HttpBridgeAdapter } from './http-bridge.adapter';
 export { WebSocketBridgeAdapter } from './websocket-bridge.adapter';
+export { DemoBridgeAdapter } from './demo-bridge.adapter';
