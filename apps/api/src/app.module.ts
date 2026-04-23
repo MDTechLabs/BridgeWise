@@ -13,10 +13,12 @@ import { TokenMetadataModule } from './token-metadata/token-metadata.module';
 import { VersionModule } from './version/version.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { LoggerModule } from './logger/logger.module';
 import { Transaction } from './transactions/entities/transaction.entity';
 
 @Module({
   imports: [
+    LoggerModule,
     ConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

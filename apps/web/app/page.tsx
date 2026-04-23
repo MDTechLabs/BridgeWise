@@ -1,14 +1,17 @@
 
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BridgeWiseProvider,
-  TransactionHeartbeat,
   useTransaction,
-  BridgeStatus,
 } from '@bridgewise/ui-components';
+
+const TransactionHeartbeat = dynamic(() => import('@bridgewise/ui-components').then(m => m.TransactionHeartbeat), { ssr: false });
+const BridgeStatus = dynamic(() => import('@bridgewise/ui-components').then(m => m.BridgeStatus), { ssr: false });
+
 import VersionDisplay from '../components/VersionDisplay';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
