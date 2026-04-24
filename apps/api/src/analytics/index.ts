@@ -30,6 +30,11 @@ export {
   UserActivityInsightsDto,
 } from './dto/bridge-analytics.dto';
 
+export {
+  computeProviderScore,
+  computeSuccessRate,
+} from './provider-score';
+
 // Types
 export type {
   BridgeAnalytics as BridgeAnalyticsType,
