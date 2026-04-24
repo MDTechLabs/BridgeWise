@@ -1,187 +1,54 @@
 /**
  * Chain Configuration for BridgeWise
- * Defines supported blockchain networks and their properties
+ * Now uses dynamic loading from configuration files and environment variables
  */
 
-export interface ChainConfig {
-  id: string;
-  name: string;
-  symbol: string;
-  chainId: number;
-  rpcUrl: string;
-  explorerUrl: string;
-  type: 'EVM' | 'Stellar';
-  isTestnet?: boolean;
-  features: {
-    supportsBridging: boolean;
-    supportsQuotes: boolean;
-    nativeCurrencyDecimals: number;
-  };
-}
+export { ChainConfig } from './chain-config-schema';
+export { DynamicChainConfigLoader } from './dynamic-chain-loader';
 
-/**
- * Supported EVM Chains
- */
-export const EVM_CHAINS: Record<string, ChainConfig> = {
-  ETHEREUM: {
-    id: 'ethereum',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    chainId: 1,
-    rpcUrl: process.env.RPC_ETHEREUM || 'https://eth.llamarpc.com',
-    explorerUrl: 'https://etherscan.io',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-  
-  POLYGON: {
-    id: 'polygon',
-    name: 'Polygon',
-    symbol: 'MATIC',
-    chainId: 137,
-    rpcUrl: process.env.RPC_POLYGON || 'https://polygon-rpc.com',
-    explorerUrl: 'https://polygonscan.com',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-  
-  BSC: {
-    id: 'bsc',
-    name: 'BNB Smart Chain',
-    symbol: 'BNB',
-    chainId: 56,
-    rpcUrl: process.env.RPC_BSC || 'https://bsc-dataseed.binance.org',
-    explorerUrl: 'https://bscscan.com',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-  
-  ARBITRUM: {
-    id: 'arbitrum',
-    name: 'Arbitrum One',
-    symbol: 'ETH',
-    chainId: 42161,
-    rpcUrl: process.env.RPC_ARBITRUM || 'https://arb1.arbitrum.io/rpc',
-    explorerUrl: 'https://arbiscan.io',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-  
-  OPTIMISM: {
-    id: 'optimism',
-    name: 'Optimism',
-    symbol: 'ETH',
-    chainId: 10,
-    rpcUrl: process.env.RPC_OPTIMISM || 'https://mainnet.optimism.io',
-    explorerUrl: 'https://optimistic.etherscan.io',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-  
-  BASE: {
-    id: 'base',
-    name: 'Base',
-    symbol: 'ETH',
-    chainId: 8453,
-    rpcUrl: process.env.RPC_BASE || 'https://mainnet.base.org',
-    explorerUrl: 'https://basescan.org',
-    type: 'EVM',
-    features: {
-      supportsBridging: true,
-      supportsQuotes: true,
-      nativeCurrencyDecimals: 18,
-    },
-  },
-};
-
-/**
- * Stellar Network Configuration
- */
-export const STELLAR_CONFIG: ChainConfig = {
-  id: 'stellar',
-  name: 'Stellar',
-  symbol: 'XLM',
-  chainId: 0, // Stellar doesn't use chainId
-  rpcUrl: 'https://horizon.stellar.org',
-  explorerUrl: 'https://stellarscan.io',
-  type: 'Stellar',
-  features: {
-    supportsBridging: true,
-    supportsQuotes: true,
-    nativeCurrencyDecimals: 7,
-  },
-};
+import { DynamicChainConfigLoader } from './dynamic-chain-loader';
+import { ChainConfig } from './chain-config-schema';
 
 /**
  * Get all supported chains
+ * Dynamically loaded from config files and environment variables
  */
 export function getAllChains(): ChainConfig[] {
-  return [
-    ...Object.values(EVM_CHAINS),
-    STELLAR_CONFIG,
-  ];
+  return DynamicChainConfigLoader.loadChains({
+    fromJson: true,
+    fromEnv: true,
+    skipValidation: false,
+  });
 }
 
 /**
  * Get chain by ID
  */
 export function getChainById(chainId: string): ChainConfig | undefined {
-  const evmChain = Object.values(EVM_CHAINS).find(
-    chain => chain.id === chainId.toLowerCase()
-  );
-  
-  if (evmChain) {
-    return evmChain;
-  }
-  
-  if (STELLAR_CONFIG.id === chainId.toLowerCase()) {
-    return STELLAR_CONFIG;
-  }
-  
-  return undefined;
+  return DynamicChainConfigLoader.getChainById(chainId);
 }
 
 /**
  * Get EVM chain by numeric chainId
  */
 export function getEVMChainByChainId(numericChainId: number): ChainConfig | undefined {
-  return Object.values(EVM_CHAINS).find(
-    chain => chain.chainId === numericChainId
-  );
+  return DynamicChainConfigLoader.getEVMChainByChainId(numericChainId);
 }
 
 /**
  * Check if chain is EVM
  */
 export function isEVMChain(chainId: string): boolean {
-  return chainId.toLowerCase() in EVM_CHAINS;
+  const chain = DynamicChainConfigLoader.getChainById(chainId);
+  return chain ? chain.type === 'EVM' : false;
 }
 
 /**
  * Check if chain is Stellar
  */
 export function isStellarChain(chainId: string): boolean {
-  return chainId.toLowerCase() === 'stellar';
+  const chain = DynamicChainConfigLoader.getChainById(chainId);
+  return chain ? chain.type === 'Stellar' : false;
 }
 
 /**

@@ -1,0 +1,107 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-04-24T00:00:00Z",
+  "description": "Staging chain configuration - mix of mainnet and testnet for validation",
+  "chains": [
+    {
+      "id": "ethereum",
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "chainId": 1,
+      "rpcUrl": "https://eth.llamarpc.com",
+      "explorerUrl": "https://etherscan.io",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "polygon",
+      "name": "Polygon",
+      "symbol": "MATIC",
+      "chainId": 137,
+      "rpcUrl": "https://polygon-rpc.com",
+      "explorerUrl": "https://polygonscan.com",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Polygon",
+        "symbol": "MATIC",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "arbitrum",
+      "name": "Arbitrum One",
+      "symbol": "ETH",
+      "chainId": 42161,
+      "rpcUrl": "https://arb1.arbitrum.io/rpc",
+      "explorerUrl": "https://arbiscan.io",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "symbol": "ETH",
+      "chainId": 8453,
+      "rpcUrl": "https://mainnet.base.org",
+      "explorerUrl": "https://basescan.org",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "polygon-mumbai",
+      "name": "Polygon Mumbai",
+      "symbol": "MATIC",
+      "chainId": 80001,
+      "rpcUrl": "https://rpc-mumbai.maticvigil.com",
+      "explorerUrl": "https://mumbai.polygonscan.com",
+      "type": "EVM",
+      "isTestnet": true,
+      "nativeCurrency": {
+        "name": "Polygon",
+        "symbol": "MATIC",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    }
+  ]
+}

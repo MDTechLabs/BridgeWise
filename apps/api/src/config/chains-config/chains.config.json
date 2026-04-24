@@ -1,0 +1,146 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-04-24T00:00:00Z",
+  "chains": [
+    {
+      "id": "ethereum",
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "chainId": 1,
+      "rpcUrl": "https://eth.llamarpc.com",
+      "explorerUrl": "https://etherscan.io",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "polygon",
+      "name": "Polygon",
+      "symbol": "MATIC",
+      "chainId": 137,
+      "rpcUrl": "https://polygon-rpc.com",
+      "explorerUrl": "https://polygonscan.com",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Polygon",
+        "symbol": "MATIC",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "bsc",
+      "name": "BNB Smart Chain",
+      "symbol": "BNB",
+      "chainId": 56,
+      "rpcUrl": "https://bsc-dataseed.binance.org",
+      "explorerUrl": "https://bscscan.com",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "BNB",
+        "symbol": "BNB",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "arbitrum",
+      "name": "Arbitrum One",
+      "symbol": "ETH",
+      "chainId": 42161,
+      "rpcUrl": "https://arb1.arbitrum.io/rpc",
+      "explorerUrl": "https://arbiscan.io",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "optimism",
+      "name": "Optimism",
+      "symbol": "ETH",
+      "chainId": 10,
+      "rpcUrl": "https://mainnet.optimism.io",
+      "explorerUrl": "https://optimistic.etherscan.io",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "symbol": "ETH",
+      "chainId": 8453,
+      "rpcUrl": "https://mainnet.base.org",
+      "explorerUrl": "https://basescan.org",
+      "type": "EVM",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 18
+      }
+    },
+    {
+      "id": "stellar",
+      "name": "Stellar",
+      "symbol": "XLM",
+      "chainId": 0,
+      "rpcUrl": "https://horizon.stellar.org",
+      "explorerUrl": "https://stellarscan.io",
+      "type": "Stellar",
+      "isTestnet": false,
+      "nativeCurrency": {
+        "name": "Lumens",
+        "symbol": "XLM",
+        "decimals": 7
+      },
+      "features": {
+        "supportsBridging": true,
+        "supportsQuotes": true,
+        "nativeCurrencyDecimals": 7
+      }
+    }
+  ]
+}
