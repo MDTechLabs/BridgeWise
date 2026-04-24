@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { RateLimitMiddleware } from './middleware/rate-limit';
 import { AppModule } from './app.module';
 import { ConfigService } from './config/config.service';
 import { BridgeWiseLogger } from './logger/logger.service';
@@ -75,6 +76,13 @@ async function bootstrap() {
   // ===== REQUEST ID MIDDLEWARE =====
   // Use dedicated RequestIdMiddleware to set req.id and response header
   app.use((req, res, next) => new RequestIdMiddleware().use(req, res, next));
+
+  // ===== RATE LIMITING MIDDLEWARE =====
+  const rateLimitMiddleware = new RateLimitMiddleware({
+    windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+    maxRequests: Number(process.env.RATE_LIMIT_MAX_REQUESTS || 100),
+  });
+  app.use((req, res, next) => rateLimitMiddleware.use(req, res, next));
 
   await app.listen(configService.get('server').port);
   console.log(
