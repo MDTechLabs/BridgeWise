@@ -11,6 +11,10 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Common commands and examples
   - Quick troubleshooting
   - ~200 lines
+- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Local environment setup
+  - Environment-specific `.env` loading
+  - Required variables and secret handling
+  - Development, staging, and production startups
 
 ### Comprehensive Guides
 
