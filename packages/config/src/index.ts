@@ -20,3 +20,8 @@ export { ChainConfigManager } from './chain-config-manager';
 export { ChainRegistry } from './chain-registry';
 export type { ChainQueryOptions, ChainQueryResult } from './chain-query';
 export { createChainQuery } from './chain-query';
+export {
+  TokenRegistry,
+  defaultTokenRegistry,
+} from './token-registry';
+export type { TokenMetadata } from './token-registry';
