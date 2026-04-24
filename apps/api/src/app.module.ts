@@ -11,10 +11,12 @@ import { BenchmarkModule } from './benchmark/benchmark.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TokenMetadataModule } from './token-metadata/token-metadata.module';
 import { VersionModule } from './version/version.module';
+import { WalletModule } from './wallet/wallet.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggerModule } from './logger/logger.module';
 import { Transaction } from './transactions/entities/transaction.entity';
+import { WalletSession } from './wallet/entities/wallet-session.entity';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { Transaction } from './transactions/entities/transaction.entity';
           password: dbConfig.password,
           database: dbConfig.database,
           ssl: dbConfig.ssl,
-          entities: [Transaction],
+          entities: [Transaction, WalletSession],
           synchronize: process.env.NODE_ENV === 'development',
           logging: process.env.NODE_ENV === 'development',
         };
@@ -44,6 +46,7 @@ import { Transaction } from './transactions/entities/transaction.entity';
     AnalyticsModule,
     TokenMetadataModule,
     VersionModule,
+    WalletModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
