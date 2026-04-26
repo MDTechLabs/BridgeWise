@@ -24,10 +24,21 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+build.log
+build_output.log
 
-# local env files
-.env*.local
+# local env files - NEVER commit secrets
 .env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+
+# Keep example files but ignore actual env files
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
@@ -36,3 +47,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 libs/bridge-core/node_modules
+
+# Secret files
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+*.secret

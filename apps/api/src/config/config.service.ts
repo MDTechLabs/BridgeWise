@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AppConfig, Environment } from './config.interface';
 import { ApiKeyVaultService } from '../security/api-key-vault.service';
+import { validateEnvironment } from './config.validation';
 
 @Injectable()
 export class ConfigService implements OnModuleInit {
@@ -9,6 +10,8 @@ export class ConfigService implements OnModuleInit {
   private vaultInitialized = false;
 
   constructor(private readonly apiKeyVault: ApiKeyVaultService) {
+    // Validate environment variables on startup
+    validateEnvironment(process.env);
     this.config = this.createConfig();
     this.validateConfig();
   }
@@ -17,6 +20,11 @@ export class ConfigService implements OnModuleInit {
     // Initialize vault with keys from environment
     this.initializeVault();
     this.vaultInitialized = true;
+    
+    // Verify vault is properly initialized in production
+    if (this.isProduction) {
+      this.verifyVaultInitialization();
+    }
   }
 
   private initializeVault(): void {
@@ -45,6 +53,27 @@ export class ConfigService implements OnModuleInit {
       this.logger.error(`Failed to initialize vault: ${error.message}`);
       // Continue anyway - vault is optional for development
     }
+  }
+
+  private verifyVaultInitialization(): void {
+    const requiredKeys = ['api-key-main', 'db-password'];
+    const missingKeys: string[] = [];
+
+    for (const keyId of requiredKeys) {
+      try {
+        this.apiKeyVault.retrieveKey(keyId);
+      } catch (error) {
+        missingKeys.push(keyId);
+      }
+    }
+
+    if (missingKeys.length > 0) {
+      throw new Error(
+        `Vault initialization failed in production. Missing keys: ${missingKeys.join(', ')}`,
+      );
+    }
+
+    this.logger.log('Vault verified and all required secrets are accessible');
   }
 
   private createConfig(): AppConfig {

@@ -4,6 +4,7 @@ export interface EnvValidationSchema {
     type: 'string' | 'number' | 'boolean' | 'url' | 'email';
     default?: string | number | boolean;
     description?: string;
+    secret?: boolean;
   };
 }
 
@@ -46,6 +47,7 @@ export const ENV_VALIDATION_SCHEMA: EnvValidationSchema = {
     required: true,
     type: 'string',
     description: 'Database password',
+    secret: true,
   },
   DB_NAME: {
     required: true,
@@ -62,11 +64,13 @@ export const ENV_VALIDATION_SCHEMA: EnvValidationSchema = {
     required: true,
     type: 'string',
     description: 'External API key',
+    secret: true,
   },
   API_SECRET: {
     required: false,
     type: 'string',
     description: 'External API secret',
+    secret: true,
   },
   API_BASE_URL: {
     required: false,
@@ -79,6 +83,12 @@ export const ENV_VALIDATION_SCHEMA: EnvValidationSchema = {
     type: 'number',
     default: 30000,
     description: 'API request timeout in milliseconds',
+  },
+  VAULT_ENCRYPTION_KEY: {
+    required: false,
+    type: 'string',
+    description: 'Encryption key for vault (32-byte hex string)',
+    secret: true,
   },
   RPC_ETHEREUM: {
     required: true,
@@ -135,6 +145,7 @@ export function validateEnvironment(
   env: Record<string, string | undefined>,
 ): void {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   for (const [key, schema] of Object.entries(ENV_VALIDATION_SCHEMA)) {
     const value = env[key];
@@ -155,10 +166,33 @@ export function validateEnvironment(
         `Invalid type for ${key}: expected ${schema.type}, got ${typeof value}`,
       );
     }
+
+    // Check for secret fields with placeholder values
+    if (schema.secret && value) {
+      const placeholderPatterns = [
+        'your_',
+        'YOUR_',
+        'generate-',
+        'placeholder',
+        'REPLACE',
+      ];
+      const isPlaceholder = placeholderPatterns.some((pattern) =>
+        value.toLowerCase().includes(pattern.toLowerCase()),
+      );
+      if (isPlaceholder) {
+        warnings.push(
+          `Secret field ${key} contains a placeholder value. This should be replaced with a real secret in production.`,
+        );
+      }
+    }
   }
 
   if (errors.length > 0) {
     throw new Error(`Environment validation failed:\n${errors.join('\n')}`);
+  }
+
+  if (warnings.length > 0) {
+    console.warn(`Environment validation warnings:\n${warnings.join('\n')}`);
   }
 }
 
