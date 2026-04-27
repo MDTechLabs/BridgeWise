@@ -7,7 +7,10 @@ import { AbandonmentTrackingService } from './abandonment-tracking.service';
 import { AbandonmentTrackingController } from './abandonment-tracking.controller';
 import { BridgeUsageHeatmapService } from './bridge-usage-heatmap.service';
 import { BridgeUsageHeatmapController } from './bridge-usage-heatmap.controller';
+import { MetricsStreamService } from './metrics-stream.service';
+import { MetricsStreamController } from './metrics-stream.controller';
 import { BridgeAnalytics } from './entities/bridge-analytics.entity';
+import { PerformanceMetricService } from './performance-metric.service';
 
 /**
  * Analytics Module
@@ -26,18 +29,22 @@ import { BridgeAnalytics } from './entities/bridge-analytics.entity';
     AnalyticsController,
     AbandonmentTrackingController,
     BridgeUsageHeatmapController,
+    MetricsStreamController,
   ],
   providers: [
     AnalyticsService,
     AnalyticsCollector,
     AbandonmentTrackingService,
     BridgeUsageHeatmapService,
+    MetricsStreamService,
+    PerformanceMetricService,
   ],
   exports: [
     AnalyticsService,
     AnalyticsCollector,
     AbandonmentTrackingService,
     BridgeUsageHeatmapService,
+    MetricsStreamService,
   ],
 })
 export class AnalyticsModule {}

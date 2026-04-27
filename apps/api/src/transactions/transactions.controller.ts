@@ -24,9 +24,14 @@ import type { Response } from 'express';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { ExportTransactionsDto, ExportFormat } from './dto/export-transactions.dto';
+import {
+  ExportTransactionsDto,
+  ExportFormat,
+} from './dto/export-transactions.dto';
 import { TransactionsService } from './transactions.service';
 import { TransactionsExportService } from './transactions-export.service';
+import { TransactionRetryService } from './retry/transaction-retry.service';
+import { TransactionStatus } from './entities/transaction.entity';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -34,6 +39,7 @@ export class TransactionsController {
   constructor(
     private readonly transactionService: TransactionsService,
     private readonly exportService: TransactionsExportService,
+    private readonly retryService: TransactionRetryService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -437,7 +443,8 @@ export class TransactionsController {
     content: {
       'text/csv': {
         schema: { type: 'string' },
-        example: 'ID,Type,Status,Source Chain,Destination Chain,Bridge Name,Amount,Fee,TX Hash,Created At,Completed At\ntxn_123,stellar-payment,completed,ethereum,polygon,hop,100,1.5,0xabc...,2024-01-15T10:00:00.000Z,2024-01-15T10:05:00.000Z',
+        example:
+          'ID,Type,Status,Source Chain,Destination Chain,Bridge Name,Amount,Fee,TX Hash,Created At,Completed At\ntxn_123,stellar-payment,completed,ethereum,polygon,hop,100,1.5,0xabc...,2024-01-15T10:00:00.000Z,2024-01-15T10:05:00.000Z',
       },
       'application/json': {
         schema: { type: 'array', items: { type: 'object' } },
@@ -457,10 +464,7 @@ export class TransactionsController {
 
     if (format === ExportFormat.CSV) {
       const csvContent = this.exportService.convertToCSV(data);
-      res.setHeader(
-        'Content-Type',
-        'text/csv; charset=utf-8',
-      );
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="transactions_${new Date().toISOString().split('T')[0]}.csv"`,
@@ -468,15 +472,241 @@ export class TransactionsController {
       return res.send(csvContent);
     } else {
       const jsonContent = this.exportService.convertToJSON(data);
-      res.setHeader(
-        'Content-Type',
-        'application/json; charset=utf-8',
-      );
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="transactions_${new Date().toISOString().split('T')[0]}.json"`,
       );
       return res.send(jsonContent);
     }
+  }
+
+  @Get(':id/failure-reason')
+  @ApiOperation({
+    summary: 'Get failure reason for transaction',
+    description:
+      'Retrieves detailed failure reason and suggested actions for a failed transaction.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: 'string',
+    description: 'Unique transaction identifier',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Failure reason retrieved successfully',
+  })
+  async getFailureReason(@Param('id') id: string) {
+    const transaction = await this.transactionService.findById(id);
+
+    if (transaction.status !== 'failed' && transaction.status !== 'partial') {
+      return {
+        category: 'UNKNOWN',
+        message: 'Transaction has not failed',
+        retryRecommended: false,
+        timestamp: new Date(),
+      };
+    }
+
+    // Analyze error and categorize
+    const error = transaction.error || '';
+    const category = this.categorizeError(error);
+
+    return {
+      category,
+      message: this.getFailureMessage(category),
+      details: error,
+      errorCode: this.extractErrorCode(error),
+      timestamp: transaction.updatedAt,
+      txHash: transaction.metadata?.txHash,
+      suggestedAction: this.getSuggestedAction(category),
+      retryRecommended: this.isRetryRecommended(category),
+    };
+  }
+
+  @Get(':id/alternative-routes')
+  @ApiOperation({
+    summary: 'Get alternative routes for failed transaction',
+    description:
+      'Suggests alternative bridge routes based on the original transaction parameters.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Alternative routes retrieved successfully',
+  })
+  async getAlternativeRoutes(@Param('id') id: string) {
+    const transaction = await this.transactionService.findById(id);
+
+    // Extract original transaction parameters
+    const { sourceChain, destinationChain, token, amount } =
+      transaction.metadata || {};
+
+    if (!sourceChain || !destinationChain) {
+      return [];
+    }
+
+    // TODO: Integrate with bridge recommendation service
+    // For now, return mock alternative routes
+    return [
+      {
+        bridgeName: 'Hop Protocol',
+        sourceChain,
+        destinationChain,
+        sourceToken: token || 'ETH',
+        destinationToken: token || 'ETH',
+        estimatedAmount: `${(parseFloat(amount || '0') * 0.995).toFixed(4)}`,
+        fee: '0.5%',
+        estimatedTime: 300,
+        successRate: 98,
+        reliabilityScore: 95,
+      },
+      {
+        bridgeName: 'Across Protocol',
+        sourceChain,
+        destinationChain,
+        sourceToken: token || 'ETH',
+        destinationToken: token || 'ETH',
+        estimatedAmount: `${(parseFloat(amount || '0') * 0.997).toFixed(4)}`,
+        fee: '0.3%',
+        estimatedTime: 180,
+        successRate: 99,
+        reliabilityScore: 97,
+      },
+    ];
+  }
+
+  @Post(':id/retry')
+  @ApiOperation({
+    summary: 'Retry failed transaction',
+    description:
+      'Attempts to retry a failed transaction with exponential backoff.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction retry initiated',
+  })
+  async retryTransaction(@Param('id') id: string) {
+    const transaction = await this.transactionService.findById(id);
+
+    if (transaction.status !== 'failed') {
+      return {
+        success: false,
+        error: 'Transaction is not in failed state',
+      };
+    }
+
+    const result = await this.retryService.retryTransaction(transaction);
+
+    return {
+      success: !!result,
+      transaction: result,
+    };
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({
+    summary: 'Cancel transaction',
+    description:
+      'Cancels a failed or pending transaction and initiates refund.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction cancelled successfully',
+  })
+  async cancelTransaction(@Param('id') id: string) {
+    const transaction = await this.transactionService.findById(id);
+
+    // Update transaction status to cancelled
+    const updated = await this.transactionService.update(id, {
+      status: TransactionStatus.FAILED,
+      state: { ...transaction.state, cancelled: true },
+    });
+
+    // TODO: Initiate refund process
+    this.eventEmitter.emit('transaction.cancelled', updated);
+
+    return {
+      success: true,
+      message: 'Transaction cancelled. Refund will be processed.',
+    };
+  }
+
+  // Helper methods for error categorization
+  private categorizeError(error: string): string {
+    const lowerError = error.toLowerCase();
+
+    if (lowerError.includes('insufficient') || lowerError.includes('balance')) {
+      return 'INSUFFICIENT_FUNDS';
+    }
+    if (lowerError.includes('network') || lowerError.includes('connection')) {
+      return 'NETWORK_ERROR';
+    }
+    if (lowerError.includes('slippage')) {
+      return 'SLIPPAGE_EXCEEDED';
+    }
+    if (lowerError.includes('timeout') || lowerError.includes('time')) {
+      return 'TIMEOUT';
+    }
+    if (lowerError.includes('liquidity')) {
+      return 'BRIDGE_LIQUIDITY';
+    }
+    if (lowerError.includes('validation') || lowerError.includes('invalid')) {
+      return 'VALIDATION_ERROR';
+    }
+    if (lowerError.includes('reject') || lowerError.includes('user')) {
+      return 'USER_REJECTED';
+    }
+    if (lowerError.includes('contract') || lowerError.includes('revert')) {
+      return 'CONTRACT_ERROR';
+    }
+
+    return 'UNKNOWN';
+  }
+
+  private getFailureMessage(category: string): string {
+    const messages: Record<string, string> = {
+      INSUFFICIENT_FUNDS: 'Insufficient funds to complete the transaction',
+      NETWORK_ERROR: 'Network error occurred during transaction',
+      SLIPPAGE_EXCEEDED: 'Price slippage exceeded the allowed threshold',
+      TIMEOUT: 'Transaction timed out waiting for confirmation',
+      BRIDGE_LIQUIDITY: 'Insufficient liquidity in bridge pool',
+      VALIDATION_ERROR: 'Transaction validation failed',
+      USER_REJECTED: 'Transaction was rejected by user',
+      CONTRACT_ERROR: 'Smart contract execution failed',
+      UNKNOWN: 'An unknown error occurred',
+    };
+    return messages[category] || messages.UNKNOWN;
+  }
+
+  private extractErrorCode(error: string): string | undefined {
+    const match = error.match(/(?:error code|code)[:\s]*(\w+)/i);
+    return match?.[1];
+  }
+
+  private getSuggestedAction(category: string): string {
+    const actions: Record<string, string> = {
+      INSUFFICIENT_FUNDS: 'Add more funds to your wallet and try again',
+      NETWORK_ERROR: 'Check your internet connection and retry',
+      SLIPPAGE_EXCEEDED:
+        'Increase slippage tolerance or wait for lower volatility',
+      TIMEOUT: 'Network is congested. Try again later or use a different route',
+      BRIDGE_LIQUIDITY:
+        'Try a different bridge provider with available liquidity',
+      VALIDATION_ERROR: 'Verify transaction parameters and try again',
+      USER_REJECTED: 'Confirm the transaction in your wallet to proceed',
+      CONTRACT_ERROR:
+        'Contract may be paused. Try again later or contact support',
+      UNKNOWN: 'Contact support if the issue persists',
+    };
+    return actions[category] || actions.UNKNOWN;
+  }
+
+  private isRetryRecommended(category: string): boolean {
+    const notRecommended = [
+      'USER_REJECTED',
+      'VALIDATION_ERROR',
+      'INSUFFICIENT_FUNDS',
+    ];
+    return !notRecommended.includes(category);
   }
 }
