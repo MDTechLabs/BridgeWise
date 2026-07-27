@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "typeRoots": [
+      "../../packages/config/node_modules/@types",
+      "../../node_modules/@types"
+    ],
+    "paths": {
+      "@nestjs/common": ["../../packages/config/node_modules/@nestjs/common"],
+      "@nestjs/core": ["../../packages/config/node_modules/@nestjs/common"],
+      "reflect-metadata": ["../../packages/config/node_modules/reflect-metadata"],
+      "rxjs": ["../../packages/config/node_modules/rxjs"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+}

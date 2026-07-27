@@ -1,0 +1,38 @@
+import { EventEmitter } from 'events';
+import type { CongestionAlert, CongestionProbe, CongestionStatus, CongestionThresholds, StellarCongestionMonitorConfig } from './types';
+export declare class StellarCongestionMonitor extends EventEmitter {
+    private readonly config;
+    private readonly probes;
+    private readonly metricsHistory;
+    private readonly statuses;
+    private readonly activeAlerts;
+    private checkInterval;
+    constructor(config?: StellarCongestionMonitorConfig);
+    registerRoute(routeId: string, probe: CongestionProbe): void;
+    unregisterRoute(routeId: string): boolean;
+    reset(): void;
+    getRouteStatus(routeId: string): CongestionStatus | null;
+    getAllStatuses(): CongestionStatus[];
+    getActiveAlerts(routeId: string): CongestionAlert[];
+    getAllActiveAlerts(): CongestionAlert[];
+    startMonitoring(): void;
+    stopMonitoring(): void;
+    checkAll(): Promise<void>;
+    checkRoute(routeId: string): Promise<CongestionStatus | null>;
+    updateThresholds(thresholds: Partial<CongestionThresholds>): void;
+    getThresholds(): Required<CongestionThresholds>;
+    private createEmptyMetrics;
+    private recordMetrics;
+    private evaluateCongestionStatus;
+    private countThresholdBreaches;
+    private detectSpike;
+    private updateStatus;
+    private detectAndGenerateAlerts;
+    private getLatencySeverity;
+    private getRateSeverity;
+    private getValueSeverity;
+    private getThroughputSeverity;
+    private emitAlert;
+    private emitStatusChange;
+    private withTimeout;
+}
