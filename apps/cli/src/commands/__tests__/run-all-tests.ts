@@ -5,6 +5,7 @@ import { CompareCommand } from '../compare.command';
 import { StatusCommand } from '../status.command';
 import { CommandRunner } from '../command-runner';
 import { HelpCommand } from '../help.command';
+import { StatusChecker } from '../../../../../libs/sdk/src/status-checker';
 
 declare const process: { exit(code?: number): void };
 
@@ -73,12 +74,32 @@ async function runAllTests() {
     assert(res.success === true && res.data![0].recommended === true, 'Compares routes and ranks recommended route first');
   }
 
-  // 5. StatusCommand Tests
+  // 5. StatusCommand & StatusChecker Tests
   {
-    console.log('\n[StatusCommand]');
+    console.log('\n[StatusCommand & StatusChecker]');
     const status = new StatusCommand();
-    const res = await status.execute([], { chainId: 148 });
-    assert(res.success === true && res.data!.chainId === 148 && res.data!.health === 'healthy', 'Returns health status by chainId');
+    const validHash = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F1234567890abcdef12345678';
+    
+    const res1 = await status.execute([validHash], {});
+    assert(res1.success === true && res1.data!.txHash === validHash && res1.data!.milestones.length === 3, 'Returns real-time cross-chain lifecycle status for valid hash');
+
+    const res2 = await status.execute([validHash], { 'source-chain': 'Stellar' });
+    assert(res2.success === true && res2.data!.sourceChain === 'Stellar', 'Respects --source-chain flag');
+
+    const res3 = await status.execute(['invalid_hash_value'], {});
+    assert(res3.success === false && res3.error!.includes('Invalid transaction hash'), 'Handles invalid hash gracefully');
+
+    const res4 = await status.execute([validHash], { 'source-chain': 'UnsupportedChain' });
+    assert(res4.success === false && res4.error!.includes('Unsupported source chain'), 'Handles unsupported chain gracefully');
+
+    const checker = new StatusChecker();
+    assert(StatusChecker.isValidTxHash(validHash) === true, 'StatusChecker validates hex tx hash');
+    assert(StatusChecker.isValidTxHash('invalid') === false, 'StatusChecker rejects invalid tx hash');
+    assert(StatusChecker.normalizeChain('stellar') === 'Stellar', 'StatusChecker normalizes chain name');
+    assert(StatusChecker.normalizeChain('invalid') === null, 'StatusChecker returns null for invalid chain');
+
+    const checkRes = await checker.checkStatus(validHash, { sourceChain: 'Polygon' });
+    assert(checkRes.sourceChain === 'Polygon' && checkRes.status === 'Relayed', 'StatusChecker queries full lifecycle status');
   }
 
   // 6. CommandRunner Tests

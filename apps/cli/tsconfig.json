@@ -9,7 +9,7 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../../",
     "skipLibCheck": true,
     "typeRoots": [
       "../../packages/config/node_modules/@types",
@@ -22,6 +22,6 @@
       "rxjs": ["../../packages/config/node_modules/rxjs"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../libs/sdk/src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }
