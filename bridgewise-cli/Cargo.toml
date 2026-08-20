@@ -1,0 +1,15 @@
+[package]
+name = "bridgewise-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+solang-parser = "0.3.5"
+
+[lib]
+name = "bridgewise_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bridgewise-cli"
+path = "src/main.rs"
