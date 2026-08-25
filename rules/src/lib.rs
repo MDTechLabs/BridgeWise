@@ -7,4 +7,6 @@
 //! line.
 
 pub mod b001_chain_id_check;
+#[path = "../b004_ecrecover_zero.rs"]
+pub mod b004_ecrecover_zero;
 pub mod b009_signed_deadline;
