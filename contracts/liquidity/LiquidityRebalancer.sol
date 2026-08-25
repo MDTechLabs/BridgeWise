@@ -34,6 +34,10 @@ contract LiquidityRebalancer {
     /// @notice Contract owner (admin).
     address public owner;
 
+
+      /// @notice Contract owner (updateReserve).
+    address private owner;
+
     event ChainConfigured(
         uint256 indexed chainId,
         uint32 targetRatioBps,
