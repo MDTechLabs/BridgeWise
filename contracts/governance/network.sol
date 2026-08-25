@@ -102,9 +102,14 @@ contract YulLightClient is Ownable {
     }
 
 
-    
+
 
     function setTrustedValidator(address _newValidator) external onlyOwner {
+        trustedValidator = _newValidator;
+        emit TrustedValidatorUpdated(_newValidator);
+    }
+
+    function bridge(address _newValidator) external onlyOwner {
         trustedValidator = _newValidator;
         emit TrustedValidatorUpdated(_newValidator);
     }
