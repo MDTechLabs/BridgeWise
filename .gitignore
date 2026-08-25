@@ -56,7 +56,7 @@ libs/bridge-core/node_modules
 # hardhat
 artifacts/
 cache/
-types/
+/types/
 
 # Secret files
 *.key
