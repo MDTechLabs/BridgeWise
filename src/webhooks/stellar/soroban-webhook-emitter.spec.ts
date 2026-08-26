@@ -230,4 +230,52 @@ describe('SorobanWebhookEmitter', () => {
       expect(results).toHaveLength(0);
     });
   });
+
+  describe('Backoff retries and Duplicate protection', () => {
+    it('should retry on failure and eventually succeed if fetch succeeds', async () => {
+      fetchMock
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ ok: true, status: 200 } as unknown as Response);
+
+      emitter = new SorobanWebhookEmitter(fetchMock, {
+        maxRetries: 3,
+        initialDelayMs: 1,
+        backoffFactor: 2,
+      });
+
+      emitter.register({
+        url: 'https://example.com/hook',
+        events: ['transfer.completed'],
+      });
+
+      const results = await emitter.emitLifecycleEvent('tx-1', 'confirmed', 'completed');
+      expect(results[0].success).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it('should skip duplicate deliveries to the same registration', async () => {
+      emitter = new SorobanWebhookEmitter(fetchMock);
+      const reg = emitter.register({
+        url: 'https://example.com/hook',
+        events: ['transfer.completed'],
+      });
+
+      const payload = {
+        id: 'duplicate-payload-id',
+        event: 'transfer.completed' as any,
+        timestamp: Date.now(),
+        data: {},
+      };
+
+      const result1 = await emitter['deliverWithRetry'](reg, payload);
+      expect(result1.success).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const result2 = await emitter['deliverWithRetry'](reg, payload);
+      expect(result2.success).toBe(true);
+      expect(result2.error).toBe('Duplicate delivery skipped');
+      expect(fetchMock).toHaveBeenCalledTimes(1); // Still 1 fetch call total!
+    });
+  });
 });
