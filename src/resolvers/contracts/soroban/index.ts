@@ -2,6 +2,7 @@ export {
   SorobanContractResolver,
   sorobanContractResolver,
 } from './soroban-contract-resolver.service';
+export { SorobanTokenContractResolver } from './soroban-token-contract-resolver';
 export type { } from './soroban-contract-resolver.service';
 
 export {
