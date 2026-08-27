@@ -6,7 +6,7 @@ This document summarizes the implementation of four critical Stellar/Soroban bri
 
 ## Issue #352: Soroban Cross-Chain Settlement Verifier
 
-**Location:** `src/verification/settlements/stellar/`
+**Location:** `src/verification/settlements/stellar/`.
 
 ### Files Created:
 - `settlement-verifier.types.ts` - Type definitions and enums
