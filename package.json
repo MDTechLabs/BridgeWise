@@ -44,8 +44,7 @@
     "stellar-sdk": "^13.3.0",
     "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.28",
-    "uuid": "^13.0.0",
-    "vitest": "^4.1.11"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

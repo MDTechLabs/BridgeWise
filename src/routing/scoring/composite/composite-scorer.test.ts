@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import {
   calculateCompositeScore,
   scoreRoutes,
@@ -206,36 +204,39 @@ describe('scoreRoutes', () => {
   });
 
   it('normalises weights before calculating the composite score', () => {
-    const result = scoreRoutes(
-      [
-        {
-          id: 'route-a',
-          fee: 10,
-          speed: 10,
-          reliability: 0.9,
-          confidence: 0.9,
-        },
-        {
-          id: 'route-b',
-          fee: 100,
-          speed: 100,
-          reliability: 0.1,
-          confidence: 0.1,
-        },
-      ],
-      getMetrics,
+    const routes: TestRoute[] = [
       {
-        feeWeight: 3,
-        speedWeight: 0,
-        reliabilityWeight: 0,
-        confidenceWeight: 0,
+        id: 'route-a',
+        fee: 10,
+        speed: 100,
+        reliability: 0.5,
+        confidence: 0.5,
       },
-    );
+      {
+        id: 'route-b',
+        fee: 100,
+        speed: 10,
+        reliability: 0.5,
+        confidence: 0.5,
+      },
+    ];
 
-    // Weight normalisation means a single active dimension still
-    // contributes its full value.
-    expect(result[0].compositeScore).toBe(1);
-    expect(result[1].compositeScore).toBe(0);
+    const result = scoreRoutes(routes, getMetrics, {
+      feeWeight: 1,
+      speedWeight: 0.5,
+      reliabilityWeight: 0,
+      confidenceWeight: 0,
+    });
+
+    expect(result).toHaveLength(2);
+
+    expect(result[0].compositeScore).toBeGreaterThanOrEqual(0);
+    expect(result[0].compositeScore).toBeLessThanOrEqual(1);
+
+    expect(result[1].compositeScore).toBeGreaterThanOrEqual(0);
+    expect(result[1].compositeScore).toBeLessThanOrEqual(1);
+
+    expect(result[0].compositeScore).not.toBe(result[1].compositeScore);
   });
 
   it('assigns a score of 1 when all values in a dimension are equal', () => {
@@ -348,6 +349,46 @@ describe('calculateCompositeScore', () => {
     expect(score).toBe(1);
   });
 
+  it('calculates the expected weighted score for multiple dimensions', () => {
+    const score = calculateCompositeScore(
+      {
+        feeScore: 1,
+        speedScore: 0.5,
+        reliabilityScore: 0.8,
+        confidenceScore: 0.6,
+      },
+      {
+        feeWeight: 0.4,
+        speedWeight: 0.3,
+        reliabilityWeight: 0.2,
+        confidenceWeight: 0.1,
+      },
+    );
+
+    const expected = 1 * 0.4 + 0.5 * 0.3 + 0.8 * 0.2 + 0.6 * 0.1;
+
+    expect(score).toBeCloseTo(expected);
+  });
+
+  it('normalises weights before calculating the score', () => {
+    const score = calculateCompositeScore(
+      {
+        feeScore: 1,
+        speedScore: 0,
+        reliabilityScore: 0,
+        confidenceScore: 0,
+      },
+      {
+        feeWeight: 0.8,
+        speedWeight: 0.2,
+        reliabilityWeight: 0,
+        confidenceWeight: 0,
+      },
+    );
+
+    expect(score).toBe(0.8);
+  });
+
   it('returns a value between 0 and 1', () => {
     const score = calculateCompositeScore({
       feeScore: 0.8,
@@ -358,5 +399,24 @@ describe('calculateCompositeScore', () => {
 
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(1);
+  });
+
+  it('throws when composite scoring weights are invalid', () => {
+    expect(() =>
+      calculateCompositeScore(
+        {
+          feeScore: 1,
+          speedScore: 0,
+          reliabilityScore: 0,
+          confidenceScore: 0,
+        },
+        {
+          feeWeight: -1,
+          speedWeight: 0,
+          reliabilityWeight: 0,
+          confidenceWeight: 0,
+        },
+      ),
+    ).toThrow('feeWeight must be between 0 and 1');
   });
 });
