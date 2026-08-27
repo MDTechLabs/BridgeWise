@@ -39,6 +39,7 @@ export interface RetryAttempt {
   attemptNumber: number;
   /** Unix timestamp (ms) when this attempt began */
   startedAt: number;
+  /** Whether this specific attempt succeeded */
   success: boolean;
   /** Error message if the attempt failed */
   error?: string;
@@ -50,14 +51,17 @@ export interface RetryAttempt {
  * Aggregated outcome of all retry attempts for a single transfer.
  */
 export interface RetryResult {
+  /** Stellar transaction hash of the transfer that was retried */
   transferHash: string;
   /** Number of operation invocations made (0 if the failure was non-retryable) */
   totalAttempts: number;
+  /** Whether the operation ultimately succeeded within the configured attempts */
   success: boolean;
   /** Recovery transaction hash returned by the operation on success */
   recoveryTransactionHash?: string;
   /** Error from the last attempt, or reason skipped when non-retryable */
   finalError?: string;
+  /** Chronological history of every attempt made (empty if non-retryable) */
   attempts: RetryAttempt[];
 }
 
