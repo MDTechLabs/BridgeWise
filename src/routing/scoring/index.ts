@@ -12,3 +12,12 @@ export {
   mergeScoringWeights,
   normaliseWeights,
 } from './scoring-weights';
+
+export {
+  calculateCompositeScore,
+  scoreRoutes,
+  type RoutingMetricsExtractor,
+  type RoutingScoringMetrics,
+} from './composite/composite-scorer';
+
+export { scoreStellarRoutes } from './stellar';
