@@ -1,6 +1,6 @@
 # Stellar/Soroban Features Implementation Summary
 
-This document summarizes the implementation of four critical Stellar/Soroban bridge features for BridgeWise.
+This document summarizes the implementation of four critical Stellar/Soroban bridge features for BridgeWise..
 
 ---
 

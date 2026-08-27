@@ -1,6 +1,6 @@
 /**
  * Example usage of Stellar bridge services
- * Demonstrates how to use the four implemented features together
+ * Demonstrates how to use the four implemented features together.
  */
 
 // # CORS_ORIGIN: Comma-separated list of allowed origins
