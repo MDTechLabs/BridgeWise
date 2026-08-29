@@ -1,0 +1,18 @@
+[package]
+name = "rules"
+version = "0.1.0"
+edition = "2021"
+description = "Standalone static-analysis rules for BridgeWise's Solidity bridge contracts."
+
+[dependencies]
+solang-parser = "0.3.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[lib]
+name = "rules"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rules"
+path = "src/main.rs"

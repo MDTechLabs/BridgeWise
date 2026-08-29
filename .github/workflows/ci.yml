@@ -24,3 +24,9 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Test Cargo Rules
+        run: cargo test
+

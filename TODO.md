@@ -5,5 +5,6 @@
 - [ ] Add test report generation to output JSON/HTML artifact(s) under the simulator folder.
 - [ ] Run `npm test` (or appropriate Jest command) and fix any errors.
 - [ ] Verify simulator acceptance criteria: provider outage simulation + failover validation.
-- [ ] Run full test suite, ensure clean pass.
+- [ ] Run full test suite, ensure clean pass...
 
+<!-- ## Stellar/Soroban Features - All Issues Implemented -->

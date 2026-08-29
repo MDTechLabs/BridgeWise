@@ -8,6 +8,22 @@ pragma solidity ^0.8.24;
 /// @dev Uses TSTORE/TLOAD opcodes to set and check execution locks. Transient
 ///      storage is automatically cleared at transaction end, eliminating the gas
 ///      refund overhead of persistent SSTORE-based reentrancy guards.
+///
+/// @dev Nonce validation scope (see docs/SIGNATURE_SPECIFICATION.md §5):
+///      This guard is INTRA-transaction only. Transient storage is wiped at the end of
+///      the transaction, so it cannot detect a message replayed in a later block. It is
+///      a complement to, never a replacement for, the persistent nonce and executed-set
+///      tracking required of every verifier:
+///
+///        mapping(uint256 sourceChainId => mapping(address sender => uint256 nonce))
+///
+///      A message is accepted only when `nonce == expectedNonce[sourceChainId][sender]`,
+///      and that counter is incremented before any external call. Gaps are not
+///      permitted, and nonce state is never reset on validator set rotation.
+///
+///      `messageHash` passed here MUST be the signed EIP-712 `messageId`
+///      (`keccak256(abi.encode(sourceChainId, targetChainId, sender, nonce))`), not a
+///      raw calldata digest — otherwise the lock is not bound to the message's lane.
 abstract contract TransientReplayGuard {
     /// @notice Thrown when a message hash is replayed within the same transaction.
     error MessageReplayed(bytes32 messageHash);

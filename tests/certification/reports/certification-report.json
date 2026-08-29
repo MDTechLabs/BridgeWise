@@ -1,0 +1,110 @@
+{
+  "timestamp": 1787745600000,
+  "runDate": "2026-08-26T12:00:00.000Z",
+  "summary": {
+    "totalEvaluated": 3,
+    "certified": 2,
+    "uncertified": 1
+  },
+  "providers": [
+    {
+      "providerId": "allbridge-platinum",
+      "level": "platinum",
+      "score": 98.96,
+      "status": "active",
+      "criteria": [
+        {
+          "name": "security",
+          "score": 30,
+          "rationale": "Security score 100/100: fully compliant"
+        },
+        {
+          "name": "reliability",
+          "score": 24.8625,
+          "rationale": "Uptime 99.9%, success rate 99.0%"
+        },
+        {
+          "name": "performance",
+          "score": 14.1,
+          "rationale": "Latency 120ms"
+        },
+        {
+          "name": "compliance",
+          "score": 15,
+          "rationale": "Compliance 100/100: fully compliant"
+        },
+        {
+          "name": "trust",
+          "score": 15,
+          "rationale": "Registered 100d ago, 15000 historical ops"
+        }
+      ]
+    },
+    {
+      "providerId": "allbridge-gold",
+      "level": "gold",
+      "score": 86.07,
+      "status": "active",
+      "criteria": [
+        {
+          "name": "security",
+          "score": 30,
+          "rationale": "Security score 100/100: fully compliant"
+        },
+        {
+          "name": "reliability",
+          "score": 24.3125,
+          "rationale": "Uptime 98.5%, success rate 96.0%"
+        },
+        {
+          "name": "performance",
+          "score": 11.625,
+          "rationale": "Latency 450ms"
+        },
+        {
+          "name": "compliance",
+          "score": 13.049999999999999,
+          "rationale": "Compliance 87/100: fully compliant"
+        },
+        {
+          "name": "trust",
+          "score": 7.083333333333333,
+          "rationale": "Registered 40d ago, 5000 historical ops"
+        }
+      ]
+    },
+    {
+      "providerId": "untrusted-bridge",
+      "level": "uncertified",
+      "score": 33.48,
+      "status": "active",
+      "criteria": [
+        {
+          "name": "security",
+          "score": 0,
+          "rationale": "Security score 0/100: no HTTPS, invalid metadata"
+        },
+        {
+          "name": "reliability",
+          "score": 21.875,
+          "rationale": "Uptime 90.0%, success rate 85.0%"
+        },
+        {
+          "name": "performance",
+          "score": 6,
+          "rationale": "Latency 1200ms"
+        },
+        {
+          "name": "compliance",
+          "score": 5.3999999999999995,
+          "rationale": "Compliance 36/100: version not semver"
+        },
+        {
+          "name": "trust",
+          "score": 0.20416666666666666,
+          "rationale": "Registered 2d ago, 50 historical ops"
+        }
+      ]
+    }
+  ]
+}

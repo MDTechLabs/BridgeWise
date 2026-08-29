@@ -1,1 +1,0 @@
-{"version":3,"file":"useBridgeValidation.js","sourceRoot":"","sources":["useBridgeValidation.ts"],"names":[],"mappings":";;AASA,kDASC;AAlBD,iCAAgC;AAChC,2DAAyD;AAQzD,SAAgB,mBAAmB,CACjC,KAAa,EACb,WAAmB,EACnB,gBAAwB;IAExB,OAAO,IAAA,eAAO,EACZ,GAAG,EAAE,CAAC,IAAA,kCAAgB,EAAC,KAAK,EAAE,WAAW,EAAE,gBAAgB,CAAC,EAC5D,CAAC,KAAK,EAAE,WAAW,EAAE,gBAAgB,CAAC,CACvC,CAAC;AACJ,CAAC"}

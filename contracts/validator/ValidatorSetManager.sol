@@ -9,6 +9,22 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 ///         prevent operational downtime during key rotations.
 /// @dev Validator proposals are activated only after EPOCH_DELAY seconds, and the
 ///      outgoing validator set remains valid for OVERLAP_WINDOW seconds after activation.
+///
+/// @dev Quorum / signature rules (see docs/SIGNATURE_SPECIFICATION.md §6):
+///      Validators sign EIP-712 typed data under the `BridgeWiseDomain` separator:
+///
+///        BridgeWiseDomain(string name,string version,uint256 sourceChainId,
+///                         uint256 targetChainId,address bridgeAddress)
+///
+///      Consuming verifiers MUST require at least `activeThreshold` valid, distinct
+///      signers. Signature bundles are 65-byte (r, s, v) tuples supplied in strictly
+///      ascending signer-address order; duplicates revert, `s` must be in the lower
+///      half order, and a recovery result of `address(0)` is a failure.
+///
+///      During `OVERLAP_WINDOW` after activation, signatures from the outgoing set
+///      remain valid, but a bundle MUST NOT mix the outgoing and incoming sets to
+///      reach quorum — quorum is evaluated against the set the signers belong to.
+///      Rotation never resets per-sender nonce state.
 contract ValidatorSetManager is AccessControl {
     /// @notice Role authorized to propose validator set changes.
     bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");

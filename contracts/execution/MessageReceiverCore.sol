@@ -10,6 +10,26 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 ///         entire cross-chain transaction.
 /// @dev Executes target calls using low-level `.call()` inside assembly. On failure,
 ///      tokens are forwarded to FallbackEscrow for user claiming.
+///
+/// @dev EIP-712 domain spec (see docs/SIGNATURE_SPECIFICATION.md):
+///      Messages reaching `executeMessage` MUST already have been verified against the
+///      `BridgeWiseDomain` separator:
+///
+///        BridgeWiseDomain(string name,string version,uint256 sourceChainId,
+///                         uint256 targetChainId,address bridgeAddress)
+///
+///      with `name = "BridgeWise"`, `version = "1"`, `targetChainId == block.chainid`
+///      and `bridgeAddress == address(this)` on the verifying contract. The payload
+///      type hash is:
+///
+///        BridgeMessage(bytes32 messageId,address sender,address recipient,
+///                      address token,uint256 amount,uint256 nonce,
+///                      uint256 deadline,bytes32 payloadHash)
+///
+///      `messageId` is the derived value `keccak256(abi.encode(sourceChainId,
+///      targetChainId, sender, nonce))`, and `data` passed here MUST satisfy
+///      `keccak256(data) == payloadHash`. This contract performs execution only — it
+///      does NOT re-verify signatures, nonces, or deadlines.
 contract MessageReceiverCore {
     using SafeERC20 for IERC20;
 

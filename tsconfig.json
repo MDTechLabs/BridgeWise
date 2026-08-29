@@ -32,6 +32,8 @@
     "**/*.spec.ts",
     "**/*.e2e-spec.ts",
     "apps/web/.next/**",
-    "apps/web/dist/**"
+    "apps/web/dist/**",
+    "test/config/**/*",
+    "contracts/"
   ]
 }

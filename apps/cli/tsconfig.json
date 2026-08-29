@@ -12,6 +12,7 @@
     "rootDir": "./src",
     "skipLibCheck": true,
     "typeRoots": [
+      "node_modules/@types",
       "../../packages/config/node_modules/@types",
       "../../node_modules/@types"
     ],

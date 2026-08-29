@@ -58,6 +58,13 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - UI status updates
   - Configuration options
 
+- **[SIGNATURE_SPECIFICATION.md](./SIGNATURE_SPECIFICATION.md)** - SIGNATURE SPEC
+  - EIP-712 typed data hashing for cross-chain messages
+  - Mandatory domain separator parameters (`sourceChainId`, `targetChainId`, `bridgeAddress`)
+  - Nonce validation and replay-surface requirements
+  - Quorum, signature encoding, and validator rotation overlap rules
+  - Verifier implementation checklist
+
 - **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - IMPLEMENTATION DETAILS
   - What was implemented
   - Acceptance criteria checklist

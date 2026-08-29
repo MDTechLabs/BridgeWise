@@ -10,7 +10,13 @@
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
-  "keywords": ["bridge", "cross-chain", "security", "exploit", "detection"],
+  "keywords": [
+    "bridge",
+    "cross-chain",
+    "security",
+    "exploit",
+    "detection"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {},
@@ -19,6 +25,6 @@
     "@types/node": "^22.10.7",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.3.0"
+    "typescript": "^5.7.3"
   }
 }

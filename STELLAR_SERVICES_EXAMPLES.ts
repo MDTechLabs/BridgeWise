@@ -1,8 +1,10 @@
 /**
  * Example usage of Stellar bridge services
- * Demonstrates how to use the four implemented features together
+ * Demonstrates how to use the four implemented features together.
  */
 
+// # CORS_ORIGIN: Comma-separated list of allowed origins
+// # IMPORTANT: Never use * in production, always specify exact domains
 import { SorobanSettlementVerifier } from './src/verification/settlements/stellar';
 import { StellarTransferAuditAPI, AuditAction, AuditStatus } from './src/audit/transfers/stellar';
 import { StellarTransferNotificationService, NotificationChannel, NotificationPriority } from './src/notifications/stellar';

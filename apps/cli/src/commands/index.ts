@@ -5,5 +5,7 @@ export * from './congestion.command';
 export * from './compare.command';
 export * from './status.command';
 export * from './help.command';
+export * from './check-invariants.command';
+export * from './invariants.command';
 export * from './command-runner';
 export * from './commands.module';
