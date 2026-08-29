@@ -1,4 +1,3 @@
-```ts
 /**
  * Soroban Multi-Contract Invocation Planner
  *
@@ -519,4 +518,3 @@ export function toExecutableInvocations(
 ): SorobanInvocation[] {
   return plan.steps.map((step) => step.invocation);
 }
-```
