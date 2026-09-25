@@ -20,12 +20,13 @@ export interface RouteLiquidityScore {
   status: 'healthy' | 'warning' | 'critical';
 }
 
-export const DEFAULT_LIQUIDITY_THRESHOLDS: Required<LiquidityThresholdConfig> = {
-  minCoverage: 1,
-  warningCoverage: 0.8,
-  criticalCoverage: 0.5,
-  maxPenalty: 0.6,
-};
+export const DEFAULT_LIQUIDITY_THRESHOLDS: Required<LiquidityThresholdConfig> =
+  {
+    minCoverage: 1,
+    warningCoverage: 0.8,
+    criticalCoverage: 0.5,
+    maxPenalty: 0.6,
+  };
 
 export function calculateLiquidityCoverage(
   availableLiquidity: number,

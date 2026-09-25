@@ -12,7 +12,10 @@ describe('Stellar route liquidity scoring', () => {
   });
 
   it('penalizes low-liquidity routes', () => {
-    const score = calculateLiquidityScore({ availableLiquidity: 100, requiredLiquidity: 500 });
+    const score = calculateLiquidityScore({
+      availableLiquidity: 100,
+      requiredLiquidity: 500,
+    });
 
     expect(score.coverage).toBe(0.2);
     expect(score.status).toBe('critical');
@@ -21,7 +24,10 @@ describe('Stellar route liquidity scoring', () => {
   });
 
   it('keeps healthy routes near full score', () => {
-    const score = calculateLiquidityScore({ availableLiquidity: 1000, requiredLiquidity: 500 });
+    const score = calculateLiquidityScore({
+      availableLiquidity: 1000,
+      requiredLiquidity: 500,
+    });
 
     expect(score.status).toBe('healthy');
     expect(score.score).toBeCloseTo(1, 5);
