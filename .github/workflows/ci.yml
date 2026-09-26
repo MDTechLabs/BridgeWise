@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test key vault and rotation lifecycle
+        run: pnpm --filter api exec jest --runInBand --moduleFileExtensions ts json js -- security/api-key-vault.service.spec.ts security/api-key-rotation.service.spec.ts
+
       - name: Build
         run: pnpm run build
 
