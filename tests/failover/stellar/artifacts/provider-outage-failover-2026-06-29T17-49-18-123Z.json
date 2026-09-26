@@ -1,0 +1,95 @@
+{
+  "simulator": "provider-outage-simulator",
+  "createdAt": "2026-06-29T17:49:18.122Z",
+  "scenarios": [
+    {
+      "scenarioId": "primary_unavailable_failover",
+      "durationMs": 0,
+      "activeProviderId": "Wormhole",
+      "failedProviders": [
+        "AllBridge"
+      ],
+      "attemptedProviders": [
+        "AllBridge",
+        "Wormhole"
+      ],
+      "quotes": [
+        {
+          "providerId": "AllBridge",
+          "simulatedError": "[AllBridge] unavailable"
+        },
+        {
+          "providerId": "Wormhole"
+        }
+      ],
+      "expectations": {
+        "expectedActiveProviderId": "Wormhole",
+        "expectedFailedProviders": [
+          "AllBridge"
+        ]
+      },
+      "meta": {
+        "providerCount": 2
+      },
+      "pass": true
+    },
+    {
+      "scenarioId": "primary_two_calls_then_fail",
+      "durationMs": 0,
+      "activeProviderId": "AllBridge",
+      "failedProviders": [],
+      "attemptedProviders": [
+        "AllBridge"
+      ],
+      "quotes": [
+        {
+          "providerId": "AllBridge"
+        }
+      ],
+      "expectations": {
+        "expectedActiveProviderId": "Wormhole",
+        "expectedFailedProviders": [
+          "AllBridge"
+        ]
+      },
+      "meta": {
+        "providerCount": 2
+      },
+      "pass": false
+    },
+    {
+      "scenarioId": "all_providers_down",
+      "durationMs": 0,
+      "activeProviderId": null,
+      "failedProviders": [
+        "AllBridge",
+        "Wormhole"
+      ],
+      "attemptedProviders": [
+        "AllBridge",
+        "Wormhole"
+      ],
+      "quotes": [
+        {
+          "providerId": "AllBridge",
+          "simulatedError": "[AllBridge] unavailable"
+        },
+        {
+          "providerId": "Wormhole",
+          "simulatedError": "[Wormhole] unavailable"
+        }
+      ],
+      "expectations": {
+        "expectedActiveProviderId": null,
+        "expectedFailedProviders": [
+          "AllBridge",
+          "Wormhole"
+        ]
+      },
+      "meta": {
+        "providerCount": 2
+      },
+      "pass": true
+    }
+  ]
+}

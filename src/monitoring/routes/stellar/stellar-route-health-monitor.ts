@@ -26,6 +26,16 @@ export interface StellarRouteHealthMonitorConfig {
   timeoutMs?: number;
   unhealthyThreshold?: number;
   degradedAvailabilityThreshold?: number;
+  latencyThresholdMs?: number;
+}
+
+export interface RouteHealthAlert {
+  routeId: string;
+  status: RouteHealthStatus;
+  message: string;
+  timestamp: Date;
+  availability: number;
+  latencyMs?: number;
 }
 
 export interface RouteStatusChange {
@@ -42,6 +52,7 @@ export class StellarRouteHealthMonitor extends EventEmitter {
   private readonly config: Required<StellarRouteHealthMonitorConfig>;
   private readonly probes = new Map<string, RouteProbe>();
   private readonly routeStates = new Map<string, RouteHealthState>();
+  private readonly activeAlerts = new Map<string, RouteHealthAlert>();
   private checkInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: StellarRouteHealthMonitorConfig = {}) {
@@ -51,6 +62,7 @@ export class StellarRouteHealthMonitor extends EventEmitter {
       timeoutMs: config.timeoutMs ?? 5000,
       unhealthyThreshold: config.unhealthyThreshold ?? 3,
       degradedAvailabilityThreshold: config.degradedAvailabilityThreshold ?? 0.8,
+      latencyThresholdMs: config.latencyThresholdMs ?? 2000,
     };
   }
 
@@ -154,9 +166,15 @@ export class StellarRouteHealthMonitor extends EventEmitter {
     if (result.available) {
       state.consecutiveFailures = 0;
       state.availability = result.availability ?? 1;
-      state.status = state.availability < this.config.degradedAvailabilityThreshold
-        ? 'degraded'
-        : 'healthy';
+
+      const isLatencyHigh =
+        result.latencyMs !== undefined &&
+        result.latencyMs > this.config.latencyThresholdMs;
+
+      state.status =
+        state.availability < this.config.degradedAvailabilityThreshold || isLatencyHigh
+          ? 'degraded'
+          : 'healthy';
     } else {
       state.consecutiveFailures += 1;
       state.availability = 0;
@@ -171,7 +189,53 @@ export class StellarRouteHealthMonitor extends EventEmitter {
       this.emitStatusChange(routeId, previousState, state);
     }
 
+    this.updateAlerts(routeId, state);
+
     return state;
+  }
+
+  private updateAlerts(routeId: string, state: RouteHealthState): void {
+    const existingAlert = this.activeAlerts.get(routeId);
+
+    if (state.status !== 'healthy') {
+      if (!existingAlert || existingAlert.status !== state.status) {
+        const alert: RouteHealthAlert = {
+          routeId,
+          status: state.status,
+          message: this.getHealthMessage(state),
+          timestamp: new Date(),
+          availability: state.availability,
+          latencyMs: state.lastLatencyMs,
+        };
+        this.activeAlerts.set(routeId, alert);
+        this.emit('alert', alert);
+      }
+    } else if (existingAlert) {
+      this.activeAlerts.delete(routeId);
+      this.emit('alert_resolved', {
+        routeId,
+        timestamp: new Date(),
+        message: `Route ${routeId} has recovered and is now healthy.`,
+      });
+    }
+  }
+
+  private getHealthMessage(state: RouteHealthState): string {
+    switch (state.status) {
+      case 'outage':
+        return `Route ${state.routeId} is experiencing an outage after ${state.consecutiveFailures} consecutive failures.`;
+      case 'unhealthy':
+        return `Route ${state.routeId} is unhealthy: ${state.lastErrorMessage || 'Service unreachable'}.`;
+      case 'degraded':
+        if (state.availability < this.config.degradedAvailabilityThreshold) {
+          return `Route ${state.routeId} performance is degraded: availability ${(
+            state.availability * 100
+          ).toFixed(1)}% is below threshold.`;
+        }
+        return `Route ${state.routeId} performance is degraded: latency ${state.lastLatencyMs}ms exceeds threshold.`;
+      default:
+        return `Route ${state.routeId} status changed to ${state.status}.`;
+    }
   }
 
   private emitStatusChange(

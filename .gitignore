@@ -2,8 +2,13 @@
 
 # dependencies
 /node_modules
+.jestrun/
 /.pnp
 .pnp.js
+
+# rust
+**/target/
+**/Cargo.lock
 
 # testing
 /coverage
@@ -48,6 +53,11 @@ build_output.log
 next-env.d.ts
 libs/bridge-core/node_modules
 
+# hardhat
+artifacts/
+cache/
+/types/
+
 # Secret files
 *.key
 *.p12
@@ -55,3 +65,7 @@ libs/bridge-core/node_modules
 secrets/
 credentials/
 *.secretpackages/sdk/metrics/node_modules
+
+# Cargo / Rust
+/target
+

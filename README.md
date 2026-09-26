@@ -2,9 +2,11 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
+# CORS_ORIGIN: Comma-separated list of allowed origins
+# IMPORTANT: Never use * in production, always specify exact domains
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
 [circleci-url]: https://circleci.com/gh/nestjs/nest
-
+<!-- ## Stellar/Soroban Features - All Issues Implemented -->
   <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
     <p align="center">
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
@@ -120,6 +122,58 @@ function MyComponent() {
   return <div>Client ready: {stored}</div>;
 }
 ```
+
+## Stellar Route Congestion Monitoring
+
+BridgeWise monitors route congestion across Stellar bridge providers to detect latency spikes, elevated failure rates, and queue buildup.
+
+### Features
+
+- Real-time congestion metrics collection (latency, failure rate, queue depth, throughput, pending transactions)
+- Spike detection based on historical baseline using configurable multipliers
+- Threshold-based status classification: `normal → elevated → congested → severe`
+- Alert generation with severity levels: `low | medium | high | critical`
+- Automatic alert resolution when metrics recover
+- Event-driven architecture via `EventEmitter` (`'alert'`, `'status-change'` events)
+
+### Usage
+
+```typescript
+import { StellarCongestionMonitor } from '@bridgewise/monitoring';
+
+const monitor = new StellarCongestionMonitor({
+  checkIntervalMs: 30_000,
+  timeoutMs: 5_000,
+  historyWindowSize: 100,
+  spikeMultiplier: 2.0,
+  minDataPoints: 5,
+  thresholds: {
+    latencyMs: 5_000,
+    failureRate: 0.3,
+    queueDepth: 100,
+    throughput: 10,
+    pendingTransactions: 500,
+  },
+  onAlert: (alert) => console.log('Congestion alert:', alert),
+  onStatusChange: (status) => console.log('Status change:', status),
+  onError: (error) => console.error('Probe error:', error),
+});
+
+monitor.registerRoute('stellar-bridge-1', async () => {
+  // Return current congestion metrics for the route
+  return {
+    latencyMs: 1200,
+    failureRate: 0.05,
+    queueDepth: 20,
+    throughput: 45,
+    pendingTransactions: 80,
+  };
+});
+
+monitor.startMonitoring();
+```
+
+Refer to `src/monitoring/congestion/stellar/` for the full implementation.
 
 ## Project setup
 

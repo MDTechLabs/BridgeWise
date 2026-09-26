@@ -66,4 +66,50 @@ describe('StellarRouteHealthMonitor', () => {
     await monitor.checkAll();
     expect(events).toContain('recovered');
   });
+
+  it('detects degradation due to high latency', async () => {
+    const monitorHighLatency = new StellarRouteHealthMonitor({
+      latencyThresholdMs: 100,
+    });
+
+    monitorHighLatency.registerRoute('route-slow', async () => ({
+      available: true,
+      latencyMs: 150,
+    }));
+
+    await monitorHighLatency.checkAll();
+
+    const state = monitorHighLatency.getRouteHealth('route-slow');
+    expect(state?.status).toBe('degraded');
+  });
+
+  it('generates alerts and handles resolution', async () => {
+    const alerts: any[] = [];
+    const resolutions: any[] = [];
+
+    monitor.on('alert', (a) => alerts.push(a));
+    monitor.on('alert_resolved', (r) => resolutions.push(r));
+
+    let healthy = false;
+    monitor.registerRoute('route-alert-test', async () => {
+      return healthy
+        ? { available: true, latencyMs: 5 }
+        : { available: false, errorMessage: 'failing' };
+    });
+
+    // Becomes unhealthy, then outage
+    await monitor.checkAll();
+    expect(alerts.length).toBe(1);
+    expect(alerts[0].status).toBe('unhealthy');
+
+    await monitor.checkAll();
+    expect(alerts.length).toBe(2);
+    expect(alerts[1].status).toBe('outage');
+
+    // Recovers
+    healthy = true;
+    await monitor.checkAll();
+    expect(resolutions.length).toBe(1);
+    expect(resolutions[0].routeId).toBe('route-alert-test');
+  });
 });

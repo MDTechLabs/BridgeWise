@@ -1,0 +1,30 @@
+{
+  "name": "@bridgewise/analyzers",
+  "version": "0.1.0",
+  "description": "Cross-chain bridge risk analyzers for BridgeWise (optimistic dispute monitoring, etc.)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint \"src/**/*.ts\" --fix"
+  },
+  "keywords": [
+    "bridge",
+    "cross-chain",
+    "security",
+    "exploit",
+    "detection"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.3"
+  }
+}

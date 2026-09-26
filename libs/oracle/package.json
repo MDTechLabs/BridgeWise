@@ -1,0 +1,26 @@
+{
+  "name": "@bridgewise/oracle",
+  "version": "0.1.0",
+  "description": "Multi-chain gas & token price oracle aggregator for dynamic relayer pricing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint \"src/**/*.ts\" --fix"
+  },
+  "keywords": ["bridge", "cross-chain", "oracle", "gas", "pricing"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.3.0"
+  }
+}

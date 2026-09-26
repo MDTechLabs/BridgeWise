@@ -48,9 +48,16 @@ export class RecommendationV2Service {
     if (!filters) return routes;
 
     return routes.filter((route) => {
-      // Excluded bridges
+      // Excluded bridges (takes precedence)
       if (filters.excludedBridges?.includes(route.bridgeName)) {
         return false;
+      }
+
+      // Preferred bridges (acts as whitelist if specified)
+      if (filters.preferredBridges && filters.preferredBridges.length > 0) {
+        if (!filters.preferredBridges.includes(route.bridgeName)) {
+          return false;
+        }
       }
 
       // Min liquidity

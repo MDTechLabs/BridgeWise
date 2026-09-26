@@ -6,3 +6,4 @@ export type {
   ParsedFailure,
   FailureAnalysisResult,
 } from './failures/stellar/types';
+export * from './bridge-hotspots';

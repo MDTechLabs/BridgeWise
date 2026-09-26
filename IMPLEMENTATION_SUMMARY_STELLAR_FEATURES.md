@@ -1,12 +1,12 @@
 # Stellar/Soroban Features Implementation Summary
 
 This document summarizes the implementation of four critical Stellar/Soroban bridge features for BridgeWise.
-
+<!-- ## Stellar/Soroban Features - All Issues Implemented -->
 ---
 
 ## Issue #352: Soroban Cross-Chain Settlement Verifier
 
-**Location:** `src/verification/settlements/stellar/`
+**Location:** `src/verification/settlements/stellar/`.
 
 ### Files Created:
 - `settlement-verifier.types.ts` - Type definitions and enums
@@ -20,6 +20,9 @@ This document summarizes the implementation of four critical Stellar/Soroban bri
 - ✅ Track settlement records with full lifecycle management
 - ✅ Inconsistency detection with severity levels
 - ✅ Verification statistics and analytics
+
+new feature have been added ooooo
+
 
 ### Core Classes:
 ```typescript
@@ -80,6 +83,9 @@ class StellarTransferAuditAPI {
 
 ---
 
+This is a hidden feature too...
+
+
 ## Issue #351: Stellar Transfer Notification Service
 
 **Location:** `src/notifications/stellar/`
@@ -136,6 +142,10 @@ class StellarTransferNotificationService {
 - `version-resolver.service.ts` - Version resolution service
 - `index.ts` - Public exports
 
+
+
+
+You will like this I guarantee it MAN.
 ### Key Features:
 - ✅ Track deployed contract versions across environments
 - ✅ Dynamic contract version resolution

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CsvBuildOptions, CsvColumn } from '../interfaces/export-options.interface';
-import { AnalyticsRecord } from '../interfaces/analytics-record.interface';
+import { CsvBuildOptions, CsvColumn } from './export-options.interface';
+import { AnalyticsRecord } from './analytics-record.interface';
 
 @Injectable()
 export class CsvBuilderUtil {
@@ -9,10 +9,7 @@ export class CsvBuilderUtil {
   /**
    * Build a complete CSV string from an array of records.
    */
-  build(
-    records: AnalyticsRecord[],
-    options: CsvBuildOptions,
-  ): string {
+  build(records: AnalyticsRecord[], options: CsvBuildOptions): string {
     const lines: string[] = [];
 
     if (options.includeHeader) {
@@ -46,7 +43,9 @@ export class CsvBuilderUtil {
    * Build the header row.
    */
   buildHeader(columns: CsvColumn[], delimiter: string): string {
-    return columns.map((col) => this.escapeField(col.header, delimiter)).join(delimiter);
+    return columns
+      .map((col) => this.escapeField(col.header, delimiter))
+      .join(delimiter);
   }
 
   /**
@@ -57,7 +56,10 @@ export class CsvBuilderUtil {
 
     return columns
       .map((col) => {
-        const rawValue = this.getNestedValue(record, col.key);
+        const rawValue = this.getNestedValue(
+          record as unknown as Record<string, unknown>,
+          col.key,
+        );
         let formatted: string;
 
         if (rawValue === null || rawValue === undefined) {

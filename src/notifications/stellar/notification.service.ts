@@ -264,6 +264,31 @@ export class StellarTransferNotificationService {
   }
 
   /**
+   * Notify on bridge system warning/health alert
+   */
+  async notifyBridgeWarning(data: {
+    routeId: string;
+    status: string;
+    message: string;
+    priority?: NotificationPriority;
+    details?: Record<string, unknown>;
+  }): Promise<void> {
+    await this.sendNotification({
+      transferId: `bridge-alert-${data.routeId}`,
+      type: 'bridge.warning',
+      priority: data.priority || NotificationPriority.HIGH,
+      sourceChain: 'stellar',
+      destinationChain: 'multiple',
+      fromAddress: 'system',
+      toAddress: 'admin',
+      amount: '0',
+      assetCode: 'SYSTEM',
+      status: data.status,
+      message: data.message,
+    });
+  }
+
+  /**
    * Get delivery receipt for a notification
    */
   getDeliveryReceipt(receiptId: string): DeliveryReceipt | undefined {

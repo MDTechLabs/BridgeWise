@@ -1,4 +1,4 @@
-import { AnalyticsMetric } from '../enums/analytics-metric.enum';
+import { AnalyticsMetric } from './analytics-metric.enum';
 
 export interface ExportOptions {
   metrics: AnalyticsMetric[];

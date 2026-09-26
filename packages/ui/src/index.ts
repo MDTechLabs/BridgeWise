@@ -45,6 +45,14 @@ export {
   BridgeStatus,
   BridgeStatusHeadless,
 } from './components/BridgeStatus';
+export { TransactionTimeline } from './components/TransactionTimeline';
+export type {
+  TransactionTimelineProps,
+  TimelineStage,
+  BridgeStageId,
+  StageStatus,
+  ExplorerLink,
+} from './components/TransactionTimeline';
 
 export type { TransactionState } from './components/TransactionHeartbeat';
 export type { BridgeHistoryProps } from './components/BridgeHistory';

@@ -6,6 +6,7 @@ import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { StellarReputationModule } from './reputation/providers/stellar/stellar-reputation.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { BenchmarkModule } from './benchmark/benchmark.module';
 import { AnalyticsModule } from './analytics/analytics.module';
@@ -22,11 +23,22 @@ import { Transaction } from './transactions/entities/transaction.entity';
 import { WalletSession } from './wallet/entities/wallet-session.entity';
 import { RecommendationV2Module } from './api/routes/v2/recommendation.module';
 import { IntelligenceHubModule } from './intelligence-hub/stellar/intelligence-hub.module';
+import { AssetDiscoveryModule } from './api/assets/discovery/stellar/asset-discovery.module';
+import { RecommendationMetricsModule } from './metrics/recommendations/recommendation-metrics.module';
+import { StellarEcosystemMetricsModule } from './metrics/ecosystem/stellar/stellar-ecosystem-metrics.module';
+import { StellarProviderDiscoveryModule } from '../../../src/providers/discovery/stellar/stellar-provider-discovery.module';
+import { AssetCoverageModule } from '../../../src/analytics/coverage/stellar/asset-coverage.module';
+import { RouteInsightsExporterModule } from './exporters/routes/stellar/route-insights-exporter.module';
+import { SorobanLifecycleModule } from './analytics/lifecycle/transfers/stellar/soroban-lifecycle.module';
+import { SorobanTransferLifecycleEntity } from './analytics/lifecycle/transfers/stellar/entities/soroban-transfer-lifecycle.entity';
+import { QuotesModule } from './quotes/quotes.module';
+import { RelayerModule } from './relayer/relayer.module';
 
 @Module({
   imports: [
     LoggerModule,
     ConfigModule,
+    QuotesModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -40,7 +52,7 @@ import { IntelligenceHubModule } from './intelligence-hub/stellar/intelligence-h
           password: dbConfig.password,
           database: dbConfig.database,
           ssl: dbConfig.ssl,
-          entities: [Transaction, WalletSession],
+          entities: [Transaction, WalletSession, SorobanTransferLifecycleEntity],
           synchronize: process.env.NODE_ENV === 'development',
           logging: process.env.NODE_ENV === 'development',
         };
@@ -51,11 +63,17 @@ import { IntelligenceHubModule } from './intelligence-hub/stellar/intelligence-h
     AnalyticsModule,
     TokenMetadataModule,
     VersionModule,
+    StellarReputationModule,
     WalletModule,
     SorobanContractModule,
     StellarTimeoutModule,
     RecommendationV2Module,
     IntelligenceHubModule,
+    AssetDiscoveryModule,
+    RecommendationMetricsModule,
+    StellarEcosystemMetricsModule,
+    StellarProviderDiscoveryModule,
+    AssetCoverageModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -65,6 +83,9 @@ import { IntelligenceHubModule } from './intelligence-hub/stellar/intelligence-h
     // Explainability API for Stellar route recommendations
     // Exposed through /explainability/stellar endpoints.
     StellarExplainabilityModule,
+    RouteInsightsExporterModule,
+    SorobanLifecycleModule,
+    RelayerModule,
   ],
   controllers: [AppController],
   providers: [
