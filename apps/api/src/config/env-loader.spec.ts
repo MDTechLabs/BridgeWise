@@ -84,7 +84,7 @@ UNQUOTED=value
       const loader = new EnvironmentLoader(testDir);
       loader.load();
 
-      expect(process.env.VAR1).toBe('base');
+      expect(process.env.VAR1).toBe('dev-override');
     });
 
     it('should not override already set environment variables', () => {
@@ -95,6 +95,19 @@ UNQUOTED=value
       loader.load();
 
       expect(process.env.TEST_VAR).toBe('already-set');
+    });
+
+    it('should not load dotenv files in production', () => {
+      fs.writeFileSync(
+        path.join(testDir, '.env.production'),
+        'TEST_VAR=from-production-file',
+      );
+      process.env.NODE_ENV = 'production';
+
+      const loader = new EnvironmentLoader(testDir);
+      loader.load();
+
+      expect(process.env.TEST_VAR).toBeUndefined();
     });
 
     it('should only load once', () => {

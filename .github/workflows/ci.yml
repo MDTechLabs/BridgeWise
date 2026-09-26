@@ -22,6 +22,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify deployment configuration safety
+        run: node --test scripts/check-deployment-config.test.mjs
+
+      - name: Test production environment loading
+        run: pnpm --filter api exec jest --runInBand --moduleFileExtensions ts json js -- config/env-loader.spec.ts
+
       - name: Build
         run: pnpm run build
 
