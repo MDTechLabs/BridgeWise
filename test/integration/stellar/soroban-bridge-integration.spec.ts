@@ -23,8 +23,14 @@ describe('Soroban Bridge Integration Test Harness', () => {
       const asset = 'USDC';
       const bridgeContract = 'C_STELLAR_BRIDGE_ABC';
 
-      harness.sandbox.createAccount(sourceAccount, { USDC: '500.0000000', XLM: '100.0000000' });
-      harness.sandbox.createAccount(destinationAccount, { USDC: '10.0000000', XLM: '50.0000000' });
+      harness.sandbox.createAccount(sourceAccount, {
+        USDC: '500.0000000',
+        XLM: '100.0000000',
+      });
+      harness.sandbox.createAccount(destinationAccount, {
+        USDC: '10.0000000',
+        XLM: '50.0000000',
+      });
 
       // 2. Register mock bridge contract on the sandbox
       harness.setupBridgeContract(bridgeContract);
@@ -70,6 +76,52 @@ describe('Soroban Bridge Integration Test Harness', () => {
       // 6. Verify balances updated in the sandbox
       const aliceAfter = harness.sandbox.getAccount(sourceAccount);
       expect(aliceAfter?.balances[asset]).toBe('400'); // 500 - 100
+      const bobAfter = harness.sandbox.getAccount(destinationAccount);
+      expect(bobAfter?.balances[asset]).toBe('110'); // 10 + 100
+      expect(result.destinationTxResult.status).toBe('success');
+    });
+
+    it('should report a partial settlement when destination release fails', async () => {
+      const sourceAccount = 'G_ALICE';
+      const destinationAccount = 'G_BOB';
+      const asset = 'USDC';
+      const bridgeContract = 'C_STELLAR_BRIDGE_ABC';
+
+      harness.sandbox.createAccount(sourceAccount, { USDC: '150' });
+      harness.sandbox.createAccount(destinationAccount, { USDC: '5' });
+      harness.setupBridgeContract(bridgeContract, {
+        unlockImpl: () => {
+          throw new Error('Destination temporarily unavailable');
+        },
+      });
+      harness.createMockProvider('AllBridgeStellar');
+
+      const result = await harness.executeBridgeTransfer({
+        sourceAccount,
+        destinationAccount,
+        token: asset,
+        amount: '100',
+        bridgeContractId: bridgeContract,
+        sourceChain: '1001',
+        destinationChain: '137',
+        providerName: 'AllBridgeStellar',
+      });
+
+      expect(result.txResult.status).toBe('success');
+      expect(result.destinationTxResult).toBeUndefined();
+      expect(result.partialFailure).toContain(
+        'Destination temporarily unavailable',
+      );
+      expect(result.indexedRecord?.status).toBe('partial');
+      expect(result.indexedRecord?.metadata.destinationFailure).toContain(
+        'Destination temporarily unavailable',
+      );
+      expect(harness.sandbox.getAccount(sourceAccount)?.balances[asset]).toBe(
+        '50',
+      );
+      expect(
+        harness.sandbox.getAccount(destinationAccount)?.balances[asset],
+      ).toBe('5');
     });
 
     it('should throw an error if the source account lacks sufficient funds', async () => {
@@ -93,7 +145,7 @@ describe('Soroban Bridge Integration Test Harness', () => {
           sourceChain: '1001',
           destinationChain: '137',
           providerName: 'AllBridgeStellar',
-        })
+        }),
       ).rejects.toThrow(/Insufficient balance/);
     });
   });
@@ -125,7 +177,9 @@ describe('Soroban Bridge Integration Test Harness', () => {
       const result = harness.validator.validate(mockContractInfo);
       expect(result.compatible).toBe(false);
       expect(result.issues.length).toBeGreaterThan(0);
-      expect(result.issues.some((i) => i.code === 'MISSING_INTERFACE')).toBe(true);
+      expect(result.issues.some((i) => i.code === 'MISSING_INTERFACE')).toBe(
+        true,
+      );
     });
 
     it('should fail validation when version is unsupported', async () => {
@@ -139,7 +193,9 @@ describe('Soroban Bridge Integration Test Harness', () => {
 
       const result = harness.validator.validate(mockContractInfo);
       expect(result.compatible).toBe(false);
-      expect(result.issues.some((i) => i.code === 'UNSUPPORTED_VERSION')).toBe(true);
+      expect(result.issues.some((i) => i.code === 'UNSUPPORTED_VERSION')).toBe(
+        true,
+      );
     });
   });
 
@@ -166,7 +222,10 @@ describe('Soroban Bridge Integration Test Harness', () => {
         maxSlippage: 0.5,
       };
 
-      harness.routingEngine.registerRoutes([routeCostPriority, routeSpeedPriority]);
+      harness.routingEngine.registerRoutes([
+        routeCostPriority,
+        routeSpeedPriority,
+      ]);
       harness.routingEngine.updateReliability('CheapBridge', 0.9);
       harness.routingEngine.updateReliability('FastBridge', 0.95);
 
@@ -237,7 +296,10 @@ describe('Soroban Bridge Integration Test Harness', () => {
         return 'success_val';
       };
 
-      const result = await harness.rpcQueue.enqueue(failThenSucceedRequest, 'HIGH');
+      const result = await harness.rpcQueue.enqueue(
+        failThenSucceedRequest,
+        'HIGH',
+      );
       expect(result).toBe('success_val');
       expect(callCount).toBe(2);
 
@@ -256,7 +318,7 @@ describe('Soroban Bridge Integration Test Harness', () => {
 
       // We expect this to reject since it will fail repeatedly
       await expect(
-        harness.rpcQueue.enqueue(keepFailingRequest, 'MEDIUM')
+        harness.rpcQueue.enqueue(keepFailingRequest, 'MEDIUM'),
       ).rejects.toThrow(/503 Service Unavailable/);
 
       // Default maxRetries is 3, so total calls = 1 initial + 3 retries = 4 calls

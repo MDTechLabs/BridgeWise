@@ -24,5 +24,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test
+        run: >-
+          pnpm exec jest --runInBand
+          src/state-machine/stellar/soroban-transfer-state-machine.spec.ts
+          src/recovery/stellar/stellar-bridge-retry.service.spec.ts
+          src/detection/rollback/stellar/soroban-rollback-detector.spec.ts
+          src/tracking/stellar/soroban-transaction-status-tracker.spec.ts
+          src/verification/settlements/stellar/settlement-verifier.service.spec.ts
+          test/integration/stellar/soroban-bridge-integration.spec.ts
+
       - name: Build
         run: pnpm run build
