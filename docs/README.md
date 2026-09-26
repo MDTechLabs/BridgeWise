@@ -58,6 +58,11 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - UI status updates
   - Configuration options
 
+- **[ROUTE_REJECTION_REASONS.md](./ROUTE_REJECTION_REASONS.md)** - ROUTE DECISIONS
+  - Stable codes for rejected route candidates
+  - All applicable rejection reasons and backward-compatible summaries
+  - Policy boundary and invalid candidate data behavior
+
 - **[SIGNATURE_SPECIFICATION.md](./SIGNATURE_SPECIFICATION.md)** - SIGNATURE SPEC
   - EIP-712 typed data hashing for cross-chain messages
   - Mandatory domain separator parameters (`sourceChainId`, `targetChainId`, `bridgeAddress`)

@@ -67,7 +67,22 @@ describe('StellarRouteDecisionEngine', () => {
     const result = engine.decide(candidates, {}, { policy: { maxSlippage: 2 } });
 
     expect(result.rejections.map((r) => r.route.id)).toEqual(['high-slippage']);
+    expect(result.rejections[0]).toMatchObject({
+      code: 'SLIPPAGE_EXCEEDED',
+      reason: 'slippage 10% exceeds policy max 2%',
+      reasons: [{ code: 'SLIPPAGE_EXCEEDED' }],
+    });
     expect(result.selection?.id).toBe('low-slippage');
+  });
+
+  it('accepts values exactly on policy boundaries', () => {
+    const engine = new StellarRouteDecisionEngine({ now });
+    const result = engine.decide(
+      [makeRoute({ id: 'boundary', provider: 'p1', slippage: 5, estimatedTime: 60, successRate: 0.8 })],
+    );
+
+    expect(result.selection?.id).toBe('boundary');
+    expect(result.rejections).toEqual([]);
   });
 
   it('rejects routes from excluded providers', () => {
@@ -82,6 +97,7 @@ describe('StellarRouteDecisionEngine', () => {
     });
 
     expect(result.rejections.find((r) => r.route.id === 'a')).toBeDefined();
+    expect(result.rejections.find((r) => r.route.id === 'a')?.code).toBe('PROVIDER_EXCLUDED');
     expect(result.selection?.id).toBe('b');
   });
 
@@ -102,6 +118,7 @@ describe('StellarRouteDecisionEngine', () => {
     });
 
     expect(result.rejections.find((r) => r.route.id === 'risky')).toBeDefined();
+    expect(result.rejections.find((r) => r.route.id === 'risky')?.code).toBe('RISK_LIMIT_EXCEEDED');
     expect(result.selection?.id).toBe('safe');
   });
 
@@ -121,6 +138,7 @@ describe('StellarRouteDecisionEngine', () => {
     });
 
     expect(result.rejections.find((r) => r.route.id === 'bad')).toBeDefined();
+    expect(result.rejections.find((r) => r.route.id === 'bad')?.code).toBe('PROVIDER_INCOMPATIBLE');
     expect(result.selection?.id).toBe('good');
   });
 
@@ -152,5 +170,58 @@ describe('StellarRouteDecisionEngine', () => {
     expect(result.selection).toBeNull();
     expect(result.alternatives).toEqual([]);
     expect(result.rejections.map((r) => r.route.id).sort()).toEqual(['a', 'b']);
+    expect(result.rejections.find((r) => r.route.id === 'a')?.code).toBe('SLIPPAGE_EXCEEDED');
+    expect(result.rejections.find((r) => r.route.id === 'b')?.code).toBe('SUCCESS_RATE_TOO_LOW');
+  });
+
+  it('reports every applicable reason in deterministic order and preserves the summary string', () => {
+    const engine = new StellarRouteDecisionEngine({ now });
+    const result = engine.decide(
+      [makeRoute({ id: 'rejected', provider: 'blocked', slippage: 8, estimatedTime: 90, successRate: 0.5 })],
+      {},
+      {
+        policy: {
+          maxSlippage: 2,
+          maxTime: 30,
+          minSuccessRate: 0.8,
+          excludeProviders: ['blocked'],
+          minRiskScore: 0.5,
+        },
+        signals: {
+          riskSignals: [{ routeId: 'rejected', riskScore: 0.9 }],
+          compatibilitySignals: [{ routeId: 'rejected', compatible: false }],
+        },
+      },
+    );
+
+    expect(result.rejections[0]).toMatchObject({
+      reason: 'slippage 8% exceeds policy max 2%',
+      code: 'SLIPPAGE_EXCEEDED',
+      reasons: [
+        { code: 'SLIPPAGE_EXCEEDED' },
+        { code: 'ESTIMATED_TIME_EXCEEDED' },
+        { code: 'SUCCESS_RATE_TOO_LOW' },
+        { code: 'PROVIDER_EXCLUDED' },
+        { code: 'RISK_LIMIT_EXCEEDED' },
+        { code: 'PROVIDER_INCOMPATIBLE' },
+      ],
+    });
+  });
+
+  it('rejects malformed route metrics and invalid risk signals with explicit codes', () => {
+    const engine = new StellarRouteDecisionEngine({ now });
+    const result = engine.decide(
+      [makeRoute({ id: 'invalid', provider: 'p1', slippage: Number.NaN, estimatedTime: -1, successRate: 1.2 })],
+      {},
+      { signals: { riskSignals: [{ routeId: 'invalid', riskScore: Number.NaN }] } },
+    );
+
+    expect(result.selection).toBeNull();
+    expect(result.rejections[0].reasons.map((reason) => reason.code)).toEqual([
+      'INVALID_SLIPPAGE',
+      'INVALID_ESTIMATED_TIME',
+      'INVALID_SUCCESS_RATE',
+      'INVALID_RISK_SCORE',
+    ]);
   });
 });
