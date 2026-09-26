@@ -70,14 +70,14 @@ export class BridgeService {
 ```
 
 #### 3. **API Key Rotation Service** (`api-key-rotation.service.ts`)
-Manages automatic and manual key rotation with rotation policies and history tracking.
+Tracks rotation age and status; manual rotation updates the process-local vault only.
 
 **Key Features:**
 - Configurable rotation policies per key
-- Automatic daily rotation schedule checks
-- Manual rotation support
-- Expiration tracking and notifications
-- Rotation history and recommendations
+- Daily age checks mark keys for rotation; they do not create new provider credentials
+- Manual process-local replacement; provider credentials and secret-manager versions must be rotated separately
+- Expiration tracking; the current service logs warnings but does not send notifications
+- In-memory rotation history and recommendations
 
 **Usage:**
 ```typescript
@@ -155,12 +155,12 @@ Intercepts all requests to sanitize sensitive headers before processing.
 
 ```bash
 # Vault Configuration
-VAULT_ENCRYPTION_KEY=your-32-byte-encryption-key-or-it-will-be-hashed
+VAULT_ENCRYPTION_KEY=<32-random-bytes-encoded-as-64-hex-characters>
 
 # API Keys (stored in vault, never exposed)
-API_KEY=your-api-key
-API_SECRET=your-api-secret
-DB_PASSWORD=your-db-password
+API_KEY=<provider-key>
+API_SECRET=<provider-secret>
+DB_PASSWORD=<database-password>
 
 # Security Settings
 NODE_ENV=production|staging|development
@@ -177,30 +177,17 @@ LOG_FORMAT=json  # Use json in production
 ```bash
 # Create .env.development
 NODE_ENV=development
-API_KEY=dev-api-key-12345
-API_SECRET=dev-secret-67890
-DB_PASSWORD=dev-password
-VAULT_ENCRYPTION_KEY=dev-encryption-key
+API_KEY=<development-only-provider-key>
+API_SECRET=<development-only-provider-secret>
+DB_PASSWORD=<development-only-database-password>
+VAULT_ENCRYPTION_KEY=<development-only-random-value>
 
 # Note: Keys are plain in development, but vault still encrypts them
 ```
 
 ### Production Setup
 
-```bash
-# Create .env.production (never commit to VCS)
-NODE_ENV=production
-API_KEY=your-real-production-key
-API_SECRET=your-real-production-secret
-DB_PASSWORD=your-real-db-password
-VAULT_ENCRYPTION_KEY=your-64-char-encryption-key-generated-securely
-
-# Security settings
-FORCE_HTTPS=true
-LOG_LEVEL=warn
-LOG_FORMAT=json
-CORS_ORIGIN=https://app.bridgewise.com,https://api.bridgewise.com
-```
+Do not create or deploy a production dotenv file. Set nonsecret configuration in the deployment configuration and inject credentials at runtime from the approved secret manager. Follow the [Production key management runbook](./KEY_MANAGEMENT_RUNBOOK.md) for generation, backup, approval, rotation, and emergency revocation.
 
 ---
 
@@ -209,8 +196,8 @@ CORS_ORIGIN=https://app.bridgewise.com,https://api.bridgewise.com
 ### Pre-Deployment
 
 - [ ] **No keys in source code**: Run `git log -p` to verify no secrets in history
-- [ ] **Environment variables validated**: Check `.env.production` exists and is ignored
-- [ ] **Encryption key generated**: `VAULT_ENCRYPTION_KEY` is 32+ bytes
+- [ ] **Environment variables validated**: Required production values are injected by the runtime secret manager; no production dotenv file is used
+- [ ] **Encryption key generated**: `VAULT_ENCRYPTION_KEY` is 32 random bytes encoded as 64 hexadecimal characters and backed up separately
 - [ ] **HTTPS enabled**: `FORCE_HTTPS=true` in production
 - [ ] **CORS restricted**: Not using wildcard origins
 - [ ] **Logging secured**: Not in debug mode
@@ -303,13 +290,12 @@ return { apiKey: this.configService.getApiKey() };
 - Certificate pinning for critical APIs
 
 ### 3. **Regular Key Rotation**
-- API keys: Every 90 days
-- Database passwords: Every 180 days
-- Database encryption keys: Every 365 days
+- Use issuer-specific rotation windows approved for each credential; the in-app daily job only flags overdue keys.
+- Follow the [key management runbook](./KEY_MANAGEMENT_RUNBOOK.md) to update the secret manager and roll out replacements before revoking old credentials.
 
 ### 4. **Monitor Key Access**
 ```typescript
-// Vault logs all access attempts
+// Current vault logs key IDs for access attempts; it does not provide approver identity or a durable audit ledger.
 private readonly logger = new Logger(ApiKeyVaultService.name);
 this.logger.debug(`Key accessed: ${keyId}`);
 ```
@@ -341,6 +327,8 @@ constructor(private readonly apiKeyVault: ApiKeyVaultService) {
 ---
 
 ## Incident Response
+
+Follow the [emergency revocation procedure](./KEY_MANAGEMENT_RUNBOOK.md#emergency-revocation). The local `revokeKey` method is supplementary; revoke the credential at its issuer and update the runtime secret store.
 
 ### If a Key is Compromised
 
@@ -423,6 +411,8 @@ describe('Secure API Key Flow', () => {
 
 ## Monitoring & Alerts
 
+The metric and alert examples below are recommendations for external monitoring. The current rotation service logs status but does not publish metrics or send notifications.
+
 ### Key Metrics to Monitor
 
 1. **Key Rotation Status**
@@ -461,11 +451,7 @@ ALERT VaultIntegrityFailed
 ## Troubleshooting
 
 ### Issue: "VAULT_ENCRYPTION_KEY not set"
-**Solution:** Generate and set encryption key:
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# Copy output to VAULT_ENCRYPTION_KEY environment variable
-```
+**Solution:** Create the key using the approved secret manager or secure generation procedure in the [key management runbook](./KEY_MANAGEMENT_RUNBOOK.md), then inject it at runtime. Do not print it in CI or a recorded terminal.
 
 ### Issue: "Failed to decrypt key - possible tampering detected"
 **Solution:** Verify vault initialization:
@@ -501,3 +487,7 @@ For security issues or questions:
 3. Details: Description, reproduction steps, impact assessment
 
 **Do NOT publicly disclose security vulnerabilities.**
+
+## Key lifecycle operations
+
+See the [Production key management runbook](./KEY_MANAGEMENT_RUNBOOK.md). The current vault stores values only in process memory, and rotation policy checks do not rotate credentials at external issuers.
