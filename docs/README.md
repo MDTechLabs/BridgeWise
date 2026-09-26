@@ -58,6 +58,11 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - UI status updates
   - Configuration options
 
+- **[PRE_SIGNING_READINESS.md](./PRE_SIGNING_READINESS.md)** - PRE-SIGNING SAFETY
+  - Required balance and allowance checks
+  - Route, policy limit, provider health, and quote freshness gates
+  - Fail-closed signer wrapper and safe failure handling
+
 - **[SIGNATURE_SPECIFICATION.md](./SIGNATURE_SPECIFICATION.md)** - SIGNATURE SPEC
   - EIP-712 typed data hashing for cross-chain messages
   - Mandatory domain separator parameters (`sourceChainId`, `targetChainId`, `bridgeAddress`)
