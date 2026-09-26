@@ -73,7 +73,7 @@ contract YulLightClient is Ownable {
     /**
      * @notice Recover ECDSA signer address using inline Yul assembly
      */
-    function recoverSignerYul(bytes32 messageHash, bytes calldata sig) public pure returns (address signer) {
+    function recoverSignerYul(bytes32 messageHash, bytes calldata sig) public view returns (address signer) {
         if (sig.length != 65) return address(0);
 
         bytes32 ethSignedHash;
