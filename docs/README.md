@@ -58,6 +58,14 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - UI status updates
   - Configuration options
 
+- **[KEY_MANAGEMENT.md](./KEY_MANAGEMENT.md)** - KEY MANAGEMENT & SIGNING CEREMONY
+  - Key inventory: purpose, generation, and the component that consumes each key
+  - Boot-time validation and configuration audit
+  - The three signing ceremonies (API auth, cross-chain messages, wallet transactions)
+  - Backup, rotation, access approval and emergency revocation procedures
+  - Documented-versus-actual defects found while writing it
+  - Operator checklist
+
 - **[SIGNATURE_SPECIFICATION.md](./SIGNATURE_SPECIFICATION.md)** - SIGNATURE SPEC
   - EIP-712 typed data hashing for cross-chain messages
   - Mandatory domain separator parameters (`sourceChainId`, `targetChainId`, `bridgeAddress`)
