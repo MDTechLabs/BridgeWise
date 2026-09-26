@@ -33,6 +33,7 @@ import {
   StellarDecisionRankingOptions,
   StellarDecisionResult,
   StellarDecisionSignals,
+  RouteRejectionReason,
 } from './types';
 
 const DEFAULT_POLICY: Required<StellarDecisionPolicy> = {
@@ -110,11 +111,16 @@ export class StellarRouteDecisionEngine {
     const survivors: BridgeRoute[] = [];
 
     for (const route of candidates) {
-      const reason = this.gate(route, policy, riskById, compatById);
-      if (reason === null) {
+      const reasons = this.gate(route, policy, riskById, compatById);
+      if (reasons.length === 0) {
         survivors.push(route);
       } else {
-        rejections.push({ route, reason });
+        rejections.push({
+          route,
+          reason: reasons[0].message,
+          code: reasons[0].code,
+          reasons,
+        });
       }
     }
 
@@ -174,41 +180,83 @@ export class StellarRouteDecisionEngine {
     policy: Required<StellarDecisionPolicy>,
     riskById: Map<string, { riskScore: number; reason?: string }>,
     compatById: Map<string, { compatible: boolean; missingFeatures?: string[] }>,
-  ): string | null {
-    if (
+  ): RouteRejectionReason[] {
+    const reasons: RouteRejectionReason[] = [];
+
+    if (route.slippage !== undefined && (!Number.isFinite(route.slippage) || route.slippage < 0)) {
+      reasons.push({
+        code: 'INVALID_SLIPPAGE',
+        message: 'slippage must be a finite non-negative percentage',
+      });
+    } else if (
       typeof policy.maxSlippage === 'number' &&
       typeof route.slippage === 'number' &&
       route.slippage > policy.maxSlippage
     ) {
-      return `slippage ${route.slippage}% exceeds policy max ${policy.maxSlippage}%`;
+      reasons.push({
+        code: 'SLIPPAGE_EXCEEDED',
+        message: `slippage ${route.slippage}% exceeds policy max ${policy.maxSlippage}%`,
+      });
     }
 
-    if (typeof policy.maxTime === 'number' && route.estimatedTime > policy.maxTime) {
-      return `estimated time ${route.estimatedTime}m exceeds policy max ${policy.maxTime}m`;
+    if (!Number.isFinite(route.estimatedTime) || route.estimatedTime < 0) {
+      reasons.push({
+        code: 'INVALID_ESTIMATED_TIME',
+        message: 'estimated time must be a finite non-negative number of minutes',
+      });
+    } else if (typeof policy.maxTime === 'number' && route.estimatedTime > policy.maxTime) {
+      reasons.push({
+        code: 'ESTIMATED_TIME_EXCEEDED',
+        message: `estimated time ${route.estimatedTime}m exceeds policy max ${policy.maxTime}m`,
+      });
     }
 
-    if (
+    if (!Number.isFinite(route.successRate) || route.successRate < 0 || route.successRate > 1) {
+      reasons.push({
+        code: 'INVALID_SUCCESS_RATE',
+        message: 'success rate must be a finite value between 0 and 1',
+      });
+    } else if (
       typeof policy.minSuccessRate === 'number' &&
       route.successRate < policy.minSuccessRate
     ) {
-      return `success rate ${route.successRate} below policy min ${policy.minSuccessRate}`;
+      reasons.push({
+        code: 'SUCCESS_RATE_TOO_LOW',
+        message: `success rate ${route.successRate} below policy min ${policy.minSuccessRate}`,
+      });
     }
 
     if (policy.excludeProviders?.includes(route.provider)) {
-      return `provider "${route.provider}" is on the exclude list`;
+      reasons.push({
+        code: 'PROVIDER_EXCLUDED',
+        message: `provider "${route.provider}" is on the exclude list`,
+      });
     }
 
     const risk = riskById.get(route.id);
-    if (risk && typeof policy.minRiskScore === 'number') {
+    if (risk && (!Number.isFinite(risk.riskScore) || risk.riskScore < 0 || risk.riskScore > 1)) {
+      reasons.push({
+        code: 'INVALID_RISK_SCORE',
+        message: 'risk score must be a finite value between 0 and 1',
+      });
+    } else if (risk && typeof policy.minRiskScore === 'number') {
       // minRiskScore = 0 means "block only routes at the riskiest end" (score 1),
       // minRiskScore = 0.5 means "block any route whose risk is above 0.5".
       if (risk.riskScore > policy.minRiskScore && policy.minRiskScore > 0) {
-        return `risk score ${risk.riskScore} exceeds policy ceiling`;
+        reasons.push({
+          code: 'RISK_LIMIT_EXCEEDED',
+          message: `risk score ${risk.riskScore} exceeds policy ceiling`,
+        });
       }
       // Also support a literal block: if minRiskScore is 1, only allow routes
       // with riskScore === 0.
       if (policy.minRiskScore >= 1 && risk.riskScore > 0) {
-        return `risk score ${risk.riskScore} exceeds policy ceiling`;
+        if (reasons[reasons.length - 1]?.code !== 'RISK_LIMIT_EXCEEDED') {
+          reasons.push({
+            code: 'RISK_LIMIT_EXCEEDED',
+            message: `risk score ${risk.riskScore} exceeds policy ceiling`,
+          });
+        }
       }
     }
 
@@ -217,10 +265,13 @@ export class StellarRouteDecisionEngine {
       const missing = compat.missingFeatures?.length
         ? ` (missing: ${compat.missingFeatures.join(', ')})`
         : '';
-      return `provider marked incompatible with the requested application${missing}`;
+      reasons.push({
+        code: 'PROVIDER_INCOMPATIBLE',
+        message: `provider marked incompatible with the requested application${missing}`,
+      });
     }
 
-    return null;
+    return reasons;
   }
 
   private toEntry(
