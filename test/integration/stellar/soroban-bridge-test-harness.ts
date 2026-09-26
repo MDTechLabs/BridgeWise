@@ -1,18 +1,42 @@
-import { SorobanSandbox, SorobanSandboxOptions, SandboxTransaction } from '../../sandbox/stellar';
-import { RawBridgeEvent, SorobanBridgeEventAggregator } from '../../../src/events/aggregation/stellar/soroban-bridge-event-aggregator';
-import { StellarTransactionMetadataRecord, StellarTransactionMetadataIndexer } from '../../../src/indexing/transactions/stellar/stellar-transaction-metadata-indexer';
-import { Route, SorobanSmartRoutingEngine } from '../../../src/routing/smart/stellar/soroban-smart-routing-engine';
-import { SorobanContractCompatibilityValidator, ContractInfo } from '../../../src/validation/contracts/stellar/soroban-contract-compatibility-validator';
+import {
+  SorobanSandbox,
+  SorobanSandboxOptions,
+  SandboxTransaction,
+} from '../../sandbox/stellar';
+import {
+  RawBridgeEvent,
+  SorobanBridgeEventAggregator,
+} from '../../../src/events/aggregation/stellar/soroban-bridge-event-aggregator';
+import {
+  StellarTransactionMetadataRecord,
+  StellarTransactionMetadataIndexer,
+} from '../../../src/indexing/transactions/stellar/stellar-transaction-metadata-indexer';
+import {
+  Route,
+  SorobanSmartRoutingEngine,
+} from '../../../src/routing/smart/stellar/soroban-smart-routing-engine';
+import {
+  SorobanContractCompatibilityValidator,
+  ContractInfo,
+} from '../../../src/validation/contracts/stellar/soroban-contract-compatibility-validator';
 import { SorobanRpcQueue } from '../../../src/networking/rpc-queue/stellar/soroban-rpc-queue';
 import { BridgeRoute } from '../../../src/services/route-ranker';
-import type { BridgeProvider as PackageBridgeProvider, BridgeParams } from '../../../packages/bridge-providers';
-import type { BridgeProvider as ApiBridgeProvider, BridgeQuote } from '../../../apps/api/src/providers/bridge-provider.service';
+import type {
+  BridgeProvider as PackageBridgeProvider,
+  BridgeParams,
+} from '../../../packages/bridge-providers';
+import type {
+  BridgeProvider as ApiBridgeProvider,
+  BridgeQuote,
+} from '../../../apps/api/src/providers/bridge-provider.service';
 
 /**
  * Mock bridge provider class that implements both the PackageBridgeProvider
  * (for routing engine packages) and ApiBridgeProvider (for NestJS services).
  */
-export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvider {
+export class MockBridgeProvider
+  implements PackageBridgeProvider, ApiBridgeProvider
+{
   readonly name: string;
   readonly type = 'stellar' as const;
   private available = true;
@@ -30,7 +54,7 @@ export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvi
         r.fromChain === params.fromChain &&
         r.toChain === params.toChain &&
         r.fromToken === params.fromToken &&
-        r.toToken === params.toToken
+        r.toToken === params.toToken,
     );
   }
 
@@ -43,11 +67,15 @@ export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvi
   }
 
   getSupportedChains(): string[] {
-    return Array.from(new Set(this.routes.flatMap((r) => [r.fromChain, r.toChain])));
+    return Array.from(
+      new Set(this.routes.flatMap((r) => [r.fromChain, r.toChain])),
+    );
   }
 
   getSupportedTokens(): string[] {
-    return Array.from(new Set(this.routes.flatMap((r) => [r.fromToken, r.toToken])));
+    return Array.from(
+      new Set(this.routes.flatMap((r) => [r.fromToken, r.toToken])),
+    );
   }
 
   addRoute(route: BridgeRoute): void {
@@ -60,7 +88,7 @@ export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvi
       (r) =>
         r.fromChain === String(fromChain) &&
         r.toChain === String(toChain) &&
-        r.fromToken === token
+        r.fromToken === token,
     );
   }
 
@@ -68,7 +96,7 @@ export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvi
     fromChain: number,
     toChain: number,
     token: string,
-    amount: number
+    amount: number,
   ): Promise<BridgeQuote> {
     const key = `${fromChain}-${toChain}-${token}-${amount}`;
     const cachedQuote = this.quotes.get(key);
@@ -103,7 +131,13 @@ export class MockBridgeProvider implements PackageBridgeProvider, ApiBridgeProvi
     };
   }
 
-  setQuote(fromChain: number, toChain: number, token: string, amount: number, quote: BridgeQuote): void {
+  setQuote(
+    fromChain: number,
+    toChain: number,
+    token: string,
+    amount: number,
+    quote: BridgeQuote,
+  ): void {
     const key = `${fromChain}-${toChain}-${token}-${amount}`;
     this.quotes.set(key, quote);
   }
@@ -154,31 +188,44 @@ export class SorobanBridgeTestHarness {
       lockImpl?: (args: unknown[]) => unknown;
       unlockImpl?: (args: unknown[]) => unknown;
       getFeeImpl?: (args: unknown[]) => unknown;
-    }
+    },
   ): void {
     this.sandbox.registerContract(contractId, {
-      lock: options?.lockImpl ?? ((args: unknown[]) => {
-        const [source, destination, asset, amount] = args as [string, string, string, string];
-        // Deduct balance from source
-        const srcBalance = this.sandbox.getAccount(source)?.balances[asset] ?? '0';
-        if (Number(srcBalance) < Number(amount)) {
-          throw new Error(`Insufficient balance: ${srcBalance} < ${amount}`);
-        }
-        const newBalance = (Number(srcBalance) - Number(amount)).toString();
-        this.sandbox.setBalance(source, asset, newBalance);
-        return { success: true, txHash: `lock_${Date.now()}` };
-      }),
-      unlock: options?.unlockImpl ?? ((args: unknown[]) => {
-        const [destination, asset, amount] = args as [string, string, string];
-        // Add balance to destination
-        const dstBalance = this.sandbox.getAccount(destination)?.balances[asset] ?? '0';
-        const newBalance = (Number(dstBalance) + Number(amount)).toString();
-        this.sandbox.setBalance(destination, asset, newBalance);
-        return { success: true, txHash: `unlock_${Date.now()}` };
-      }),
-      get_fee: options?.getFeeImpl ?? (() => {
-        return '100'; // base fee in stroops
-      }),
+      lock:
+        options?.lockImpl ??
+        ((args: unknown[]) => {
+          const [source, destination, asset, amount] = args as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          // Deduct balance from source
+          const srcBalance =
+            this.sandbox.getAccount(source)?.balances[asset] ?? '0';
+          if (Number(srcBalance) < Number(amount)) {
+            throw new Error(`Insufficient balance: ${srcBalance} < ${amount}`);
+          }
+          const newBalance = (Number(srcBalance) - Number(amount)).toString();
+          this.sandbox.setBalance(source, asset, newBalance);
+          return { success: true, txHash: `lock_${Date.now()}` };
+        }),
+      unlock:
+        options?.unlockImpl ??
+        ((args: unknown[]) => {
+          const [destination, asset, amount] = args as [string, string, string];
+          // Add balance to destination
+          const dstBalance =
+            this.sandbox.getAccount(destination)?.balances[asset] ?? '0';
+          const newBalance = (Number(dstBalance) + Number(amount)).toString();
+          this.sandbox.setBalance(destination, asset, newBalance);
+          return { success: true, txHash: `unlock_${Date.now()}` };
+        }),
+      get_fee:
+        options?.getFeeImpl ??
+        (() => {
+          return '100'; // base fee in stroops
+        }),
     });
   }
 
@@ -214,6 +261,8 @@ export class SorobanBridgeTestHarness {
     contractInterfaces?: string[];
   }): Promise<{
     txResult: any;
+    destinationTxResult?: any;
+    partialFailure?: string;
     eventCount: number;
     indexedRecord: StellarTransactionMetadataRecord | null;
   }> {
@@ -221,7 +270,12 @@ export class SorobanBridgeTestHarness {
     const contractInfo: ContractInfo = {
       contractId: params.bridgeContractId,
       wasmHash: 'wasm_hash_val_abc123',
-      interfaces: params.contractInterfaces ?? ['SEP-41', 'transfer', 'balance', 'approve'],
+      interfaces: params.contractInterfaces ?? [
+        'SEP-41',
+        'transfer',
+        'balance',
+        'approve',
+      ],
       version: params.contractVersion ?? '1.0',
       network: 'testnet',
     };
@@ -229,7 +283,7 @@ export class SorobanBridgeTestHarness {
     const valResult = this.validator.validate(contractInfo);
     if (!valResult.compatible) {
       throw new Error(
-        `Bridge contract compatibility check failed: ${valResult.issues.map((i) => i.message).join(', ')}`
+        `Bridge contract compatibility check failed: ${valResult.issues.map((i) => i.message).join(', ')}`,
       );
     }
 
@@ -240,7 +294,12 @@ export class SorobanBridgeTestHarness {
       payload: {
         contractId: params.bridgeContractId,
         method: 'lock',
-        args: [params.sourceAccount, params.destinationAccount, params.token, params.amount],
+        args: [
+          params.sourceAccount,
+          params.destinationAccount,
+          params.token,
+          params.amount,
+        ],
       },
     };
 
@@ -254,6 +313,38 @@ export class SorobanBridgeTestHarness {
       }
       return res;
     });
+
+    // A source lock is only the first leg of a bridge transfer. Simulate the
+    // destination release separately so the harness cannot report a completed
+    // settlement while the recipient remains unpaid.
+    let destinationTxResult: any;
+    let partialFailure: string | undefined;
+    try {
+      const destinationTx: SandboxTransaction = {
+        source: params.destinationAccount,
+        op: 'call',
+        payload: {
+          contractId: params.bridgeContractId,
+          method: 'unlock',
+          args: [params.destinationAccount, params.token, params.amount],
+        },
+      };
+
+      destinationTxResult = await this.rpcQueue.enqueue(async () => {
+        const res = this.sandbox.submitTransaction(destinationTx);
+        if (res.kind !== 'tx') {
+          throw new Error(
+            `Expected destination transaction event, got ${res.kind}`,
+          );
+        }
+        if (res.status !== 'success') {
+          throw new Error(`Destination submission failed: ${res.error}`);
+        }
+        return res;
+      });
+    } catch (error) {
+      partialFailure = error instanceof Error ? error.message : String(error);
+    }
 
     // 3. Ingest raw bridge event to simulator event aggregator
     const rawEvent: RawBridgeEvent = {
@@ -278,21 +369,32 @@ export class SorobanBridgeTestHarness {
     // 4. Index the transaction metadata
     const record = this.indexer.storeMetadata({
       transactionId: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      txHash: (txResult.result as { txHash: string })?.txHash || `hash_${Date.now()}`,
+      txHash:
+        (txResult.result as { txHash: string })?.txHash || `hash_${Date.now()}`,
       sourceChain: params.sourceChain,
       destinationChain: params.destinationChain,
       bridgeName: params.providerName,
-      status: 'completed',
+      status: partialFailure ? 'partial' : 'completed',
       assetSymbol: params.token,
       amount: params.amount,
       metadata: {
         bridgeContractId: params.bridgeContractId,
         normalizedEventId: normalized.id,
+        ...(partialFailure ? { destinationFailure: partialFailure } : {}),
+        ...(destinationTxResult
+          ? {
+              destinationTxHash: (
+                destinationTxResult.result as { txHash: string }
+              )?.txHash,
+            }
+          : {}),
       },
     });
 
     return {
       txResult,
+      destinationTxResult,
+      partialFailure,
       eventCount: 1,
       indexedRecord: record,
     };
