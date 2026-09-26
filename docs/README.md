@@ -77,6 +77,11 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Retry behavior on timeout failures
   - Simulation/testing guidance
 
+- **[SERVICE_OBJECTIVES_AND_INCIDENT_RESPONSE.md](./SERVICE_OBJECTIVES_AND_INCIDENT_RESPONSE.md)** - OPERATIONS
+  - API availability and quote latency objectives
+  - Critical incident alert thresholds and response steps
+  - Telemetry and production security guidance
+
 ---
 
 ## 🚀 Quick Start
