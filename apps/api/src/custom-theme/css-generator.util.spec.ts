@@ -3,8 +3,8 @@ import {
   generateDarkModeVariables,
   generateFullCssBundle,
   variablesToCssString,
-} from '../utils/css-generator.util';
-import { DEFAULT_THEME_CONFIG, ThemeConfig } from '../types/theme-config.types';
+} from './css-generator.util';
+import { DEFAULT_THEME_CONFIG, ThemeConfig } from './theme-config.types';
 
 describe('CssGeneratorUtil', () => {
   describe('generateCssVariables', () => {

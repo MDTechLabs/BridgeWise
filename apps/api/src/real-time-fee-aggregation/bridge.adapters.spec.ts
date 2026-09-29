@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AcrossAdapter, HopAdapter, StargateAdapter } from '../src/adapters/bridge.adapters';
-import { QuoteRequest } from '../src/interfaces/bridge-adapter.interface';
+import { AcrossAdapter, HopAdapter, StargateAdapter } from './bridge.adapters';
+import { QuoteRequest } from './bridge-adapter.interface';
 
 const baseRequest: QuoteRequest = {
   fromChain: 1,

@@ -36,7 +36,10 @@ export class ThemeService {
 
   // ─── CRUD ────────────────────────────────────────────────────────────────
 
-  async create(dto: CreateThemeDto, actorId?: string): Promise<ThemeResponseDto> {
+  async create(
+    dto: CreateThemeDto,
+    actorId?: string,
+  ): Promise<ThemeResponseDto> {
     const scope = dto.scope ?? ThemeScope.GLOBAL;
 
     // Validate owner required for non-global scopes
@@ -49,9 +52,13 @@ export class ThemeService {
     // Resolve parent config if inheritance is requested
     let resolvedConfig = DEFAULT_THEME_CONFIG;
     if (dto.parentThemeId) {
-      const parent = await this.themeRepository.findActiveById(dto.parentThemeId);
+      const parent = await this.themeRepository.findActiveById(
+        dto.parentThemeId,
+      );
       if (!parent) {
-        throw new NotFoundException(`Parent theme "${dto.parentThemeId}" not found`);
+        throw new NotFoundException(
+          `Parent theme "${dto.parentThemeId}" not found`,
+        );
       }
       resolvedConfig = parent.config;
     }
@@ -104,11 +111,13 @@ export class ThemeService {
 
     return themes
       .filter((t) => {
-        if (query.isActive !== undefined && t.isActive !== query.isActive) return false;
-        if (query.isDefault !== undefined && t.isDefault !== query.isDefault) return false;
+        if (query.isActive !== undefined && t.isActive !== query.isActive)
+          return false;
+        if (query.isDefault !== undefined && t.isDefault !== query.isDefault)
+          return false;
         return true;
       })
-      .map(this.toResponseDto);
+      .map((theme) => this.toResponseDto(theme));
   }
 
   async findOne(id: string): Promise<ThemeResponseDto> {
@@ -117,12 +126,18 @@ export class ThemeService {
     return this.toResponseDto(theme);
   }
 
-  async update(id: string, dto: UpdateThemeDto, actorId?: string): Promise<ThemeResponseDto> {
+  async update(
+    id: string,
+    dto: UpdateThemeDto,
+    actorId?: string,
+  ): Promise<ThemeResponseDto> {
     const theme = await this.themeRepository.findActiveById(id);
     if (!theme) throw new NotFoundException(`Theme "${id}" not found`);
 
     if (theme.isReadOnly) {
-      throw new BadRequestException(`Theme "${id}" is read-only and cannot be modified`);
+      throw new BadRequestException(
+        `Theme "${id}" is read-only and cannot be modified`,
+      );
     }
 
     if (dto.isDefault && !theme.isDefault) {
@@ -133,13 +148,18 @@ export class ThemeService {
     }
 
     if (dto.config) {
-      theme.config = deepmerge(theme.config, dto.config as Partial<ThemeConfig>, {
-        arrayMerge: (_, src) => src,
-      });
+      theme.config = deepmerge(
+        theme.config,
+        dto.config as Partial<ThemeConfig>,
+        {
+          arrayMerge: (_, src) => src,
+        },
+      );
     }
 
     if (dto.name !== undefined) theme.name = dto.name;
-    if (dto.description !== undefined) theme.description = dto.description ?? null;
+    if (dto.description !== undefined)
+      theme.description = dto.description ?? null;
     if (dto.isDefault !== undefined) theme.isDefault = dto.isDefault;
     theme.updatedBy = actorId ?? null;
 
@@ -153,7 +173,9 @@ export class ThemeService {
     if (!theme) throw new NotFoundException(`Theme "${id}" not found`);
 
     if (theme.isReadOnly) {
-      throw new BadRequestException(`Theme "${id}" is read-only and cannot be deleted`);
+      throw new BadRequestException(
+        `Theme "${id}" is read-only and cannot be deleted`,
+      );
     }
 
     if (theme.isDefault) {
@@ -192,7 +214,10 @@ export class ThemeService {
     return this.toResponseDto(saved);
   }
 
-  async resetToDefault(id: string, actorId?: string): Promise<ThemeResponseDto> {
+  async resetToDefault(
+    id: string,
+    actorId?: string,
+  ): Promise<ThemeResponseDto> {
     const theme = await this.themeRepository.findActiveById(id);
     if (!theme) throw new NotFoundException(`Theme "${id}" not found`);
 
@@ -202,7 +227,9 @@ export class ThemeService {
 
     let baseConfig = DEFAULT_THEME_CONFIG;
     if (theme.parentThemeId) {
-      const parent = await this.themeRepository.findActiveById(theme.parentThemeId);
+      const parent = await this.themeRepository.findActiveById(
+        theme.parentThemeId,
+      );
       if (parent) baseConfig = parent.config;
     }
 
@@ -239,12 +266,21 @@ export class ThemeService {
     };
   }
 
-  async getDefaultTheme(scope: ThemeScope, scopeOwnerId?: string): Promise<ThemeResponseDto> {
-    const theme = await this.themeRepository.findDefaultForScope(scope, scopeOwnerId);
+  async getDefaultTheme(
+    scope: ThemeScope,
+    scopeOwnerId?: string,
+  ): Promise<ThemeResponseDto> {
+    const theme = await this.themeRepository.findDefaultForScope(
+      scope,
+      scopeOwnerId,
+    );
 
     // Fallback: return any active theme for the scope
     if (!theme) {
-      const [fallback] = await this.themeRepository.findByScope(scope, scopeOwnerId);
+      const [fallback] = await this.themeRepository.findByScope(
+        scope,
+        scopeOwnerId,
+      );
       if (!fallback) {
         // Last resort: synthesise a virtual default
         return {

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AggregationService } from '../src/bridge-compare/aggregation.service';
-import { QuoteRequestParams } from '../src/bridge-compare/interfaces';
-import { BridgeStatus, RankingMode } from '../src/bridge-compare/enums';
+import { AggregationService } from './aggregation.service';
+import { QuoteRequestParams } from './interfaces';
+import { BridgeStatus, RankingMode } from './enums';
 import { HttpException } from '@nestjs/common';
 
 const baseParams: QuoteRequestParams = {
@@ -17,11 +17,16 @@ describe('AggregationService', () => {
   let service: AggregationService;
 
   beforeEach(async () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.5);
     const module: TestingModule = await Test.createTestingModule({
       providers: [AggregationService],
     }).compile();
 
     service = module.get<AggregationService>(AggregationService);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {

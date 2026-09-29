@@ -1,21 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionRecoveryManager } from './recovery_idempotency';
-import { TransactionRecoveryQueueService, RecoveryOutcome } from '../recovery/queue/stellar/transaction-recovery-queue.service';
+import {
+  TransactionRecoveryQueueService,
+  RecoveryOutcome,
+} from '../recovery/queue/stellar/transaction-recovery-queue.service';
 
 describe('Execution Idempotency — Integration', () => {
   let recoveryManager: TransactionRecoveryManager;
   let recoveryQueue: TransactionRecoveryQueueService;
 
-  beforeAll(async () => {
+  beforeEach(() => {
+    jest.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
     recoveryManager = new TransactionRecoveryManager();
     recoveryQueue = new TransactionRecoveryQueueService({ maxRetries: 3 });
   });
 
   afterEach(() => {
-    // Clean up state between tests
-    (recoveryManager as any).cache.clear();
-    (recoveryQueue as any).queue.clear();
-    (recoveryQueue as any).deadLetter.clear();
+    jest.useRealTimers();
   });
 
   describe('Transaction Submission Idempotency', () => {
@@ -104,7 +104,10 @@ describe('Execution Idempotency — Integration', () => {
       expect(recoveryManager.isDuplicateSubmission(idempotencyKey)).toBe(true);
 
       // Step 2: Enqueue for recovery
-      const queued = recoveryQueue.enqueue({ id: txId, payload: { idempotencyKey } });
+      const queued = recoveryQueue.enqueue({
+        id: txId,
+        payload: { idempotencyKey },
+      });
       expect(queued.id).toBe(txId);
 
       // Step 3: Simulate recovery attempt failure
@@ -128,13 +131,18 @@ describe('Execution Idempotency — Integration', () => {
       // Register all submissions
       transactions.forEach((tx) => {
         recoveryManager.registerSubmission(tx.idempotencyKey, tx.txHash);
-        recoveryQueue.enqueue({ id: tx.txId, payload: { idempotencyKey: tx.idempotencyKey } });
+        recoveryQueue.enqueue({
+          id: tx.txId,
+          payload: { idempotencyKey: tx.idempotencyKey },
+        });
       });
 
       // Verify all are tracked independently
       expect(recoveryQueue.size()).toBe(3);
       transactions.forEach((tx) => {
-        expect(recoveryManager.isDuplicateSubmission(tx.idempotencyKey)).toBe(true);
+        expect(recoveryManager.isDuplicateSubmission(tx.idempotencyKey)).toBe(
+          true,
+        );
         expect(recoveryQueue.has(tx.txId)).toBe(true);
       });
 
@@ -156,6 +164,12 @@ describe('Execution Idempotency — Integration', () => {
 
       recoveryManager.registerSubmission(idempotencyKey, txHash);
 
+      // A transaction is stuck only after exceeding the timeout.
+      expect(recoveryManager.findStuckTransactions(1)).toEqual([]);
+      jest.advanceTimersByTime(1);
+      expect(recoveryManager.findStuckTransactions(1)).toEqual([]);
+      jest.advanceTimersByTime(1);
+
       // Find stuck transactions with 1ms timeout
       const stuck = recoveryManager.findStuckTransactions(1);
       expect(stuck.length).toBe(1);
@@ -176,6 +190,8 @@ describe('Execution Idempotency — Integration', () => {
         confirmed.status = 'confirmed';
       }
 
+      jest.advanceTimersByTime(2);
+
       // Only pending should be detected as stuck
       const stuck = recoveryManager.findStuckTransactions(1);
       expect(stuck.length).toBe(1);
@@ -188,14 +204,24 @@ describe('Execution Idempotency — Integration', () => {
       const txId = 'exhausted-tx';
       recoveryQueue.enqueue({ id: txId });
 
-      // Exhaust retries
-      recoveryQueue.recordAttempt(txId, false);
-      recoveryQueue.recordAttempt(txId, false);
-      recoveryQueue.recordAttempt(txId, false);
+      // The third failed attempt reaches the configured retry limit.
+      expect(recoveryQueue.recordAttempt(txId, false)).toBe(
+        RecoveryOutcome.RETRY_SCHEDULED,
+      );
+      expect(recoveryQueue.recordAttempt(txId, false)).toBe(
+        RecoveryOutcome.RETRY_SCHEDULED,
+      );
 
-      expect(recoveryQueue.recordAttempt(txId, false)).toBe(RecoveryOutcome.EXHAUSTED);
+      expect(recoveryQueue.recordAttempt(txId, false)).toBe(
+        RecoveryOutcome.EXHAUSTED,
+      );
       expect(recoveryQueue.has(txId)).toBe(false);
-      expect(recoveryQueue.getDeadLettered().length).toBe(1);
+      expect(recoveryQueue.getDeadLettered()).toEqual([
+        expect.objectContaining({ id: txId, attempts: 3 }),
+      ]);
+      expect(() => recoveryQueue.recordAttempt(txId, false)).toThrow(
+        `No queued recovery for transaction "${txId}".`,
+      );
 
       // Re-enqueue should start fresh
       const result = recoveryQueue.enqueue({ id: txId });
@@ -208,7 +234,9 @@ describe('Execution Idempotency — Integration', () => {
       recoveryQueue.enqueue({ id: txId });
 
       // Attempt to record for non-existent transaction should throw
-      expect(() => recoveryQueue.recordAttempt('non-existent', false)).toThrow();
+      expect(() =>
+        recoveryQueue.recordAttempt('non-existent', false),
+      ).toThrow();
 
       // Original transaction should remain unaffected
       expect(recoveryQueue.has(txId)).toBe(true);

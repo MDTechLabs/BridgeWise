@@ -1,4 +1,4 @@
-import { ThemeConfig } from '../types/theme-config.types';
+import { ThemeConfig } from './theme-config.types';
 
 /**
  * Converts a camelCase key to a CSS custom property name.
@@ -45,7 +45,7 @@ export function generateCssVariables(
     const prefix = sectionPrefix(section);
 
     for (const [key, value] of Object.entries(sectionData)) {
-      if (value === undefined || value === null) continue;
+      if (typeof value !== 'string' && typeof value !== 'number') continue;
       const varName = `${prefix}-${camelToKebab(key)}`;
       vars[varName] = String(value);
     }
@@ -54,7 +54,9 @@ export function generateCssVariables(
   // Custom CSS variables pass-through
   if (config.customCssVariables) {
     for (const [key, value] of Object.entries(config.customCssVariables)) {
-      const cssKey = key.startsWith('--') ? key : `--custom-${camelToKebab(key)}`;
+      const cssKey = key.startsWith('--')
+        ? key
+        : `--custom-${camelToKebab(key)}`;
       vars[cssKey] = value;
     }
   }
@@ -69,7 +71,7 @@ export function generateDarkModeVariables(
 
   const vars: Record<string, string> = {};
   for (const [key, value] of Object.entries(config.darkModeColors)) {
-    if (value === undefined || value === null) continue;
+    if (typeof value !== 'string' && typeof value !== 'number') continue;
     vars[`--color-${camelToKebab(key)}`] = String(value);
   }
   return vars;

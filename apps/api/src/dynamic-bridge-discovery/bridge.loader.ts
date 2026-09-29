@@ -126,7 +126,6 @@ export class BridgeLoader implements OnModuleInit {
           continue;
         }
 
-<<<<<<< HEAD:src/dynamic-bridge-discovery/bridge.loader.ts
         await this.createAndRegisterAdapter(
           AdapterClass,
           resolvedPath,
@@ -155,8 +154,6 @@ export class BridgeLoader implements OnModuleInit {
 
   // ─── Private helpers ────────────────────────────────────────────────────────
 
-<<<<<<< HEAD:src/dynamic-bridge-discovery/bridge.loader.ts
-=======
   private resolvePath(filePath: string): string {
     return path.isAbsolute(filePath)
       ? filePath
@@ -181,7 +178,6 @@ export class BridgeLoader implements OnModuleInit {
     return instance;
   }
 
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/dynamic-bridge-discovery/bridge.loader.ts
   private extractAdapterClass(
     mod: Record<string, unknown>,
   ): BridgeAdapterConstructor | null {

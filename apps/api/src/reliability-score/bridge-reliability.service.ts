@@ -1,34 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
-<<<<<<< HEAD:src/reliability-score/bridge-reliability.service.ts
-import { BridgeTransactionEvent } from './entities/bridge-transaction-event.entity';
-import { BridgeReliabilityMetric } from './entities/bridge-reliability-metric.entity';
-import {
-  ReliabilityCalculatorService,
-  RawCounts,
-=======
 import { BridgeTransactionEvent } from './bridge-transaction-event.entity';
 import { BridgeReliabilityMetric } from './bridge-reliability-metric.entity';
 import {
   RawCounts,
   ReliabilityCalculatorService,
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/reliability-score/bridge-reliability.service.ts
 } from './reliability-calculator.service';
 import {
   BridgeReliabilityResponseDto,
   GetReliabilityDto,
   RecordBridgeEventDto,
   ReliabilityRankingFactorDto,
-<<<<<<< HEAD:src/reliability-score/bridge-reliability.service.ts
-} from './dto/reliability.dto';
-import { TransactionOutcome, WindowMode } from './enums/reliability.enum';
-import { RELIABILITY_CONSTANTS } from './constants/reliability.constants';
-=======
 } from './reliability.dto';
 import { TransactionOutcome, WindowMode } from './reliability.enum';
 import { RELIABILITY_CONSTANTS } from './reliability.constants';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/reliability-score/bridge-reliability.service.ts
 
 @Injectable()
 export class BridgeReliabilityService {

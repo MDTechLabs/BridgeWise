@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import * as os from 'os';
 import * as fs from 'fs';
@@ -66,7 +67,11 @@ export class SdkDebugService {
   // Public API
   // ---------------------------------------------------------------------------
 
-  verbose(event: string, message: string, meta?: Record<string, unknown>): void {
+  verbose(
+    event: string,
+    message: string,
+    meta?: Record<string, unknown>,
+  ): void {
     this.emit(SDK_DEBUG_LOG_LEVELS.VERBOSE, event, message, meta);
   }
 
@@ -97,7 +102,10 @@ export class SdkDebugService {
             code: (error as NodeJS.ErrnoException).code,
           }
         : error
-          ? { name: 'UnknownError', message: String(error) }
+          ? {
+              name: 'UnknownError',
+              message: typeof error === 'string' ? error : inspect(error),
+            }
           : undefined;
 
     this.emit(SDK_DEBUG_LOG_LEVELS.ERROR, event, message, meta, errorInfo);
@@ -295,20 +303,20 @@ export class SdkDebugService {
     }
 
     // Pretty format
-    const ts = useColor
-      ? colorize(entry.timestamp, 'gray')
-      : entry.timestamp;
+    const ts = useColor ? colorize(entry.timestamp, 'gray') : entry.timestamp;
     const lvl = useColor
-      ? colorize(entry.level.toUpperCase().padEnd(7), levelColor(entry.level), 'bold')
+      ? colorize(
+          entry.level.toUpperCase().padEnd(7),
+          levelColor(entry.level),
+          'bold',
+        )
       : entry.level.toUpperCase().padEnd(7);
     const ns = entry.namespace
       ? useColor
         ? colorize(`[${entry.namespace}]`, 'magenta')
         : `[${entry.namespace}]`
       : '';
-    const evt = useColor
-      ? colorize(entry.event, 'cyan')
-      : entry.event;
+    const evt = useColor ? colorize(entry.event, 'cyan') : entry.event;
     const msg = useColor
       ? colorize(entry.message, 'white', 'bold')
       : entry.message;

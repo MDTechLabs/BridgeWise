@@ -1,13 +1,18 @@
 /**
  * Auto Refresh Service for Real-Time Fee and Speed Updates
- * 
+ *
  * Polls bridge providers periodically and updates UI reactively.
  * Ensures data freshness with configurable refresh intervals.
- * 
+ *
  * Implementation Scope: src/services/refresh.ts
  */
 
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 /**
@@ -129,7 +134,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private eventEmitter: EventEmitter2) {
     // Initialize states and configs
-    Object.values(RefreshDataType).forEach(dataType => {
+    Object.values(RefreshDataType).forEach((dataType) => {
       this.states.set(dataType, {
         isRefreshing: false,
         lastRefreshed: null,
@@ -161,7 +166,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Start auto-refresh for a specific data type
    */
   async start(dataType: RefreshDataType): Promise<void> {
-    const config = this.configs.get(dataType)!;
+    const config = this.configs.get(dataType);
 
     if (!config.enabled) {
       this.logger.debug(`Auto-refresh disabled for ${dataType}`);
@@ -173,15 +178,19 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    this.logger.log(`Starting auto-refresh for ${dataType} (every ${config.intervalMs}ms)`);
+    this.logger.log(
+      `Starting auto-refresh for ${dataType} (every ${config.intervalMs}ms)`,
+    );
 
     // Trigger immediate first refresh
     await this.refresh(dataType);
 
     // Set up interval
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       if (!this.isPaused) {
-        await this.refresh(dataType);
+        this.refresh(dataType).catch((error: unknown) => {
+          this.logger.error(`Auto-refresh failed for ${dataType}`, error);
+        });
       }
     }, config.intervalMs);
 
@@ -231,8 +240,8 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Trigger manual refresh
    */
   async refresh(dataType: RefreshDataType): Promise<any> {
-    const state = this.states.get(dataType)!;
-    const config = this.configs.get(dataType)!;
+    const state = this.states.get(dataType);
+    const config = this.configs.get(dataType);
 
     if (state.isRefreshing) {
       this.logger.debug(`Refresh already in progress for ${dataType}`);
@@ -255,7 +264,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
       this.eventEmitter.emit('refresh:start', {
         dataType,
         timestamp: new Date(),
-      } as RefreshEvent);
+      });
 
       // Fetch data with retry logic
       const data = await this.fetchWithRetry(dataType, config);
@@ -272,9 +281,11 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
         dataType,
         timestamp: new Date(),
         data,
-      } as RefreshEvent);
+      });
 
-      this.logger.log(`Successfully refreshed ${dataType} (refresh #${state.refreshCount})`);
+      this.logger.log(
+        `Successfully refreshed ${dataType} (refresh #${state.refreshCount})`,
+      );
 
       return data;
     } catch (error) {
@@ -287,7 +298,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
         dataType,
         timestamp: new Date(),
         error: error as Error,
-      } as RefreshEvent);
+      });
 
       this.logger.error(`Failed to refresh ${dataType}: ${error}`);
 
@@ -315,10 +326,9 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
         lastError = error as Error;
 
         if (attempt < config.maxRetries) {
-          const delay = config.retryDelayMs * Math.pow(
-            config.backoffMultiplier || 2,
-            attempt,
-          );
+          const delay =
+            config.retryDelayMs *
+            Math.pow(config.backoffMultiplier || 2, attempt);
 
           this.logger.warn(
             `Retry ${attempt + 1}/${config.maxRetries} for ${dataType} in ${delay}ms`,
@@ -329,18 +339,28 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    throw lastError || new Error(`Failed to fetch ${dataType} after ${config.maxRetries} retries`);
+    throw (
+      lastError ||
+      new Error(
+        `Failed to fetch ${dataType} after ${config.maxRetries} retries`,
+      )
+    );
   }
 
   /**
    * Update refresh configuration
    */
-  updateConfig(dataType: RefreshDataType, config: Partial<RefreshConfig>): void {
-    const current = this.configs.get(dataType)!;
+  updateConfig(
+    dataType: RefreshDataType,
+    config: Partial<RefreshConfig>,
+  ): void {
+    const current = this.configs.get(dataType);
     const updated = { ...current, ...config };
     this.configs.set(dataType, updated);
 
-    this.logger.debug(`Updated config for ${dataType}: ${JSON.stringify(updated)}`);
+    this.logger.debug(
+      `Updated config for ${dataType}: ${JSON.stringify(updated)}`,
+    );
 
     // Restart if interval changed
     if (config.intervalMs && this.intervals.has(dataType)) {
@@ -353,7 +373,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Get current refresh state
    */
   getState(dataType: RefreshDataType): RefreshState {
-    return { ...this.states.get(dataType)! };
+    return { ...this.states.get(dataType) };
   }
 
   /**
@@ -371,7 +391,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Get current configuration
    */
   getConfig(dataType: RefreshDataType): RefreshConfig {
-    return { ...this.configs.get(dataType)! };
+    return { ...this.configs.get(dataType) };
   }
 
   /**
@@ -392,6 +412,6 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Utility: sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

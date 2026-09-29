@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events';
 
 export type BridgeEventTopic = 'Deposit' | 'MessageSent' | 'TokensClaimed';
-export type BridgeTransactionStatus = 'Pending' | 'In-Flight' | 'Completed' | 'Failed';
+export type BridgeTransactionStatus =
+  'Pending' | 'In-Flight' | 'Completed' | 'Failed';
 
 export interface BridgeEventPayload {
   txHash: string;
@@ -80,11 +81,14 @@ export class StellarEventSubscriber extends EventEmitter {
     const backoff = this.currentBackoffMs;
     this.currentBackoffMs *= 2; // Exponential backoff
 
-    return new Promise((resolve) => {
-      this.mockWsTimer = setTimeout(async () => {
-        await this.connect();
-        this.emit('reconnected', { attempt: currentAttempt });
-        resolve();
+    return new Promise<void>((resolve, reject) => {
+      this.mockWsTimer = setTimeout(() => {
+        this.connect()
+          .then(() => {
+            this.emit('reconnected', { attempt: currentAttempt });
+            resolve();
+          })
+          .catch(reject);
       }, backoff);
     });
   }
@@ -102,7 +106,10 @@ export class StellarEventSubscriber extends EventEmitter {
       fromAddress: payload.fromAddress || 'GABC...123',
       toAddress: payload.toAddress || '0x123...abc',
       amount: payload.amount || '10000000',
-      contractAddress: payload.contractAddress || this.config.contractAddresses[0] || 'CSTELLAR_CONTRACT',
+      contractAddress:
+        payload.contractAddress ||
+        this.config.contractAddresses[0] ||
+        'CSTELLAR_CONTRACT',
       blockNumber: payload.blockNumber || 1234567,
       timestamp: payload.timestamp || Date.now(),
     };

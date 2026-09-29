@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
-import { BridgeEventPayload, SubscriberConfig } from './stellar-event-subscriber';
+import {
+  BridgeEventPayload,
+  SubscriberConfig,
+} from './stellar-event-subscriber';
 
 export class EVMLogSubscriber extends EventEmitter {
   private config: SubscriberConfig;
@@ -58,11 +61,14 @@ export class EVMLogSubscriber extends EventEmitter {
     const backoff = this.currentBackoffMs;
     this.currentBackoffMs *= 2; // Exponential backoff
 
-    return new Promise((resolve) => {
-      this.mockWsTimer = setTimeout(async () => {
-        await this.connect();
-        this.emit('reconnected', { attempt: currentAttempt });
-        resolve();
+    return new Promise<void>((resolve, reject) => {
+      this.mockWsTimer = setTimeout(() => {
+        this.connect()
+          .then(() => {
+            this.emit('reconnected', { attempt: currentAttempt });
+            resolve();
+          })
+          .catch(reject);
       }, backoff);
     });
   }
@@ -80,7 +86,10 @@ export class EVMLogSubscriber extends EventEmitter {
       fromAddress: payload.fromAddress || '0x999...def',
       toAddress: payload.toAddress || '0x888...ghi',
       amount: payload.amount || '50000000',
-      contractAddress: payload.contractAddress || this.config.contractAddresses[0] || '0xEVM_CONTRACT',
+      contractAddress:
+        payload.contractAddress ||
+        this.config.contractAddresses[0] ||
+        '0xEVM_CONTRACT',
       blockNumber: payload.blockNumber || 9876543,
       timestamp: payload.timestamp || Date.now(),
     };
