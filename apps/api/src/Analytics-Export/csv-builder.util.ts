@@ -111,10 +111,22 @@ export class CsvBuilderUtil {
     if (value instanceof Date) {
       return value.toISOString();
     }
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
+    if (value === null || value === undefined) {
+      return '';
     }
-    return String(value);
+    if (typeof value === 'object') {
+      return JSON.stringify(value) ?? '';
+    }
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      typeof value === 'bigint' ||
+      typeof value === 'symbol'
+    ) {
+      return String(value);
+    }
+    return '[Function]';
   }
 
   /**

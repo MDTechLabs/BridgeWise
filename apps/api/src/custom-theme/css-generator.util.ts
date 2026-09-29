@@ -22,6 +22,17 @@ function sectionPrefix(section: string): string {
   return map[section] ?? `--${camelToKebab(section)}`;
 }
 
+function cssValueToString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (typeof value === 'object' && value !== null) {
+    return JSON.stringify(value) ?? '';
+  }
+  return '';
+}
+
 export function generateCssVariables(
   config: ThemeConfig,
 ): Record<string, string> {
@@ -47,7 +58,7 @@ export function generateCssVariables(
     for (const [key, value] of Object.entries(sectionData)) {
       if (value === undefined || value === null) continue;
       const varName = `${prefix}-${camelToKebab(key)}`;
-      vars[varName] = String(value);
+      vars[varName] = cssValueToString(value);
     }
   }
 
@@ -70,7 +81,7 @@ export function generateDarkModeVariables(
   const vars: Record<string, string> = {};
   for (const [key, value] of Object.entries(config.darkModeColors)) {
     if (value === undefined || value === null) continue;
-    vars[`--color-${camelToKebab(key)}`] = String(value);
+    vars[`--color-${camelToKebab(key)}`] = cssValueToString(value);
   }
   return vars;
 }

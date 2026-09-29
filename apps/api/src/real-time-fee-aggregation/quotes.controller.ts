@@ -8,11 +8,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-<<<<<<< HEAD:src/real-time-fee-aggregation/quotes.controller.ts
-import { FeeAggregationService } from './services/fee-aggregation.service';
-import { GetQuotesDto, CompareQuotesResponseDto } from './dto/get-quotes.dto';
-=======
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/real-time-fee-aggregation/quotes.controller.ts
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { FeeAggregationService } from './fee-aggregation.service';

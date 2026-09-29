@@ -34,6 +34,22 @@ export interface TransferOptions {
   priorityFee?: string;
 }
 
+/** Context checked immediately before the executor asks the wallet to sign. */
+export interface TransferSigningContext {
+  transfer: Readonly<BridgeTransactionDetails>;
+  options: Readonly<TransferOptions>;
+  walletConnection: Readonly<WalletConnection>;
+  preparedTransaction: Readonly<Record<string, any>>;
+}
+
+/** Structural contract implemented by the shared pre-signing safety gate. */
+export interface TransferSigningGate {
+  sign<TSigned>(
+    context: TransferSigningContext,
+    signer: (context: TransferSigningContext) => Promise<TSigned>,
+  ): Promise<{ signed: TSigned }>;
+}
+
 export class StellarBridgeExecutor {
   private wallet: FreighterProvider;
   private bridgeContract: BridgeContract;
@@ -43,6 +59,7 @@ export class StellarBridgeExecutor {
   constructor(
     wallet: FreighterProvider,
     bridgeContract: BridgeContract,
+    private readonly safetyGate: TransferSigningGate,
     horizonUrl: string = 'https://horizon.stellar.org',
   ) {
     this.wallet = wallet;
@@ -79,8 +96,18 @@ export class StellarBridgeExecutor {
         params,
         sorobanAccount,
       );
-      const signedTx = await this.wallet.signTransaction(
-        JSON.stringify(preparedTx),
+      const signingContext: TransferSigningContext = {
+        transfer: { ...transfer },
+        options: { ...options },
+        walletConnection: { ...this.walletConnection },
+        preparedTransaction: preparedTx,
+      };
+      const { signed: signedTx } = await this.safetyGate.sign(
+        signingContext,
+        (validatedContext) =>
+          this.wallet.signTransaction(
+            JSON.stringify(validatedContext.preparedTransaction),
+          ),
       );
       const result = await this.bridgeContract.submitBridgeTransfer(
         signedTx.signature,

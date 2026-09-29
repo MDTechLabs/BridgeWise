@@ -6,6 +6,7 @@
 import { FreighterProvider } from './wallet/FreighterProvider';
 import { BridgeContract } from './contracts/BridgeContract';
 import { StellarBridgeExecutor } from './executor/BridgeExecutor';
+import type { TransferSigningGate } from './executor/BridgeExecutor';
 
 // Wallet exports
 export { FreighterProvider } from './wallet/FreighterProvider';
@@ -29,6 +30,8 @@ export type {
   BridgeTransactionDetails,
   TransferExecutionResult,
   TransferOptions,
+  TransferSigningContext,
+  TransferSigningGate,
 } from './executor/BridgeExecutor';
 
 /**
@@ -37,13 +40,15 @@ export type {
  * @param horizonUrl Horizon API endpoint URL
  * @param contractId Bridge contract address
  * @param network Target network
+ * @param safetyGate Mandatory pre-signing readiness gate
  * @returns Configured bridge executor ready for use
  */
 export function createStellarAdapter(
   rpcUrl: string = 'https://soroban-rpc.mainnet.stellar.org',
   horizonUrl: string = 'https://horizon.stellar.org',
   contractId: string,
-  network: 'mainnet' | 'testnet' = 'mainnet'
+  network: 'mainnet' | 'testnet' = 'mainnet',
+  safetyGate: TransferSigningGate,
 ) {
   const wallet = new FreighterProvider(rpcUrl, horizonUrl);
 
@@ -53,7 +58,12 @@ export function createStellarAdapter(
     networkPassphrase: network === 'mainnet' ? 'Public Global Stellar Network ; September 2015' : 'Test SDF Network ; September 2015',
   });
 
-  return new StellarBridgeExecutor(wallet, bridgeContract, horizonUrl);
+  return new StellarBridgeExecutor(
+    wallet,
+    bridgeContract,
+    safetyGate,
+    horizonUrl,
+  );
 }
 
 // Adapter interface exports

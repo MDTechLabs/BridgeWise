@@ -97,7 +97,7 @@ export class SdkDebugService {
             code: (error as NodeJS.ErrnoException).code,
           }
         : error
-          ? { name: 'UnknownError', message: String(error) }
+          ? { name: 'UnknownError', message: serializeUnknownError(error) }
           : undefined;
 
     this.emit(SDK_DEBUG_LOG_LEVELS.ERROR, event, message, meta, errorInfo);
@@ -395,5 +395,17 @@ export class SdkDebugService {
     const count = this.stats.logsByEvent['sdk.request.end'] ?? 1;
     this.stats.averageRequestDurationMs =
       (prev * (count - 1) + duration) / count;
+  }
+}
+
+function serializeUnknownError(error: unknown): string {
+  if (typeof error === 'string') return error;
+  if (typeof error === 'symbol') return error.description ?? 'Unknown error';
+  if (typeof error === 'bigint') return error.toString();
+
+  try {
+    return JSON.stringify(error) ?? 'Unknown error';
+  } catch {
+    return 'Unknown error';
   }
 }

@@ -86,13 +86,13 @@ export class MetricsStreamService {
    */
   private setupEventListeners(): void {
     // Listen for transaction completion
-    this.eventEmitter.on('transaction.updated', async (transaction: any) => {
-      await this.handleTransactionUpdate(transaction);
+    this.eventEmitter.on('transaction.updated', (transaction: any) => {
+      void this.handleTransactionUpdate(transaction);
     });
 
     // Listen for analytics updates
-    this.eventEmitter.on('analytics.updated', async (payload: any) => {
-      await this.handleAnalyticsUpdate(payload);
+    this.eventEmitter.on('analytics.updated', (payload: any) => {
+      void this.handleAnalyticsUpdate(payload);
     });
   }
 
@@ -176,8 +176,8 @@ export class MetricsStreamService {
    */
   private startPeriodicUpdates(): void {
     // Refresh full metrics every 30 seconds
-    this.updateInterval = setInterval(async () => {
-      await this.refreshFullMetrics();
+    this.updateInterval = setInterval(() => {
+      void this.refreshFullMetrics();
     }, 30000);
   }
 

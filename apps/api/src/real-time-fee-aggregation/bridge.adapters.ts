@@ -3,11 +3,7 @@ import {
   BridgeAdapter,
   NormalizedQuote,
   QuoteRequest,
-<<<<<<< HEAD:src/real-time-fee-aggregation/bridge.adapters.ts
-} from '../interfaces/bridge-adapter.interface';
-=======
 } from './bridge-adapter.interface';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/real-time-fee-aggregation/bridge.adapters.ts
 
 /**
  * Across Protocol Adapter

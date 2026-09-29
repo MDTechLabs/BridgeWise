@@ -13,6 +13,7 @@ describe('EnvironmentLoader', () => {
     }
     // Clear relevant env vars
     delete process.env.TEST_VAR;
+    delete process.env.VAR1;
     delete process.env.NODE_ENV;
   });
 

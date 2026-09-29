@@ -161,7 +161,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Start auto-refresh for a specific data type
    */
   async start(dataType: RefreshDataType): Promise<void> {
-    const config = this.configs.get(dataType)!;
+    const config = this.configs.get(dataType);
 
     if (!config.enabled) {
       this.logger.debug(`Auto-refresh disabled for ${dataType}`);
@@ -179,9 +179,10 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
     await this.refresh(dataType);
 
     // Set up interval
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       if (!this.isPaused) {
-        await this.refresh(dataType);
+        // refresh records and emits its own errors, so contain interval failures.
+        void this.refresh(dataType).catch(() => undefined);
       }
     }, config.intervalMs);
 
@@ -231,8 +232,8 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Trigger manual refresh
    */
   async refresh(dataType: RefreshDataType): Promise<any> {
-    const state = this.states.get(dataType)!;
-    const config = this.configs.get(dataType)!;
+    const state = this.states.get(dataType);
+    const config = this.configs.get(dataType);
 
     if (state.isRefreshing) {
       this.logger.debug(`Refresh already in progress for ${dataType}`);
@@ -255,7 +256,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
       this.eventEmitter.emit('refresh:start', {
         dataType,
         timestamp: new Date(),
-      } as RefreshEvent);
+      });
 
       // Fetch data with retry logic
       const data = await this.fetchWithRetry(dataType, config);
@@ -272,7 +273,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
         dataType,
         timestamp: new Date(),
         data,
-      } as RefreshEvent);
+      });
 
       this.logger.log(`Successfully refreshed ${dataType} (refresh #${state.refreshCount})`);
 
@@ -280,14 +281,14 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       // Update state on error
       state.isRefreshing = false;
-      state.lastError = error as Error;
+      state.lastError = error;
 
       // Emit error event
       this.eventEmitter.emit('refresh:error', {
         dataType,
         timestamp: new Date(),
-        error: error as Error,
-      } as RefreshEvent);
+        error,
+      });
 
       this.logger.error(`Failed to refresh ${dataType}: ${error}`);
 
@@ -312,7 +313,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
 
         return await this.fetcher(dataType);
       } catch (error) {
-        lastError = error as Error;
+        lastError = error;
 
         if (attempt < config.maxRetries) {
           const delay = config.retryDelayMs * Math.pow(
@@ -336,7 +337,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Update refresh configuration
    */
   updateConfig(dataType: RefreshDataType, config: Partial<RefreshConfig>): void {
-    const current = this.configs.get(dataType)!;
+    const current = this.configs.get(dataType);
     const updated = { ...current, ...config };
     this.configs.set(dataType, updated);
 
@@ -353,7 +354,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Get current refresh state
    */
   getState(dataType: RefreshDataType): RefreshState {
-    return { ...this.states.get(dataType)! };
+    return { ...this.states.get(dataType) };
   }
 
   /**
@@ -371,7 +372,7 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
    * Get current configuration
    */
   getConfig(dataType: RefreshDataType): RefreshConfig {
-    return { ...this.configs.get(dataType)! };
+    return { ...this.configs.get(dataType) };
   }
 
   /**

@@ -22,6 +22,14 @@ const result = await gate.sign(intent, (validatedIntent) =>
 );
 ```
 
+`StellarBridgeExecutor` requires a `TransferSigningGate` in its constructor.
+Pass the shared gate there; the executor supplies a context containing copies
+of the transfer/options, the connected wallet, and the exact prepared
+transaction. Its wallet signer callback is only reachable from the gate. For
+this executor, checks should derive the amount, source account, route, and
+quote from that context and verify the prepared transaction matches them.
+Missing check integrations must not be replaced with successful no-op checks.
+
 These callbacks are required at construction. Wire them to authoritative
 chain/provider reads for the same account, route, spender, and transaction
 intent that will be signed. Existing helpers include the Soroban token balance
