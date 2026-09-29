@@ -26,14 +26,14 @@ Object.defineProperty(exports, "StellarBridgeExecutor", { enumerable: true, get:
  * @param network Target network
  * @returns Configured bridge executor ready for use
  */
-function createStellarAdapter(rpcUrl = 'https://soroban-rpc.mainnet.stellar.org', horizonUrl = 'https://horizon.stellar.org', contractId, network = 'mainnet') {
+function createStellarAdapter(rpcUrl = 'https://soroban-rpc.mainnet.stellar.org', horizonUrl = 'https://horizon.stellar.org', contractId, network = 'mainnet', safetyGate) {
     const wallet = new FreighterProvider_1.FreighterProvider(rpcUrl, horizonUrl);
     const bridgeContract = new BridgeContract_1.BridgeContract({
         contractId,
         rpcUrl,
         networkPassphrase: network === 'mainnet' ? 'Public Global Stellar Network ; September 2015' : 'Test SDF Network ; September 2015',
     });
-    return new BridgeExecutor_1.StellarBridgeExecutor(wallet, bridgeContract, horizonUrl);
+    return new BridgeExecutor_1.StellarBridgeExecutor(wallet, bridgeContract, safetyGate, horizonUrl);
 }
 // Version export
 exports.version = '0.1.0';

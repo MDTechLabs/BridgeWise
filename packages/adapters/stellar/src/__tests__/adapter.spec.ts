@@ -204,6 +204,12 @@ describe('StellarBridgeExecutor', () => {
   let provider: FreighterProvider;
   let contract: BridgeContract;
   const testPublicKey = 'GBUQWP3BOUZX34ULNQG23RQ6F4YUSXHTZSGYCON5JSXC2H7YVSTQQLYJ';
+  const testSafetyGate = {
+    sign: async <TSigned>(
+      context: any,
+      signer: (context: any) => Promise<TSigned>,
+    ) => ({ signed: await signer(context) }),
+  };
 
   beforeEach(async () => {
     provider = new FreighterProvider();
@@ -212,7 +218,7 @@ describe('StellarBridgeExecutor', () => {
       rpcUrl: 'https://soroban-rpc.mainnet.stellar.org',
       networkPassphrase: 'Public Global Stellar Network ; September 2015',
     });
-    executor = new StellarBridgeExecutor(provider, contract);
+    executor = new StellarBridgeExecutor(provider, contract, testSafetyGate);
 
     // Mock window.freighter
     if (typeof window === 'undefined') {
@@ -329,7 +335,7 @@ describe('StellarBridgeExecutor', () => {
 
   describe('connectAndPrepare', () => {
     it('should connect and prepare for transfers', async () => {
-      executor = new StellarBridgeExecutor(provider, contract);
+      executor = new StellarBridgeExecutor(provider, contract, testSafetyGate);
       const connection = await executor.connectAndPrepare('mainnet');
 
       expect(connection).toBeDefined();

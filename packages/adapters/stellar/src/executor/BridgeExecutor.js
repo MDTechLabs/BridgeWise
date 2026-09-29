@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StellarBridgeExecutor = void 0;
 class StellarBridgeExecutor {
-    constructor(wallet, bridgeContract, horizonUrl = "https://horizon.stellar.org") {
+    constructor(wallet, bridgeContract, safetyGate, horizonUrl = "https://horizon.stellar.org") {
         this.walletConnection = null;
         this.wallet = wallet;
         this.bridgeContract = bridgeContract;
+        this.safetyGate = safetyGate;
         this.horizonUrl = horizonUrl;
     }
     async executeTransfer(transfer, options = {}) {
@@ -28,7 +29,13 @@ class StellarBridgeExecutor {
                 sequenceNumber: "1",
             };
             const preparedTx = await this.bridgeContract.prepareBridgeTransfer(params, sorobanAccount);
-            const signedTx = await this.wallet.signTransaction(JSON.stringify(preparedTx));
+            const signingContext = {
+                transfer: { ...transfer },
+                options: { ...options },
+                walletConnection: { ...this.walletConnection },
+                preparedTransaction: preparedTx,
+            };
+            const { signed: signedTx } = await this.safetyGate.sign(signingContext, (validatedContext) => this.wallet.signTransaction(JSON.stringify(validatedContext.preparedTransaction)));
             const result = await this.bridgeContract.submitBridgeTransfer(signedTx.signature);
             // Log successful execution (without sensitive data)
             console.log(JSON.stringify({
