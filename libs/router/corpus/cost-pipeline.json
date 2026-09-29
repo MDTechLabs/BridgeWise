@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "suite": "cost-pipeline",
+  "description": "End-to-end cases where CostCalculator derives edge costs and PathFinder selects the route, pinning the fee and latency model.",
+  "cases": [
+    {
+      "id": "stellar-to-ethereum-cost-model",
+      "description": "1000 USDC Stellar->Ethereum: fee = 0.001 network + 5 bps (0.5) = 0.501; latency = (2 + 5 + 12 + 5) s = 24s.",
+      "tags": ["integration", "cost-model"],
+      "graph": { "generate": [{ "asset": "USDC", "sourceChain": "stellar", "targetChain": "ethereum", "amount": 1000, "provider": "allbridge" }] },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": {
+        "kind": "route",
+        "route": { "hops": ["USDC:stellar->USDC:ethereum@allbridge"], "totalFee": 0.501, "totalLatencyMs": 24000 }
+      }
+    },
+    {
+      "id": "unknown-chain-uses-default-latency",
+      "description": "Chains missing from the latency table fall back to 10s network + 30s confirmation: (10 + 30 + 10 + 5) s = 55s.",
+      "tags": ["integration", "cost-model", "defaults"],
+      "graph": { "generate": [{ "asset": "USDC", "sourceChain": "unlisted-a", "targetChain": "unlisted-b", "amount": 0, "provider": "bridge" }] },
+      "request": { "source": "USDC:unlisted-a", "target": "USDC:unlisted-b", "options": { "strategy": "fastest" } },
+      "expected": {
+        "kind": "route",
+        "route": { "hops": ["USDC:unlisted-a->USDC:unlisted-b@bridge"], "totalFee": 0.001, "totalLatencyMs": 55000 }
+      }
+    },
+    {
+      "id": "direct-beats-relay-on-generated-costs",
+      "description": "Generated costs are per-hop, so the direct Stellar->Ethereum bridge (0.501, 24s) beats relaying via Polygon (14s + 39s). The relay is not offered as an alternative because it never improves on the recorded 24s distance.",
+      "tags": ["integration", "multi-hop", "find-paths"],
+      "graph": {
+        "generate": [
+          { "asset": "USDC", "sourceChain": "stellar", "targetChain": "polygon", "amount": 1000, "provider": "allbridge" },
+          { "asset": "USDC", "sourceChain": "polygon", "targetChain": "ethereum", "amount": 1000, "provider": "stargate" },
+          { "asset": "USDC", "sourceChain": "stellar", "targetChain": "ethereum", "amount": 1000, "provider": "wormhole" }
+        ]
+      },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "fastest" }, "maxResults": 2 },
+      "expected": {
+        "kind": "routes",
+        "routes": [{ "hops": ["USDC:stellar->USDC:ethereum@wormhole"], "totalFee": 0.501, "totalLatencyMs": 24000 }]
+      }
+    },
+    {
+      "id": "identical-costs-keep-insertion-order",
+      "description": "When two providers produce identical costs, the first-declared edge wins (ties are not reordered).",
+      "tags": ["integration", "determinism", "boundary"],
+      "graph": {
+        "generate": [
+          { "asset": "USDC", "sourceChain": "stellar", "targetChain": "ethereum", "amount": 1000, "provider": "allbridge" },
+          { "asset": "USDC", "sourceChain": "stellar", "targetChain": "ethereum", "amount": 1000, "provider": "wormhole" }
+        ]
+      },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "route", "route": { "hops": ["USDC:stellar->USDC:ethereum@allbridge"] } }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Security Module provides comprehensive, production-ready API key management with encryption, rotation, and audit capabilities. It prevents key exposure to clients and ensures keys are properly stored, encrypted, and managed throughout their lifecycle.
+The Security Module provides API key encryption and process-local rotation helpers. Production credential storage, operator approvals, durable backups, and provider-side rotation must be handled by the deployment platform and its secret manager.
 
 ## Quick Start
 
@@ -25,14 +25,9 @@ export class AppModule {}
 ### 2. Set Environment Variables
 
 ```bash
-# Generate encryption key
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-# Set in .env
-VAULT_ENCRYPTION_KEY=<generated-key>
-API_KEY=your-actual-api-key
-API_SECRET=your-actual-api-secret
-DB_PASSWORD=your-db-password
+# For local development, use development-only values in an ignored .env file.
+# Create production credentials in the approved secret manager and inject them at runtime.
+# See docs/KEY_MANAGEMENT_RUNBOOK.md for safe key creation and handling.
 ```
 
 ### 3. Use in Your Services
@@ -107,10 +102,10 @@ export class BridgeService {
 - `getRotationRecommendations()` - Get recommendations
 
 **Features:**
-- Automatic daily rotation checks (via `@Cron`)
+- Daily age checks mark keys requiring rotation; they do not create provider credentials
 - Configurable policies per key
 - Expiration tracking
-- Rotation history
+- Process-local rotation history
 - Recommendations
 
 ### EnvironmentSecurityValidator
@@ -151,17 +146,17 @@ export class BridgeService {
 - **Algorithm:** AES-256-GCM
 - **Unique IV:** Each key encrypted with random IV
 - **Authentication Tag:** Detects tampering
-- **Key Derivation:** PBKDF2 from encryption key
+- **Key Derivation:** SHA-256 hash of the configured encryption-key string
 
 ### ✅ Key Rotation
-- **Automatic:** Daily schedule checks
+- **Scheduled check:** Daily age checks mark keys that need rotation; no provider key is created automatically
 - **Configurable:** Per-key policies
-- **Tracked:** Complete rotation history
-- **Alerts:** Expiration warnings
+- **Tracked:** Rotation history in process memory only
+- **Alerts:** Expiration warnings are logged; no notification integration is configured
 
 ### ✅ Access Control
 - **Server-side only:** Keys never exposed to clients
-- **Audit logs:** All access logged
+- **Access records:** The vault logs key identifiers, not approver identities or secret values; this is not a durable audit ledger
 - **Expiration:** Automatic key expiration
 - **Revocation:** Immediate key disabling
 
@@ -271,19 +266,9 @@ CORS_ORIGIN=http://localhost:3000
 LOG_LEVEL=debug
 ```
 
-### Production (.env.production)
+### Production
 
-```bash
-NODE_ENV=production
-API_KEY=<real-production-key>
-API_SECRET=<real-production-secret>
-DB_PASSWORD=<real-db-password>
-VAULT_ENCRYPTION_KEY=<secure-generated-key>
-FORCE_HTTPS=true
-CORS_ORIGIN=https://app.domain.com
-LOG_LEVEL=warn
-LOG_FORMAT=json
-```
+Do not create or deploy `.env.production`. Provide required production configuration through the deployment platform and inject credentials at runtime from the approved secret manager. Follow the [Production key management runbook](../../../../docs/KEY_MANAGEMENT_RUNBOOK.md) for key creation, protected backups, approvals, rotation, and emergency revocation.
 
 ## Best Practices
 

@@ -43,11 +43,11 @@ export interface QuoteComparisonOptions {
    */
   maxResults?: number;
 
-  /**
-   * If true, quotes that have expired (expiresAt < now) are silently
-   * excluded before comparison. Defaults to false.
-   */
+  /** @deprecated Expired quotes are always excluded. */
   excludeExpired?: boolean;
+
+  /** Maximum age of a quote in milliseconds. Defaults to 60 seconds. */
+  maxQuoteAgeMs?: number;
 }
 
 // ─── Dimension Scores ────────────────────────────────────────────────────────

@@ -54,6 +54,8 @@ export interface StellarLiquidityProviderConfig {
   fetchFn: (asset: string) => Promise<StellarLiquiditySnapshot>;
   /** Cache TTL for this provider's data in milliseconds (default: 60000). */
   cacheTtlMs?: number;
+  /** Maximum accepted age of the provider-reported snapshot timestamp. */
+  maxSnapshotAgeMs?: number;
 }
 
 export interface StellarBridgeLiquidityMonitorConfig {
@@ -65,6 +67,8 @@ export interface StellarBridgeLiquidityMonitorConfig {
   thresholds?: LiquidityThreshold[];
   /** Maximum age of cached data before forced refresh in ms (default: 60000). */
   cacheTtlMs?: number;
+  /** Maximum age of provider-reported liquidity data in ms (default: 60000). */
+  maxSnapshotAgeMs?: number;
 }
 
 export interface LiquidityAlertEvent {
@@ -83,6 +87,7 @@ const DEFAULT_CONFIG: Required<StellarBridgeLiquidityMonitorConfig> = {
   providers: [],
   refreshIntervalMs: 30_000,
   cacheTtlMs: 60_000,
+  maxSnapshotAgeMs: 60_000,
   thresholds: [
     { asset: 'USDC', lowThreshold: '50000', criticalThreshold: '10000' },
     { asset: 'USDT', lowThreshold: '50000', criticalThreshold: '10000' },
@@ -108,6 +113,8 @@ export class StellarBridgeLiquidityMonitor extends EventEmitter {
       refreshIntervalMs:
         config.refreshIntervalMs ?? DEFAULT_CONFIG.refreshIntervalMs,
       cacheTtlMs: config.cacheTtlMs ?? DEFAULT_CONFIG.cacheTtlMs,
+      maxSnapshotAgeMs:
+        config.maxSnapshotAgeMs ?? DEFAULT_CONFIG.maxSnapshotAgeMs,
       thresholds: config.thresholds
         ? [...config.thresholds]
         : [...DEFAULT_CONFIG.thresholds],
@@ -186,33 +193,39 @@ export class StellarBridgeLiquidityMonitor extends EventEmitter {
       const cachedAt = this.cacheTimestamps.get(cacheKey) ?? 0;
 
       const effectiveTtl = providerConfig.cacheTtlMs ?? this.config.cacheTtlMs;
+      const maxSnapshotAge =
+        providerConfig.maxSnapshotAgeMs ?? this.config.maxSnapshotAgeMs;
       // Return cached data if still fresh
-      if (cached && Date.now() - cachedAt < effectiveTtl) {
+      const now = Date.now();
+      if (
+        cached &&
+        now - cachedAt < effectiveTtl &&
+        this.isFreshSnapshot(cached, now, maxSnapshotAge)
+      ) {
         results.push(cached);
         continue;
       }
 
       try {
         const snapshot = await providerConfig.fetchFn(query.asset);
+        const fetchedAt = Date.now();
+        if (!this.isFreshSnapshot(snapshot, fetchedAt, maxSnapshotAge)) {
+          throw new Error(`Provider ${providerName} returned stale liquidity data`);
+        }
         const enriched: StellarLiquiditySnapshot = {
           ...snapshot,
           sourceChain: query.sourceChain ?? snapshot.sourceChain,
           destinationChain: query.destinationChain ?? snapshot.destinationChain,
-          timestamp: Date.now(),
         };
 
         this.cache.set(cacheKey, enriched);
-        this.cacheTimestamps.set(cacheKey, Date.now());
+        this.cacheTimestamps.set(cacheKey, fetchedAt);
         this.evaluateThresholds(enriched);
         results.push(enriched);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         errors.push(`Provider ${providerName} failed: ${message}`);
 
-        // Use stale cache if available on failure
-        if (cached) {
-          results.push({ ...cached, status: cached.status ?? 'unknown' });
-        }
       }
     }
 
@@ -451,5 +464,14 @@ export class StellarBridgeLiquidityMonitor extends EventEmitter {
 
   private buildCacheKey(provider: string, asset: string): string {
     return `${provider}:${asset}`;
+  }
+
+  private isFreshSnapshot(
+    snapshot: StellarLiquiditySnapshot,
+    now: number,
+    maxAgeMs: number,
+  ): boolean {
+    const ageMs = now - snapshot.timestamp;
+    return Number.isFinite(snapshot.timestamp) && ageMs >= 0 && ageMs <= maxAgeMs;
   }
 }

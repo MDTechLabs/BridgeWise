@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "suite": "multi-path",
+  "description": "Ordering and truncation of alternative routes returned by findPaths.",
+  "graphs": {
+    "three-options": [
+      { "sourceNode": "ETH:ethereum", "targetNode": "ETH:arbitrum", "provider": "native", "fee": 1, "latencyMs": 600000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "ETH:ethereum", "targetNode": "ETH:arbitrum", "provider": "hop", "fee": 2, "latencyMs": 90000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "ETH:ethereum", "targetNode": "ETH:optimism", "provider": "across", "fee": 0.2, "latencyMs": 30000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "ETH:optimism", "targetNode": "ETH:arbitrum", "provider": "across", "fee": 0.2, "latencyMs": 30000, "liquidity": 1000, "isActive": true }
+    ]
+  },
+  "cases": [
+    {
+      "id": "alternatives-ordered-by-weight",
+      "description": "Routes are returned cheapest first. The costlier direct hop bridge is not an alternative because Dijkstra only re-queues a node on a strictly better distance.",
+      "tags": ["find-paths", "ordering", "characterisation"],
+      "graph": "three-options",
+      "request": { "source": "ETH:ethereum", "target": "ETH:arbitrum", "options": { "strategy": "cheapest" }, "maxResults": 5 },
+      "expected": {
+        "kind": "routes",
+        "routes": [
+          { "hops": ["ETH:ethereum->ETH:optimism@across", "ETH:optimism->ETH:arbitrum@across"], "totalFee": 0.4 },
+          { "hops": ["ETH:ethereum->ETH:arbitrum@native"], "totalFee": 1 }
+        ]
+      }
+    },
+    {
+      "id": "max-results-truncates",
+      "description": "maxResults 1 returns only the best route.",
+      "tags": ["find-paths", "boundary"],
+      "graph": "three-options",
+      "request": { "source": "ETH:ethereum", "target": "ETH:arbitrum", "options": { "strategy": "cheapest" }, "maxResults": 1 },
+      "expected": {
+        "kind": "routes",
+        "routes": [{ "hops": ["ETH:ethereum->ETH:optimism@across", "ETH:optimism->ETH:arbitrum@across"] }]
+      }
+    },
+    {
+      "id": "fastest-alternatives",
+      "description": "Under the fastest strategy all three routes are returned in latency order: relay (60s), hop direct (90s), native (600s). Whether a costlier edge becomes an alternative depends on it being queued before a better distance is recorded.",
+      "tags": ["find-paths", "fastest", "characterisation"],
+      "graph": "three-options",
+      "request": { "source": "ETH:ethereum", "target": "ETH:arbitrum", "options": { "strategy": "fastest" }, "maxResults": 5 },
+      "expected": {
+        "kind": "routes",
+        "routes": [
+          { "hops": ["ETH:ethereum->ETH:optimism@across", "ETH:optimism->ETH:arbitrum@across"], "totalLatencyMs": 60000 },
+          { "hops": ["ETH:ethereum->ETH:arbitrum@hop"], "totalLatencyMs": 90000 },
+          { "hops": ["ETH:ethereum->ETH:arbitrum@native"], "totalLatencyMs": 600000 }
+        ]
+      }
+    }
+  ]
+}

@@ -83,7 +83,7 @@ describe('EvmExecutor', () => {
     executor['bumpCount'] = 0;
     executor['currentGasPrice'] = BigInt('50000000000');
 
-    executor['handleReprice'](makeMessage(), new Error('nonce too low'));
+    executor['handleReprice'](makeMessage(), 0, new Error('nonce too low'));
 
     expect(executor.getCurrentGasPrice()).toBe('55000000000');
     expect(executor['bumpCount']).toBe(1);
@@ -93,8 +93,8 @@ describe('EvmExecutor', () => {
     executor['bumpCount'] = 0;
     executor['currentGasPrice'] = BigInt('490000000000');
 
-    executor['handleReprice'](makeMessage(), new Error('nonce too low'));
-    executor['handleReprice'](makeMessage(), new Error('nonce too low'));
+    executor['handleReprice'](makeMessage(), 0, new Error('nonce too low'));
+    executor['handleReprice'](makeMessage(), 0, new Error('nonce too low'));
 
     expect(BigInt(executor.getCurrentGasPrice()) <= BigInt('500000000000')).toBe(true);
   });
@@ -102,7 +102,22 @@ describe('EvmExecutor', () => {
   it('emits gas-repriced event', () => {
     const spy = jest.fn();
     executor.on('gas-repriced', spy);
-    executor['handleReprice'](makeMessage(), new Error('nonce too low'));
+    executor['handleReprice'](makeMessage(), 0, new Error('nonce too low'));
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('reserves a nonce before attempting a broadcast', async () => {
+    const result = await executor.execute(makeMessage());
+    expect(result.success).toBe(false);
+    // The nonce was reserved and rolled forward even though the RPC failed,
+    // so a redelivery cannot collide with this attempt.
+    expect(executor.getNonce()).toBe(1);
+  });
+
+  it('emits nonce-assigned when acquiring a nonce', async () => {
+    const spy = jest.fn();
+    executor.on('nonce-assigned', spy);
+    await executor.execute(makeMessage());
+    expect(spy).toHaveBeenCalledWith({ chainId: 'ethereum', messageId: 'msg-evm-1', nonce: 0 });
   });
 });

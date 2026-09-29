@@ -22,11 +22,37 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test contract boundary and property cases
+        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/utils/CalldataSlicer.test.ts
+
+      - name: Lint
+        run: pnpm run lint
+        working-directory: apps/api
+      - name: Verify deployment configuration safety
+        run: node --test scripts/check-deployment-config.test.mjs
+
+      - name: Test production environment loading
+        run: pnpm --filter api exec jest --runInBand --moduleFileExtensions ts json js -- config/env-loader.spec.ts
+
       - name: Build
         run: pnpm run build
+        working-directory: apps/api
+
+      - name: Test
+        run: pnpm run test
+        working-directory: apps/api
+
+      - name: Test e2e
+        run: pnpm run test:e2e
+        working-directory: apps/api
+
+      - name: Build relayer service
+        run: pnpm --filter @bridgewise/relayer-service build
+
+      - name: Test relayer service
+        run: pnpm --filter @bridgewise/relayer-service test
 
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Test Cargo Rules
         run: cargo test
-

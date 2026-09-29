@@ -11,7 +11,7 @@
  *   - Pure / dependency-free so the engine is trivial to test.
  *   - Configurable ranking weights that do not need to sum to 1.
  *   - Every dimension is normalised to [0, 1] where 1 = best.
- *   - Expired-quote filtering is opt-in.
+ *   - Expired and stale quotes are excluded by default.
  *   - Deterministic timestamps via injected clock.
  */
 
@@ -56,13 +56,17 @@ export class QuoteComparator {
   ): QuoteComparisonResult {
     const weights = { ...this.weights, ...(options.weights ?? {}) };
     const now = options.now ? options.now() : this.now();
-    const excludeExpired = options.excludeExpired ?? false;
+    const maxQuoteAgeMs = options.maxQuoteAgeMs ?? 60_000;
 
-    // 1 — Optionally filter expired quotes.
+    if (!Number.isFinite(maxQuoteAgeMs) || maxQuoteAgeMs < 0) {
+      throw new RangeError('maxQuoteAgeMs must be a finite non-negative number');
+    }
+
+    // 1 — Filter expired and stale quotes before they can influence ranking.
     const { eligible, excludedCount } = this.filterQuotes(
       quotes,
       now,
-      excludeExpired,
+      maxQuoteAgeMs,
     );
 
     if (eligible.length === 0) {
@@ -241,15 +245,18 @@ export class QuoteComparator {
   private filterQuotes(
     quotes: StellarBridgeQuote[],
     now: number,
-    excludeExpired: boolean,
+    maxQuoteAgeMs: number,
   ): { eligible: StellarBridgeQuote[]; excludedCount: number } {
-    if (!excludeExpired) {
-      return { eligible: [...quotes], excludedCount: 0 };
-    }
     const eligible: StellarBridgeQuote[] = [];
     let excludedCount = 0;
     for (const q of quotes) {
-      if (q.expiresAt !== undefined && q.expiresAt < now) {
+      const expired = q.expiresAt !== undefined && q.expiresAt <= now;
+      const quoteAgeMs = now - q.quotedAt;
+      const stale =
+        !Number.isFinite(q.quotedAt) ||
+        quoteAgeMs < 0 ||
+        quoteAgeMs > maxQuoteAgeMs;
+      if (expired || stale) {
         excludedCount++;
       } else {
         eligible.push(q);

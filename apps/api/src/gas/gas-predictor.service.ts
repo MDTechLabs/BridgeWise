@@ -35,7 +35,8 @@ export class GasPredictorService {
 
         // Apply 15% safety buffer during high-volatility periods
         const buffer = estimate.isVolatile ? 1.15 : 1.0;
-        const suggestedGas = (BigInt(estimate.totalGasEstimate) * BigInt(Math.floor(buffer * 100)) / 100n).toString();
+        const bufferPercent = estimate.isVolatile ? 115n : 100n;
+        const suggestedGas = (BigInt(estimate.totalGasEstimate) * bufferPercent / 100n).toString();
 
         const result: GasEstimateResponse = {
             ...estimate,

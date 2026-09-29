@@ -83,7 +83,7 @@ describe('SorobanExecutor', () => {
     executor['bumpCount'] = 0;
     executor['currentBaseFee'] = BigInt('100');
 
-    executor['handleReprice'](makeMessage(), new Error('insufficient fee'));
+    executor['handleReprice'](makeMessage(), 0, new Error('insufficient fee'));
 
     expect(executor.getCurrentBaseFee()).toBe('115');
     expect(executor['bumpCount']).toBe(1);
@@ -93,8 +93,8 @@ describe('SorobanExecutor', () => {
     executor['bumpCount'] = 0;
     executor['currentBaseFee'] = BigInt('90000');
 
-    executor['handleReprice'](makeMessage(), new Error('insufficient fee'));
-    executor['handleReprice'](makeMessage(), new Error('insufficient fee'));
+    executor['handleReprice'](makeMessage(), 0, new Error('insufficient fee'));
+    executor['handleReprice'](makeMessage(), 0, new Error('insufficient fee'));
 
     expect(BigInt(executor.getCurrentBaseFee()) <= BigInt('100000')).toBe(true);
   });
@@ -102,7 +102,7 @@ describe('SorobanExecutor', () => {
   it('emits gas-repriced event', () => {
     const spy = jest.fn();
     executor.on('gas-repriced', spy);
-    executor['handleReprice'](makeMessage(), new Error('insufficient fee'));
+    executor['handleReprice'](makeMessage(), 0, new Error('insufficient fee'));
     expect(spy).toHaveBeenCalled();
   });
 
@@ -111,5 +111,18 @@ describe('SorobanExecutor', () => {
     executor.on('confirmation-progress', spy);
     await executor.execute(makeMessage());
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('reserves a nonce before attempting a submission', async () => {
+    const result = await executor.execute(makeMessage());
+    expect(result.success).toBe(false);
+    expect(executor.getNonce()).toBe(1);
+  });
+
+  it('emits nonce-assigned when acquiring a nonce', async () => {
+    const spy = jest.fn();
+    executor.on('nonce-assigned', spy);
+    await executor.execute(makeMessage());
+    expect(spy).toHaveBeenCalledWith({ chainId: 'stellar', messageId: 'msg-soroban-1', nonce: 0 });
   });
 });

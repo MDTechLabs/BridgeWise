@@ -6,6 +6,10 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
 
 ### Smart Contract Operations
 
+- **[CONTRACT_FUZZ_TESTING.md](./CONTRACT_FUZZ_TESTING.md)**
+  - Deterministic property and boundary tests for contract utilities
+  - Reproduction guidance and fuzzing limitations
+
 - **[CONTRACT_UPGRADES_AND_ACCOUNTING.md](./CONTRACT_UPGRADES_AND_ACCOUNTING.md)**
   - Upgrade authorization and immutable-code policy
   - Fee and vault accounting invariants
@@ -92,6 +96,11 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Timeout limits for slow/unresponsive APIs
   - Retry behavior on timeout failures
   - Simulation/testing guidance
+
+- **[SERVICE_OBJECTIVES_AND_INCIDENT_RESPONSE.md](./SERVICE_OBJECTIVES_AND_INCIDENT_RESPONSE.md)** - OPERATIONS
+  - API availability and quote latency objectives
+  - Critical incident alert thresholds and response steps
+  - Telemetry and production security guidance
 
 ---
 

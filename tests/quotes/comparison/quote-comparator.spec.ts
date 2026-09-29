@@ -482,14 +482,16 @@ describe('QuoteComparator', () => {
   // ─── Expired Quote Filtering ────────────────────────────────────────────
 
   describe('expired quote filtering', () => {
-    it('does not filter expired quotes by default', () => {
+    it('excludes expired quotes by default, including at the expiry boundary', () => {
       const quotes = [
         buildQuote({ id: 'expired', expiresAt: FIXED_NOW - 1000 }),
+        buildQuote({ id: 'expires-now', expiresAt: FIXED_NOW }),
         buildQuote({ id: 'valid' }),
       ];
       const result = comparator.compare(quotes);
-      expect(result.ranked).toHaveLength(2);
-      expect(result.metadata.excludedQuotes).toBe(0);
+      expect(result.ranked).toHaveLength(1);
+      expect(result.ranked[0].quote.id).toBe('valid');
+      expect(result.metadata.excludedQuotes).toBe(2);
     });
 
     it('excludes expired quotes when excludeExpired is true', () => {
@@ -514,10 +516,30 @@ describe('QuoteComparator', () => {
       expect(result.metadata.bestQuoteId).toBeNull();
     });
 
-    it('quotes without expiresAt are never excluded', () => {
+    it('allows fresh quotes without an explicit expiry', () => {
       const quotes = [buildQuote({ id: 'no-expiry' })];
       const result = comparator.compare(quotes, { excludeExpired: true });
       expect(result.ranked).toHaveLength(1);
+    });
+
+    it('excludes quotes older than the configured freshness window', () => {
+      const quotes = [
+        buildQuote({ id: 'stale', quotedAt: FIXED_NOW - 10_001 }),
+        buildQuote({ id: 'fresh', quotedAt: FIXED_NOW - 10_000 }),
+      ];
+      const result = comparator.compare(quotes, { maxQuoteAgeMs: 10_000 });
+
+      expect(result.ranked.map(({ quote }) => quote.id)).toEqual(['fresh']);
+      expect(result.metadata.excludedQuotes).toBe(1);
+    });
+
+    it('excludes future-dated quotes', () => {
+      const result = comparator.compare([
+        buildQuote({ id: 'future', quotedAt: FIXED_NOW + 1 }),
+      ]);
+
+      expect(result.ranked).toHaveLength(0);
+      expect(result.metadata.excludedQuotes).toBe(1);
     });
   });
 

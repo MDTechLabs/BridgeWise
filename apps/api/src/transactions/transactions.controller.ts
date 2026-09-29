@@ -32,6 +32,11 @@ import { TransactionsService } from './transactions.service';
 import { TransactionsExportService } from './transactions-export.service';
 import { TransactionRetryService } from './retry/transaction-retry.service';
 import { TransactionStatus } from './entities/transaction.entity';
+import { TransactionsStatusService } from './transactions-status.service';
+import {
+  TransactionStatusResponse,
+  TransactionStatusQuery,
+} from './dto/transaction-status.dto';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -41,6 +46,7 @@ export class TransactionsController {
     private readonly exportService: TransactionsExportService,
     private readonly retryService: TransactionRetryService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly statusService: TransactionsStatusService,
   ) {}
 
   @Post()
@@ -183,6 +189,82 @@ export class TransactionsController {
   })
   async getTransaction(@Param('id') id: string) {
     return this.transactionService.findById(id);
+  }
+
+  @Get(':id/status')
+  @ApiOperation({
+    summary: 'Get transaction status with stable states and chain references',
+    description:
+      'Retrieves the current status of a transaction using stable, versioned states and includes chain reference information. This endpoint provides a secure, documented interface for status queries with backward compatibility.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: 'string',
+    description: 'Unique transaction identifier',
+    example: 'txn_550e8400e29b41d4a716446655440000',
+  })
+  @ApiQuery({
+    name: 'includeChainDetails',
+    required: false,
+    type: Boolean,
+    description: 'Include detailed chain information (explorer URLs, block numbers)',
+    example: true,
+  })
+  @ApiQuery({
+    name: 'includeEstimates',
+    required: false,
+    type: Boolean,
+    description: 'Include estimated time remaining for completion',
+    example: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction status retrieved successfully',
+    type: TransactionStatusResponse,
+    example: {
+      id: 'txn_550e8400e29b41d4a716446655440000',
+      type: 'stellar-payment',
+      state: 'source_confirmed',
+      status: 'in_progress',
+      currentStep: 2,
+      totalSteps: 3,
+      sourceChain: {
+        chainId: 'stellar',
+        chainName: 'Stellar Mainnet',
+        chainNumber: 1,
+        chainType: 'Stellar',
+        explorerUrl: 'https://stellar.expert',
+        transactionHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        blockNumber: 12345678,
+        confirmedAt: '2026-01-29T10:02:00.000Z',
+      },
+      destinationChain: {
+        chainId: 'ethereum',
+        chainName: 'Ethereum Mainnet',
+        chainNumber: 1,
+        chainType: 'EVM',
+        explorerUrl: 'https://etherscan.io',
+      },
+      retryCount: 0,
+      maxRetries: 3,
+      createdAt: '2026-01-29T10:00:00.000Z',
+      updatedAt: '2026-01-29T10:02:00.000Z',
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Transaction not found',
+    example: {
+      success: false,
+      error: 'Transaction not found',
+      details: 'No transaction with ID txn_invalid',
+    },
+  })
+  async getStatus(
+    @Param('id') id: string,
+    @Query() query: TransactionStatusQuery,
+  ): Promise<TransactionStatusResponse> {
+    return this.statusService.getStatus(id, query);
   }
 
   @Put(':id')

@@ -58,6 +58,9 @@ curl -X POST http://localhost:3000/transactions \
 
 ## API Endpoints
 
+Quote response schema versions and client migration details are documented in
+[Quote response schema versioning](./QUOTE_RESPONSE_VERSIONING.md).
+
 ### Health & Status
 
 #### GET `/`

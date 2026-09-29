@@ -27,6 +27,39 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Transaction Status API
+
+### New Feature: Secure Status Retrieval with Stable States
+
+BridgeWise now includes a secure, documented status retrieval endpoint with stable states and chain references for cross-chain transactions.
+
+**Endpoint:** `GET /transactions/:id/status`
+
+**Key Features:**
+- **Stable States:** Versioned, stable transaction states (`INITIALIZED`, `SUBMITTED`, `SOURCE_CONFIRMED`, `DESTINATION_PROCESSING`, `COMPLETED`, `FAILED`, `PARTIAL`, `CANCELLED`)
+- **Chain References:** Detailed chain information including explorer URLs, transaction hashes, block numbers, and confirmation timestamps
+- **Security:** Protected by API authentication via `ApiSecurityGuard` with rate limiting
+- **Query Options:** Configurable responses with `includeChainDetails` and `includeEstimates` parameters
+- **Error Handling:** Graceful degradation for missing chain information
+- **Backward Compatibility:** Legacy `TransactionStatus` included alongside stable states
+
+**Example Usage:**
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:3000/transactions/txn_123/status?includeChainDetails=true&includeEstimates=true"
+```
+
+**Documentation:**
+- Security documentation: [docs/SECURITY_STATUS_API.md](docs/SECURITY_STATUS_API.md)
+- Operational runbook: [docs/OPERATIONAL_RUNBOOK_STATUS_API.md](docs/OPERATIONAL_RUNBOOK_STATUS_API.md)
+- API documentation: [apps/api/README.md](apps/api/README.md)
+
+**Implementation:**
+- Service: `apps/api/src/transactions/transactions-status.service.ts`
+- Controller: `apps/api/src/transactions/transactions.controller.ts`
+- DTOs: `apps/api/src/transactions/dto/transaction-status.dto.ts`
+- Tests: `apps/api/src/transactions/transactions-status.service.spec.ts`
+
 ## Transaction History
 
 BridgeWise UI SDK includes a multi-chain transaction history system for Stellar and EVM bridge flows.

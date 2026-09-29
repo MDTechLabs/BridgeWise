@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, FindOptionsWhere } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { BridgeAnalytics } from '../../../analytics/entities/bridge-analytics.entity';
 import { StellarAnalyticsService } from '../../../analytics/stellar/stellar-analytics.service';
 import {
@@ -49,7 +49,7 @@ export class RouteInsightsExporterService {
     userId: string,
     dto: RouteInsightsExportDto,
   ): Promise<RouteInsightsExportResponseDto> {
-    const exportId = uuidv4();
+    const exportId = randomUUID();
 
     // Build query for Stellar routes
     const query = this.buildAnalyticsQuery(dto);

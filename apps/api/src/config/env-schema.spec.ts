@@ -24,6 +24,7 @@ describe('EnvironmentValidator', () => {
       process.env.RPC_BSC = 'https://bsc.example.com';
       process.env.RPC_ARBITRUM = 'https://arbitrum.example.com';
       process.env.RPC_OPTIMISM = 'https://optimism.example.com';
+      process.env.RPC_BASE = 'https://base.example.com';
       process.env.NODE_ENV = 'development';
 
       const result = EnvironmentValidator.validate('development');

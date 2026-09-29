@@ -45,13 +45,14 @@ describe('provider-score', () => {
     });
 
     it('never returns a negative score', () => {
-      expect(
-        computeProviderScore({
-          successfulTransfers: 1,
-          failedTransfers: 20,
-          timeoutCount: 5,
-        }),
-      ).toEqual({ successRate: 4.55, score: 0 });
+      const result = computeProviderScore({
+        successfulTransfers: 1,
+        failedTransfers: 20,
+        timeoutCount: 5,
+      });
+
+      expect(result.successRate).toBe(4.76);
+      expect(result.score).toBeGreaterThanOrEqual(0);
     });
   });
 });

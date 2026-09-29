@@ -6,6 +6,7 @@ import {
   ExecutorConfig,
   GasRepriceConfig,
 } from '../types';
+import { NonceManager } from '../nonce/nonce-manager';
 
 const DEFAULT_GAS_REPRICING: GasRepriceConfig = {
   initialGasPrice: '100',
@@ -20,7 +21,7 @@ const DEFAULT_POLL_INTERVAL_MS = 3000;
 
 export class SorobanExecutor extends EventEmitter {
   private config: ExecutorConfig;
-  private nonce: number = 0;
+  private readonly nonceManager: NonceManager;
   private currentBaseFee: bigint;
   private bumpCount: number = 0;
 
@@ -33,14 +34,26 @@ export class SorobanExecutor extends EventEmitter {
       confirmationPollIntervalMs: config.confirmationPollIntervalMs || DEFAULT_POLL_INTERVAL_MS,
     } as ExecutorConfig;
     this.currentBaseFee = BigInt(this.config.gasRepricing.initialGasPrice);
+    this.nonceManager = new NonceManager(this.config.chainId, { store: this.config.nonceStore });
+    this.nonceManager
+      .on('nonce-loaded', (payload) => this.emit('nonce-loaded', payload))
+      .on('nonce-assigned', (payload) => this.emit('nonce-assigned', payload))
+      .on('nonce-reused', (payload) => this.emit('nonce-reused', payload))
+      .on('nonce-error', (payload) => this.emit('nonce-error', payload));
   }
 
   async execute(message: CrossChainMessage): Promise<ExecutionResult> {
+    return this.deliver(message, null);
+  }
+
+  private async deliver(message: CrossChainMessage, reservedNonce: number | null): Promise<ExecutionResult> {
+    let nonce: number | null = reservedNonce;
     try {
       this.emit('execution-started', { messageId: message.id, chainId: this.config.chainId });
 
+      nonce = nonce ?? (await this.nonceManager.acquire(message.id));
       const feeStats = await this.getFeeStats();
-      const { txHash } = await this.submitTransaction(message, feeStats);
+      const { txHash } = await this.submitTransaction(message, nonce, feeStats);
       this.emit('transaction-submitted', { messageId: message.id, txHash, chainId: this.config.chainId });
 
       const receipt = await this.waitForConfirmation(txHash);
@@ -56,14 +69,16 @@ export class SorobanExecutor extends EventEmitter {
         timestamp: Date.now(),
       };
 
+      await this.nonceManager.release(message.id);
+
       this.emit('execution-completed', result);
       return result;
     } catch (error: unknown) {
       const message_ = error instanceof Error ? error.message : String(error);
       this.emit('execution-error', { messageId: message.id, error: message_ });
 
-      if (this.shouldReprice(error)) {
-        return this.handleReprice(message, error);
+      if (nonce !== null && this.shouldReprice(error)) {
+        return this.handleReprice(message, nonce, error);
       }
 
       return {
@@ -104,11 +119,11 @@ export class SorobanExecutor extends EventEmitter {
   }
 
   updateNonce(nonce: number): void {
-    this.nonce = nonce;
+    this.nonceManager.updateNonce(nonce);
   }
 
   getNonce(): number {
-    return this.nonce;
+    return this.nonceManager.getNonce();
   }
 
   getCurrentBaseFee(): string {
@@ -123,7 +138,11 @@ export class SorobanExecutor extends EventEmitter {
     return response.data;
   }
 
-  private async submitTransaction(message: CrossChainMessage, feeStats: any): Promise<{ txHash: string }> {
+  private async submitTransaction(
+    message: CrossChainMessage,
+    nonce: number,
+    feeStats: any,
+  ): Promise<{ txHash: string }> {
     const baseFee = BigInt(feeStats?.fee_charged?.max || feeStats?.maxFee || '1000');
     const surgeFee = BigInt(feeStats?.max_fee?.max || feeStats?.surgeFee || '10000');
     const fee = baseFee + surgeFee + this.currentBaseFee;
@@ -158,7 +177,12 @@ export class SorobanExecutor extends EventEmitter {
       throw new Error(response.data.error?.message || 'Soroban transaction submission failed');
     }
 
-    this.nonce++;
+    this.emit('nonce-bookkeeping', {
+      chainId: this.config.chainId,
+      messageId: message.id,
+      nonce,
+    });
+
     return { txHash: response.data.result.hash };
   }
 
@@ -228,6 +252,7 @@ export class SorobanExecutor extends EventEmitter {
 
   private async handleReprice(
     message: CrossChainMessage,
+    nonce: number,
     error: unknown,
   ): Promise<ExecutionResult> {
     this.bumpCount++;
@@ -246,7 +271,7 @@ export class SorobanExecutor extends EventEmitter {
       maxBumps: this.config.gasRepricing.maxBumps,
     });
 
-    return this.execute(message);
+    return this.deliver(message, nonce);
   }
 
   private delay(ms: number): Promise<void> {

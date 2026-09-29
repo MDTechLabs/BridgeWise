@@ -98,6 +98,19 @@ UNQUOTED=value
       expect(process.env.TEST_VAR).toBe('already-set');
     });
 
+    it('should not load dotenv files in production', () => {
+      fs.writeFileSync(
+        path.join(testDir, '.env.production'),
+        'TEST_VAR=from-production-file',
+      );
+      process.env.NODE_ENV = 'production';
+
+      const loader = new EnvironmentLoader(testDir);
+      loader.load();
+
+      expect(process.env.TEST_VAR).toBeUndefined();
+    });
+
     it('should only load once', () => {
       fs.writeFileSync(path.join(testDir, '.env'), 'TEST_VAR=value1');
 

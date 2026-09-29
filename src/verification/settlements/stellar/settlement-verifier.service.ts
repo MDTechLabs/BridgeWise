@@ -45,13 +45,17 @@ export class SorobanSettlementVerifier {
     averageVerificationTimeMs: 0,
   };
 
-  constructor(config: Partial<SettlementVerifierConfig> = {}) {
+  constructor(
+    config: Partial<SettlementVerifierConfig> = {},
+    private readonly fetchTransaction: typeof fetch = (...args) =>
+      fetch(...args),
+  ) {
     this.config = {
       horizonUrl: config.horizonUrl || 'https://horizon-testnet.stellar.org',
-      confirmationThreshold: config.confirmationThreshold || 1,
-      timeoutMs: config.timeoutMs || 30000,
-      maxRetries: config.maxRetries || 3,
-      retryDelayMs: config.retryDelayMs || 1000,
+      confirmationThreshold: config.confirmationThreshold ?? 1,
+      timeoutMs: config.timeoutMs ?? 30000,
+      maxRetries: config.maxRetries ?? 3,
+      retryDelayMs: config.retryDelayMs ?? 1000,
     };
   }
 
@@ -194,7 +198,7 @@ export class SorobanSettlementVerifier {
     retryCount = 0,
   ): Promise<Record<string, unknown> | null> {
     try {
-      const response = await fetch(
+      const response = await this.fetchTransaction(
         `${this.config.horizonUrl}/transactions/${txHash}`,
         { signal: AbortSignal.timeout(this.config.timeoutMs) },
       );
@@ -241,7 +245,10 @@ export class SorobanSettlementVerifier {
     if (request.destinationTransaction && !destTx) {
       inconsistencies.push({
         type: InconsistencyType.MISSING_DESTINATION,
-        severity: 'critical',
+        // A missing destination transaction is an incomplete settlement, not
+        // proof that the source transfer itself is invalid. Reconciliation
+        // should keep monitoring it instead of escalating it as a mismatch.
+        severity: 'warning',
         description: 'Destination transaction not found',
       });
     }
@@ -275,9 +282,16 @@ export class SorobanSettlementVerifier {
     inconsistencies: SettlementInconsistency[],
   ): SettlementMatchStatus {
     if (inconsistencies.length > 0) {
-      const hasCritical = inconsistencies.some((i) => i.severity === 'critical');
+      const hasCritical = inconsistencies.some(
+        (i) => i.severity === 'critical',
+      );
       if (hasCritical) {
         return SettlementMatchStatus.MISMATCH;
+      }
+      if (request.destinationTransaction && sourceTx && !destTx) {
+        return this.isConfirmed(sourceTx)
+          ? SettlementMatchStatus.PARTIAL
+          : SettlementMatchStatus.PENDING;
       }
       return SettlementMatchStatus.PARTIAL;
     }
@@ -286,10 +300,7 @@ export class SorobanSettlementVerifier {
       return SettlementMatchStatus.PENDING;
     }
 
-    if (
-      sourceTx &&
-      (!request.destinationTransaction || destTx)
-    ) {
+    if (sourceTx && (!request.destinationTransaction || destTx)) {
       return SettlementMatchStatus.COMPLETE;
     }
 

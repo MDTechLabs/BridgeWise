@@ -7,6 +7,7 @@ describe('ConfigFactory', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     process.env.NODE_ENV = 'development';
+    process.env.RPC_BASE = 'https://base.example.com';
     delete process.env.VAULT_ENCRYPTION_KEY;
   });
 

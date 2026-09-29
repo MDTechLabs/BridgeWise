@@ -22,6 +22,7 @@ describe('EnvironmentConfigService', () => {
     process.env.RPC_BSC = 'https://bsc.example.com';
     process.env.RPC_ARBITRUM = 'https://arbitrum.example.com';
     process.env.RPC_OPTIMISM = 'https://optimism.example.com';
+    process.env.RPC_BASE = 'https://base.example.com';
     process.env.CORS_ORIGIN = 'http://localhost:3000';
     process.env.LOG_LEVEL = 'debug';
     process.env.LOG_FORMAT = 'simple';

@@ -56,7 +56,7 @@ describe('RateLimitMiddleware', () => {
     });
   });
 
-  it('keys requests by user identifier when provided', () => {
+  it('shares a rate limit between requests from the same user', () => {
     const middleware = new RateLimitMiddleware({ windowMs: 10000, maxRequests: 1 });
     const req1 = createRequest('127.0.0.1', { 'x-user-id': 'user-abc' });
     const req2 = createRequest('127.0.0.2', { 'x-user-id': 'user-abc' });
@@ -67,7 +67,7 @@ describe('RateLimitMiddleware', () => {
     middleware.use(req1, res1, next);
     middleware.use(req2, res2, next);
 
-    expect(next).toHaveBeenCalledTimes(2);
-    expect(res2.status).not.toHaveBeenCalledWith(429);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res2.status).toHaveBeenCalledWith(429);
   });
 });

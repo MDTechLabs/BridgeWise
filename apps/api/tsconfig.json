@@ -24,8 +24,7 @@
     }
   },
   "include": [
-    "./src/**/*.ts",
-    "../../packages/utils/src/**/*.ts"
+    "./src/**/*.ts"
   ],
   "exclude": [
     "./src/**/*.spec.ts",
@@ -43,12 +42,6 @@
     "./src/Analytics-Export/**",
     "./src/bridge-compare/**",
     "./src/bridge-providers/**",
-    "./src/bridge-recommendation/**",
-    "../../packages/utils/src/**/__tests__/**",
-    "../../apps/web/**",
-    "../../examples/**",
-    "../../packages/ui/**",
-    "../../dist/**",
-    "../../node_modules/**"
+    "./src/bridge-recommendation/**"
   ]
 }

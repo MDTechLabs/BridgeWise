@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "suite": "core-strategies",
+  "description": "Route selection for each strategy and provider preference/exclusion on a representative USDC topology.",
+  "graphs": {
+    "usdc-mainnet": [
+      { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "allbridge", "fee": 1.2, "latencyMs": 180000, "liquidity": 500000, "isActive": true },
+      { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "wormhole", "fee": 0.9, "latencyMs": 900000, "liquidity": 2000000, "isActive": true },
+      { "sourceNode": "USDC:stellar", "targetNode": "USDC:polygon", "provider": "allbridge", "fee": 0.3, "latencyMs": 120000, "liquidity": 250000, "isActive": true },
+      { "sourceNode": "USDC:polygon", "targetNode": "USDC:ethereum", "provider": "stargate", "fee": 0.4, "latencyMs": 300000, "liquidity": 800000, "isActive": true },
+      { "sourceNode": "USDC:stellar", "targetNode": "USDC:arbitrum", "provider": "squid", "fee": 0.5, "latencyMs": 60000, "liquidity": 300000, "isActive": true },
+      { "sourceNode": "USDC:arbitrum", "targetNode": "USDC:ethereum", "provider": "hop", "fee": 0.6, "latencyMs": 90000, "liquidity": 600000, "isActive": true },
+      { "sourceNode": "USDC:polygon", "targetNode": "USDC:base", "provider": "stargate", "fee": 0.2, "latencyMs": 100000, "liquidity": 400000, "isActive": true },
+      { "sourceNode": "USDC:arbitrum", "targetNode": "USDC:base", "provider": "hop", "fee": 0.1, "latencyMs": 30000, "liquidity": 400000, "isActive": true },
+      { "sourceNode": "USDC:stellar", "targetNode": "USDC:base", "provider": "allbridge", "fee": 0.05, "latencyMs": 20000, "liquidity": 100000, "isActive": false },
+      { "sourceNode": "USDC:ethereum", "targetNode": "USDC:stellar", "provider": "allbridge", "fee": 1.0, "latencyMs": 180000, "liquidity": 500000, "isActive": true }
+    ]
+  },
+  "cases": [
+    {
+      "id": "cheapest-prefers-two-hop-over-direct",
+      "description": "Cheapest strategy takes the 0.7 fee Polygon hop over the 0.9 and 1.2 fee direct bridges.",
+      "tags": ["strategy", "cheapest", "multi-hop"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": {
+        "kind": "route",
+        "route": {
+          "hops": ["USDC:stellar->USDC:polygon@allbridge", "USDC:polygon->USDC:ethereum@stargate"],
+          "totalFee": 0.7,
+          "totalLatencyMs": 420000
+        }
+      }
+    },
+    {
+      "id": "fastest-picks-lowest-total-latency",
+      "description": "Fastest strategy takes the Arbitrum hop (150s total) over the 180s direct bridge.",
+      "tags": ["strategy", "fastest", "multi-hop"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "fastest" } },
+      "expected": {
+        "kind": "route",
+        "route": {
+          "hops": ["USDC:stellar->USDC:arbitrum@squid", "USDC:arbitrum->USDC:ethereum@hop"],
+          "totalFee": 1.1,
+          "totalLatencyMs": 150000
+        }
+      }
+    },
+    {
+      "id": "balanced-latency-normalisation-saturates",
+      "description": "Balanced strategy caps latency at 60s per hop, so every hop here scores latency 1.0 and the lowest-fee direct bridge (wormhole, 900s) wins. Update this case if the normalisation is changed deliberately.",
+      "tags": ["strategy", "balanced", "characterisation"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "balanced" } },
+      "expected": {
+        "kind": "route",
+        "route": { "hops": ["USDC:stellar->USDC:ethereum@wormhole"], "totalFee": 0.9, "totalLatencyMs": 900000 }
+      }
+    },
+    {
+      "id": "exclude-provider-removes-its-edges",
+      "description": "Excluding allbridge removes the cheapest multi-hop route and the direct allbridge bridge; wormhole direct becomes cheapest.",
+      "tags": ["providers", "exclude", "cheapest"],
+      "graph": "usdc-mainnet",
+      "request": {
+        "source": "USDC:stellar",
+        "target": "USDC:ethereum",
+        "options": { "strategy": "cheapest", "excludeProviders": ["allbridge"] }
+      },
+      "expected": { "kind": "route", "route": { "hops": ["USDC:stellar->USDC:ethereum@wormhole"], "totalFee": 0.9 } }
+    },
+    {
+      "id": "exclude-every-provider-yields-no-route",
+      "description": "Excluding every provider leaving the source means no route exists.",
+      "tags": ["providers", "exclude", "no-route"],
+      "graph": "usdc-mainnet",
+      "request": {
+        "source": "USDC:stellar",
+        "target": "USDC:ethereum",
+        "options": { "strategy": "cheapest", "excludeProviders": ["allbridge", "wormhole", "squid"] }
+      },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "preference-discount-is-bounded",
+      "description": "Preferring wormhole discounts its weight by 10% (0.81), which is still more than the 0.7 Polygon route.",
+      "tags": ["providers", "prefer", "boundary"],
+      "graph": "usdc-mainnet",
+      "request": {
+        "source": "USDC:stellar",
+        "target": "USDC:ethereum",
+        "options": { "strategy": "cheapest", "preferProviders": ["wormhole"] }
+      },
+      "expected": {
+        "kind": "route",
+        "route": { "hops": ["USDC:stellar->USDC:polygon@allbridge", "USDC:polygon->USDC:ethereum@stargate"] }
+      }
+    },
+    {
+      "id": "preference-breaks-near-tie",
+      "description": "A preferred provider within 10% of the cheapest fee is selected even though its raw fee is higher.",
+      "tags": ["providers", "prefer", "boundary"],
+      "graph": {
+        "edges": [
+          { "sourceNode": "XLM:stellar", "targetNode": "XLM:base", "provider": "allbridge", "fee": 1.0, "latencyMs": 30000, "liquidity": 10000, "isActive": true },
+          { "sourceNode": "XLM:stellar", "targetNode": "XLM:base", "provider": "squid", "fee": 1.05, "latencyMs": 30000, "liquidity": 10000, "isActive": true }
+        ]
+      },
+      "request": {
+        "source": "XLM:stellar",
+        "target": "XLM:base",
+        "options": { "strategy": "cheapest", "preferProviders": ["squid"] }
+      },
+      "expected": { "kind": "route", "route": { "hops": ["XLM:stellar->XLM:base@squid"], "totalFee": 1.05 } }
+    },
+    {
+      "id": "balanced-preference-discount-is-bounded",
+      "description": "Under balanced, preferring squid discounts its 0.65 weight by 10% to 0.585, which still loses to allbridge at 0.5.",
+      "tags": ["providers", "prefer", "balanced", "boundary"],
+      "graph": {
+        "edges": [
+          { "sourceNode": "XLM:stellar", "targetNode": "XLM:base", "provider": "allbridge", "fee": 0.5, "latencyMs": 30000, "liquidity": 10000, "isActive": true },
+          { "sourceNode": "XLM:stellar", "targetNode": "XLM:base", "provider": "squid", "fee": 0.8, "latencyMs": 30000, "liquidity": 10000, "isActive": true }
+        ]
+      },
+      "request": {
+        "source": "XLM:stellar",
+        "target": "XLM:base",
+        "options": { "strategy": "balanced", "preferProviders": ["squid"] }
+      },
+      "expected": { "kind": "route", "route": { "hops": ["XLM:stellar->XLM:base@allbridge"], "totalFee": 0.5 } }
+    },
+    {
+      "id": "inactive-direct-bridge-is-skipped",
+      "description": "The inactive allbridge direct bridge (fee 0.05) is ignored; the cheapest active path goes through Polygon.",
+      "tags": ["availability", "inactive", "cheapest"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:stellar", "target": "USDC:base", "options": { "strategy": "cheapest" } },
+      "expected": {
+        "kind": "route",
+        "route": {
+          "hops": ["USDC:stellar->USDC:polygon@allbridge", "USDC:polygon->USDC:base@stargate"],
+          "totalFee": 0.5,
+          "totalLatencyMs": 220000
+        }
+      }
+    },
+    {
+      "id": "inactive-direct-bridge-fastest",
+      "description": "The fastest active route to Base goes via Arbitrum (90s) once the 20s inactive bridge is skipped.",
+      "tags": ["availability", "inactive", "fastest"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:stellar", "target": "USDC:base", "options": { "strategy": "fastest" } },
+      "expected": {
+        "kind": "route",
+        "route": {
+          "hops": ["USDC:stellar->USDC:arbitrum@squid", "USDC:arbitrum->USDC:base@hop"],
+          "totalLatencyMs": 90000
+        }
+      }
+    },
+    {
+      "id": "reverse-direction-uses-directed-edges",
+      "description": "Edges are directed: Ethereum to Stellar only has the allbridge return bridge.",
+      "tags": ["graph", "direction"],
+      "graph": "usdc-mainnet",
+      "request": { "source": "USDC:ethereum", "target": "USDC:stellar", "options": { "strategy": "fastest" } },
+      "expected": { "kind": "route", "route": { "hops": ["USDC:ethereum->USDC:stellar@allbridge"], "totalFee": 1.0 } }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { LayerZeroModule } from './modules/layerzero.module';
 import { LayerZeroService } from './services/layerzero.service';
 import { ConfigModule } from '@nestjs/config';

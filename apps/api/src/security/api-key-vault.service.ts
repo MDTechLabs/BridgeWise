@@ -52,6 +52,18 @@ export class ApiKeyVaultService {
    * @returns Encrypted key data
    */
   storeKey(keyId: string, secretValue: string, expiresAt?: Date): EncryptedKey {
+    const encryptedKey = this.encryptKey(keyId, secretValue, expiresAt);
+    this.keyStore.set(keyId, encryptedKey);
+    this.logger.debug(`Key stored: ${keyId}`);
+
+    return encryptedKey;
+  }
+
+  private encryptKey(
+    keyId: string,
+    secretValue: string,
+    expiresAt?: Date,
+  ): EncryptedKey {
     if (!secretValue || secretValue.trim() === '') {
       this.logger.warn(`Attempted to store empty key with ID: ${keyId}`);
       throw new Error('Cannot store empty API key');
@@ -84,9 +96,6 @@ export class ApiKeyVaultService {
       authTag: authTag.toString('hex'),
       metadata,
     };
-
-    this.keyStore.set(keyId, encryptedKey);
-    this.logger.debug(`Key stored: ${keyId}`);
 
     return encryptedKey;
   }
@@ -184,17 +193,19 @@ export class ApiKeyVaultService {
    */
   rotateKey(keyId: string, newSecretValue: string): EncryptedKey {
     const oldKey = this.keyStore.get(keyId);
+    // Store new key with expiration 90 days from now
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 90);
+    const newKey = this.encryptKey(keyId, newSecretValue, expiresAt);
 
     if (oldKey) {
       oldKey.metadata.isActive = false;
       this.logger.log(`Key rotated, old key deactivated: ${keyId}`);
     }
 
-    // Store new key with expiration 90 days from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 90);
-
-    return this.storeKey(keyId, newSecretValue, expiresAt);
+    this.keyStore.set(keyId, newKey);
+    this.logger.debug(`Key stored: ${keyId}`);
+    return newKey;
   }
 
   /**

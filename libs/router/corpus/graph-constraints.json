@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "suite": "graph-constraints",
+  "description": "Boundary and failure behaviour: hop limits, liquidity, disconnected or unknown nodes, cycles and degenerate requests.",
+  "graphs": {
+    "hop-ladder": [
+      { "sourceNode": "A", "targetNode": "B", "provider": "ladder", "fee": 0.1, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "B", "targetNode": "C", "provider": "ladder", "fee": 0.1, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "C", "targetNode": "D", "provider": "ladder", "fee": 0.1, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "A", "targetNode": "D", "provider": "express", "fee": 5, "latencyMs": 1000, "liquidity": 1000, "isActive": true }
+    ],
+    "shortcut-after-cheap-detour": [
+      { "sourceNode": "A", "targetNode": "B", "provider": "x", "fee": 1, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "B", "targetNode": "C", "provider": "x", "fee": 1, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "A", "targetNode": "C", "provider": "y", "fee": 3, "latencyMs": 1000, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "C", "targetNode": "D", "provider": "x", "fee": 1, "latencyMs": 1000, "liquidity": 1000, "isActive": true }
+    ],
+    "cyclic": [
+      { "sourceNode": "A", "targetNode": "B", "provider": "loop", "fee": 1, "latencyMs": 10, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "B", "targetNode": "A", "provider": "loop", "fee": 1, "latencyMs": 10, "liquidity": 1000, "isActive": true },
+      { "sourceNode": "B", "targetNode": "C", "provider": "loop", "fee": 1, "latencyMs": 10, "liquidity": 1000, "isActive": true }
+    ]
+  },
+  "cases": [
+    {
+      "id": "max-hops-at-limit-allows-path",
+      "description": "With maxHops equal to the cheap path length (3), the 0.3 fee ladder is used.",
+      "tags": ["hops", "boundary"],
+      "graph": "hop-ladder",
+      "request": { "source": "A", "target": "D", "options": { "strategy": "cheapest", "maxHops": 3 } },
+      "expected": {
+        "kind": "route",
+        "route": { "hops": ["A->B@ladder", "B->C@ladder", "C->D@ladder"], "totalFee": 0.3, "totalLatencyMs": 3000 }
+      }
+    },
+    {
+      "id": "max-hops-below-limit-falls-back",
+      "description": "With maxHops one below the cheap path length, the expensive direct bridge is used instead.",
+      "tags": ["hops", "boundary"],
+      "graph": "hop-ladder",
+      "request": { "source": "A", "target": "D", "options": { "strategy": "cheapest", "maxHops": 2 } },
+      "expected": { "kind": "route", "route": { "hops": ["A->D@express"], "totalFee": 5 } }
+    },
+    {
+      "id": "default-max-hops-is-five",
+      "description": "Without maxHops the default (5) permits the three-hop ladder.",
+      "tags": ["hops", "defaults"],
+      "graph": "hop-ladder",
+      "request": { "source": "A", "target": "D", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "route", "route": { "hops": ["A->B@ladder", "B->C@ladder", "C->D@ladder"] } }
+    },
+    {
+      "id": "max-hops-one-without-direct-edge",
+      "description": "maxHops 1 with only multi-hop connectivity to C yields no route.",
+      "tags": ["hops", "boundary", "no-route"],
+      "graph": "hop-ladder",
+      "request": { "source": "A", "target": "C", "options": { "strategy": "cheapest", "maxHops": 1 } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "hop-limit-hides-valid-shortcut",
+      "description": "A->C->D (2 hops, fee 4) satisfies maxHops 2, but the router records hop counts per node from the cheaper 3-hop detour and prunes it.",
+      "tags": ["hops", "known-issue"],
+      "status": "known-issue",
+      "issue": "PathFinder tracks hop counts in a graph-wide map keyed by node, so a cheaper but longer partial path to an intermediate node blocks shorter valid paths under maxHops.",
+      "graph": "shortcut-after-cheap-detour",
+      "request": { "source": "A", "target": "D", "options": { "strategy": "cheapest", "maxHops": 2 } },
+      "expected": { "kind": "route", "route": { "hops": ["A->C@y", "C->D@x"], "totalFee": 4 } }
+    },
+    {
+      "id": "zero-liquidity-edge-is-skipped",
+      "description": "An edge with zero liquidity is treated as unusable.",
+      "tags": ["liquidity", "boundary", "no-route"],
+      "graph": {
+        "edges": [
+          { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "allbridge", "fee": 1, "latencyMs": 1000, "liquidity": 0, "isActive": true }
+        ]
+      },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "negative-liquidity-edge-is-skipped",
+      "description": "Corrupt negative liquidity is treated the same as depleted liquidity.",
+      "tags": ["liquidity", "failure", "no-route"],
+      "graph": {
+        "edges": [
+          { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "allbridge", "fee": 1, "latencyMs": 1000, "liquidity": -5, "isActive": true }
+        ]
+      },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "depleted-cheap-edge-falls-back",
+      "description": "When the cheapest bridge is depleted the next cheapest one with liquidity is chosen.",
+      "tags": ["liquidity", "fallback"],
+      "graph": {
+        "edges": [
+          { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "allbridge", "fee": 0.1, "latencyMs": 1000, "liquidity": 0, "isActive": true },
+          { "sourceNode": "USDC:stellar", "targetNode": "USDC:ethereum", "provider": "wormhole", "fee": 0.9, "latencyMs": 1000, "liquidity": 1, "isActive": true }
+        ]
+      },
+      "request": { "source": "USDC:stellar", "target": "USDC:ethereum", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "route", "route": { "hops": ["USDC:stellar->USDC:ethereum@wormhole"] } }
+    },
+    {
+      "id": "unknown-source-yields-no-route",
+      "description": "A source node absent from the graph yields no route rather than an error.",
+      "tags": ["failure", "no-route"],
+      "graph": "hop-ladder",
+      "request": { "source": "Z", "target": "D", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "unknown-target-yields-no-route",
+      "description": "A target node absent from the graph yields no route.",
+      "tags": ["failure", "no-route"],
+      "graph": "hop-ladder",
+      "request": { "source": "A", "target": "Z", "options": { "strategy": "fastest" } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "empty-graph-yields-no-route",
+      "description": "An empty graph yields no route.",
+      "tags": ["failure", "no-route"],
+      "graph": { "edges": [] },
+      "request": { "source": "A", "target": "B", "options": { "strategy": "balanced" } },
+      "expected": { "kind": "no-route" }
+    },
+    {
+      "id": "cycle-does-not-loop",
+      "description": "A two-node cycle does not cause revisiting; the route leaves via B->C.",
+      "tags": ["graph", "cycle"],
+      "graph": "cyclic",
+      "request": { "source": "A", "target": "C", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "route", "route": { "hops": ["A->B@loop", "B->C@loop"], "totalFee": 2, "totalLatencyMs": 20 } }
+    },
+    {
+      "id": "same-source-and-target-has-no-route",
+      "description": "Routing a node to itself should report no route; currently a zero-hop PathResult is returned.",
+      "tags": ["failure", "known-issue"],
+      "status": "known-issue",
+      "issue": "findPath(source, source) returns a PathResult with an empty path and zero fee instead of null, which callers may treat as a successful bridge quote.",
+      "graph": "cyclic",
+      "request": { "source": "A", "target": "A", "options": { "strategy": "cheapest" } },
+      "expected": { "kind": "no-route" }
+    }
+  ]
+}

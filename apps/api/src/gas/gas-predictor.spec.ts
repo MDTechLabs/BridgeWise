@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GasPredictorService } from './gas-predictor.service';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import { getRedisToken } from '@nestjs-modules/ioredis';
+import { getRedisConnectionToken } from '@nestjs-modules/ioredis';
 import { ethers } from 'ethers';
 
 jest.mock('ethers', () => {
@@ -34,7 +34,7 @@ describe('GasPredictorService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 GasPredictorService,
-                { provide: getRedisToken('default'), useValue: redisMock },
+                { provide: getRedisConnectionToken(), useValue: redisMock },
                 { provide: ConfigService, useValue: configMock },
             ],
         }).compile();

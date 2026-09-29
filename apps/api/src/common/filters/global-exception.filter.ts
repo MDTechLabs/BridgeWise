@@ -13,7 +13,7 @@ import {
   AppException,
   mapHttpExceptionToAppException,
 } from '../exceptions/app.exception';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 /**
  * Global exception filter that catches ALL exceptions and formats responses
@@ -94,7 +94,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   private generateRequestId(): string {
-    return uuidv4();
+    return randomUUID();
   }
 
   private logError(

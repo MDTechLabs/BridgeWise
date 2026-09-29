@@ -118,7 +118,7 @@ describe('StellarBridgeLiquidityMonitor', () => {
       expect(fetchFn).toHaveBeenCalledTimes(1);
     });
 
-    it('should use stale cache when provider fetch fails', async () => {
+    it('should not use stale cache when provider fetch fails', async () => {
       const fetchFn = jest
         .fn()
         .mockResolvedValueOnce({
@@ -145,15 +145,54 @@ describe('StellarBridgeLiquidityMonitor', () => {
       // Wait for cache to expire
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      // Second call — fails, should return stale cache
+      // Second call — stale cache is not eligible for routing decisions.
       const results = await monitor.getLiquidity({
         asset: 'USDC',
         provider: 'flaky-provider',
       });
 
-      expect(results).toHaveLength(1);
-      expect(results[0].availableAmount).toBe('50000');
+      expect(results).toHaveLength(0);
     }, 10000);
+
+    it('rejects provider snapshots with stale or future timestamps', async () => {
+      monitor.registerProvider({
+        name: 'stale-provider',
+        fetchFn: async (asset) => ({
+          provider: 'stale-provider',
+          asset,
+          availableAmount: '100000',
+          totalAmount: '100000',
+          sourceChain: 'stellar',
+          destinationChain: 'ethereum',
+          timestamp: Date.now() - 5000,
+        }),
+        maxSnapshotAgeMs: 1000,
+      });
+
+      const stale = await monitor.getLiquidity({
+        asset: 'USDC',
+        provider: 'stale-provider',
+      });
+      expect(stale).toHaveLength(0);
+
+      monitor.registerProvider({
+        name: 'future-provider',
+        fetchFn: async (asset) => ({
+          provider: 'future-provider',
+          asset,
+          availableAmount: '100000',
+          totalAmount: '100000',
+          sourceChain: 'stellar',
+          destinationChain: 'ethereum',
+          timestamp: Date.now() + 5000,
+        }),
+      });
+      const future = await monitor.getLiquidity({
+        asset: 'USDC',
+        provider: 'future-provider',
+      });
+      expect(future).toHaveLength(0);
+    });
   });
 
   describe('Liquidity Fetching - all providers', () => {

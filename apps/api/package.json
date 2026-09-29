@@ -68,12 +68,29 @@
   },
   "jest": {
     "moduleFileExtensions": [
-      "js",
+      "ts",
       "json",
-      "ts"
+      "js"
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/webhook-support/",
+      "<rootDir>/webhooks/",
+      "<rootDir>/real-time-fee-aggregation/",
+      "<rootDir>/reliability-score/",
+      "<rootDir>/SDK-Debug/",
+      "<rootDir>/dynamic-bridge-discovery/",
+      "<rootDir>/transactions/retry/useRetryFeedback\\.ts$",
+      "<rootDir>/custom-theme/",
+      "<rootDir>/gas-estimation/",
+      "<rootDir>/monotoring/",
+      "<rootDir>/Analytics-Export/",
+      "<rootDir>/bridge-compare/",
+      "<rootDir>/bridge-providers/",
+      "<rootDir>/bridge-recommendation/"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

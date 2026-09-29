@@ -5,7 +5,7 @@ import { Logger } from '@nestjs/common';
 export type Environment = 'development' | 'staging' | 'production';
 
 /**
- * Loads environment-specific .env files
+ * Loads environment-specific .env files outside production
  * Priority order:
  * 1. .env.{NODE_ENV}.local
  * 2. .env.{NODE_ENV}
@@ -19,7 +19,8 @@ export class EnvironmentLoader {
   constructor(private readonly envDir: string = process.cwd()) {}
 
   /**
-   * Load environment variables from .env files
+   * Load environment variables from .env files for local and staging use.
+   * Production configuration must be injected through the process environment.
    */
   load(): void {
     if (this.loaded) {
@@ -27,6 +28,11 @@ export class EnvironmentLoader {
     }
 
     const nodeEnv = (process.env.NODE_ENV as Environment) || 'development';
+    if (nodeEnv === 'production') {
+      this.loaded = true;
+      return;
+    }
+
     const envFiles = this.getEnvFilesByPriority(nodeEnv);
 
     for (const envFile of envFiles) {

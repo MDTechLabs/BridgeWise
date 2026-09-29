@@ -1,72 +1,227 @@
+```tsx
 'use client';
 
 import React from 'react';
-import { ChainHealth, useChainHealth, UseChainHealthOptions } from '../hooks/useChainHealth';
+import {
+  ChainHealth,
+  useChainHealth,
+  UseChainHealthOptions,
+} from '../hooks/useChainHealth';
 
-const STATUS_COLOR: Record<ChainHealth['status'], string> = {
-  healthy: '#16a34a',
-  degraded: '#f59e0b',
-  down: '#dc2626',
+const STATUS_CONFIG: Record<
+  ChainHealth['status'],
+  { label: string; color: string; background: string }
+> = {
+  healthy: {
+    label: 'Healthy',
+    color: '#166534',
+    background: '#dcfce7',
+  },
+  degraded: {
+    label: 'Degraded',
+    color: '#92400e',
+    background: '#fef3c7',
+  },
+  down: {
+    label: 'Down',
+    color: '#991b1b',
+    background: '#fee2e2',
+  },
 };
 
-const BALANCE_COLOR: Record<ChainHealth['relayerBalanceStatus'], string> = {
-  ok: '#16a34a',
-  low: '#eab308',
-  critical: '#dc2626',
+const BALANCE_CONFIG: Record<
+  ChainHealth['relayerBalanceStatus'],
+  { color: string; background: string }
+> = {
+  ok: {
+    color: '#166534',
+    background: '#dcfce7',
+  },
+  low: {
+    color: '#854d0e',
+    background: '#fef9c3',
+  },
+  critical: {
+    color: '#991b1b',
+    background: '#fee2e2',
+  },
+};
+
+const styles = {
+  container: {
+    width: '100%',
+  } as React.CSSProperties,
+
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '12px',
+  } as React.CSSProperties,
+
+  chainName: {
+    margin: 0,
+    fontSize: '15px',
+    lineHeight: 1.4,
+    fontWeight: 700,
+    color: '#0f172a',
+  } as React.CSSProperties,
+
+  statusBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    padding: '3px 8px',
+    borderRadius: '9999px',
+    fontSize: '10px',
+    lineHeight: 1.2,
+    fontWeight: 700,
+    letterSpacing: '0.02em',
+  } as React.CSSProperties,
+
+  details: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto',
+    gap: '8px 16px',
+    margin: 0,
+    fontSize: '13px',
+  } as React.CSSProperties,
+
+  label: {
+    color: '#64748b',
+  } as React.CSSProperties,
+
+  value: {
+    margin: 0,
+    color: '#0f172a',
+    textAlign: 'right',
+    fontVariantNumeric: 'tabular-nums',
+  } as React.CSSProperties,
+
+  card: {
+    padding: '16px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '10px',
+    backgroundColor: '#fff',
+    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+  } as React.CSSProperties,
+
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+    gap: '12px',
+  } as React.CSSProperties,
+
+  loading: {
+    padding: '12px 0',
+    fontSize: '13px',
+    color: '#64748b',
+  } as React.CSSProperties,
+
+  error: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '8px',
+    padding: '12px 14px',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    backgroundColor: '#fef2f2',
+    color: '#991b1b',
+    fontSize: '13px',
+  } as React.CSSProperties,
+
+  retryButton: {
+    padding: '4px 10px',
+    border: '1px solid #fecaca',
+    borderRadius: '6px',
+    backgroundColor: '#fff',
+    color: '#991b1b',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+
+  alert: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    marginBottom: '12px',
+    padding: '10px 14px',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    backgroundColor: '#fef2f2',
+    color: '#991b1b',
+    fontSize: '13px',
+    fontWeight: 600,
+  } as React.CSSProperties,
+
+  alertIcon: {
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  lastUpdated: {
+    marginTop: '12px',
+    fontSize: '11px',
+    color: '#94a3b8',
+  } as React.CSSProperties,
 };
 
 function ChainHealthCard({ chain }: { chain: ChainHealth }) {
-  const blocksBehind = chain.chainTipHeight - chain.syncedHeight;
+  const status = STATUS_CONFIG[chain.status];
+  const balance = BALANCE_CONFIG[chain.relayerBalanceStatus];
+
+  const blocksBehind = Math.max(
+    0,
+    chain.chainTipHeight - chain.syncedHeight,
+  );
+
+  const syncLabel =
+    blocksBehind > 0
+      ? `${chain.syncedHeight.toLocaleString()} (${blocksBehind.toLocaleString()} behind)`
+      : chain.syncedHeight.toLocaleString();
 
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: '10px',
-        padding: '16px',
-        backgroundColor: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{chain.chainName}</span>
+    <article style={styles.card} aria-label={`${chain.chainName} health`}>
+      <div style={styles.header}>
+        <h3 style={styles.chainName}>{chain.chainName}</h3>
+
         <span
           style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            padding: '2px 8px',
-            borderRadius: '9999px',
-            color: '#fff',
-            backgroundColor: STATUS_COLOR[chain.status],
+            ...styles.statusBadge,
+            color: status.color,
+            backgroundColor: status.background,
           }}
+          aria-label={`Status: ${status.label}`}
         >
-          {chain.status.toUpperCase()}
+          {status.label}
         </span>
       </div>
 
-      <dl style={{ display: 'grid', gridTemplateColumns: '1fr auto', rowGap: '6px', fontSize: '13px', margin: 0 }}>
-        <dt style={{ color: '#64748b' }}>RPC latency</dt>
-        <dd style={{ margin: 0, textAlign: 'right', color: '#0f172a' }}>{chain.blockLatencyMs} ms</dd>
-
-        <dt style={{ color: '#64748b' }}>Sync height</dt>
-        <dd style={{ margin: 0, textAlign: 'right', color: '#0f172a' }}>
-          {chain.syncedHeight.toLocaleString()}
-          {blocksBehind > 0 ? ` (-${blocksBehind})` : ''}
+      <dl style={styles.details}>
+        <dt style={styles.label}>RPC latency</dt>
+        <dd style={styles.value}>
+          {chain.blockLatencyMs.toLocaleString()} ms
         </dd>
 
-        <dt style={{ color: '#64748b' }}>Relayer balance</dt>
+        <dt style={styles.label}>Sync height</dt>
+        <dd style={styles.value}>{syncLabel}</dd>
+
+        <dt style={styles.label}>Relayer balance</dt>
         <dd
           style={{
-            margin: 0,
-            textAlign: 'right',
+            ...styles.value,
             fontWeight: 600,
-            color: BALANCE_COLOR[chain.relayerBalanceStatus],
+            color: balance.color,
           }}
+          title={`Relayer balance status: ${chain.relayerBalanceStatus}`}
         >
-          {chain.relayerBalanceNative.toFixed(3)} {chain.nativeTokenSymbol}
+          {chain.relayerBalanceNative.toFixed(3)}{' '}
+          {chain.nativeTokenSymbol}
         </dd>
       </dl>
-    </div>
+    </article>
   );
 }
 
@@ -76,67 +231,93 @@ export interface ChainHealthGridProps {
 }
 
 /**
- * Visual health panel showing active bridge connections, RPC latency, sync
- * height, and relayer wallet gas balances across all supported chains.
- * Auto-refreshes every 15 seconds by default (configurable via `options`),
- * and flags low/critical relayer gas balances.
+ * Displays the health of supported bridge chains, including:
+ * - RPC latency
+ * - Synchronization height
+ * - Relayer wallet balance
+ *
+ * Automatically refreshes through useChainHealth. The refresh interval
+ * can be configured through the supplied options.
  */
 export function ChainHealthGrid({ options }: ChainHealthGridProps) {
-  const { chains, isLoading, error, lastUpdated, refresh } = useChainHealth(options);
+  const {
+    chains,
+    isLoading,
+    error,
+    lastUpdated,
+    refresh,
+  } = useChainHealth(options);
 
   if (isLoading && chains.length === 0) {
-    return <div style={{ fontSize: '13px', color: '#64748b' }}>Loading chain health…</div>;
+    return (
+      <div style={styles.loading} role="status" aria-live="polite">
+        Loading chain health…
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div style={{ fontSize: '13px', color: '#dc2626' }}>
-        Failed to load chain health: {error.message}{' '}
-        <button onClick={refresh} style={{ marginLeft: '8px', cursor: 'pointer' }}>
+      <div style={styles.error} role="alert">
+        <span>
+          Failed to load chain health: {error.message}
+        </span>
+
+        <button
+          type="button"
+          onClick={refresh}
+          style={styles.retryButton}
+        >
           Retry
         </button>
       </div>
     );
   }
 
-  const criticalChains = chains.filter((chain) => chain.relayerBalanceStatus === 'critical');
+  if (chains.length === 0) {
+    return (
+      <div style={styles.loading}>
+        No chain health data available.
+      </div>
+    );
+  }
+
+  const criticalChains = chains.filter(
+    (chain) => chain.relayerBalanceStatus === 'critical',
+  );
 
   return (
-    <div>
+    <section style={styles.container} aria-label="Chain health">
       {criticalChains.length > 0 && (
-        <div
-          style={{
-            marginBottom: '12px',
-            padding: '10px 14px',
-            borderRadius: '8px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            fontSize: '13px',
-            fontWeight: 600,
-          }}
-        >
-          ⚠ {criticalChains.length} relayer wallet{criticalChains.length > 1 ? 's' : ''} critically low on
-          gas: {criticalChains.map((chain) => chain.chainName).join(', ')}
+        <div style={styles.alert} role="alert">
+          <span style={styles.alertIcon} aria-hidden="true">
+            ⚠
+          </span>
+
+          <span>
+            {criticalChains.length} relayer wallet
+            {criticalChains.length === 1 ? '' : 's'} critically low on gas:{' '}
+            {criticalChains.map((chain) => chain.chainName).join(', ')}
+          </span>
         </div>
       )}
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: '12px',
-        }}
-      >
+      <div style={styles.grid}>
         {chains.map((chain) => (
-          <ChainHealthCard key={chain.chainId} chain={chain} />
+          <ChainHealthCard
+            key={chain.chainId}
+            chain={chain}
+          />
         ))}
       </div>
 
       {lastUpdated && (
-        <div style={{ marginTop: '12px', fontSize: '11px', color: '#94a3b8' }}>
-          Last updated {new Date(lastUpdated).toLocaleTimeString()}
+        <div style={styles.lastUpdated}>
+          Last updated{' '}
+          {new Date(lastUpdated).toLocaleTimeString()}
         </div>
       )}
-    </div>
+    </section>
   );
 }
+```

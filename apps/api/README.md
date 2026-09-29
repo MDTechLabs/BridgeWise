@@ -25,6 +25,68 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## BridgeWise Transaction Status API
+
+### New Feature: Secure Status Retrieval with Stable States
+
+The API now includes a secure, documented status retrieval endpoint with stable states and chain references:
+
+**Endpoint:** `GET /transactions/:id/status`
+
+**Features:**
+- **Stable States:** Versioned, stable transaction states for backward compatibility
+- **Chain References:** Detailed chain information including explorer URLs and transaction hashes
+- **Security:** Protected by API authentication via `ApiSecurityGuard`
+- **Query Options:** Configurable responses with chain details and time estimates
+- **Error Handling:** Graceful degradation for missing data
+
+**Example Request:**
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:3000/transactions/txn_123/status?includeChainDetails=true&includeEstimates=true"
+```
+
+**Example Response:**
+```json
+{
+  "id": "txn_123",
+  "type": "stellar-payment",
+  "state": "source_confirmed",
+  "status": "in_progress",
+  "currentStep": 2,
+  "totalSteps": 3,
+  "sourceChain": {
+    "chainId": "stellar",
+    "chainName": "Stellar Mainnet",
+    "chainNumber": 1,
+    "chainType": "Stellar",
+    "explorerUrl": "https://stellar.expert/tx/abc123",
+    "transactionHash": "abc123",
+    "blockNumber": 12345,
+    "confirmedAt": "2026-01-29T10:00:00.000Z"
+  },
+  "destinationChain": {
+    "chainId": "ethereum",
+    "chainName": "Ethereum Mainnet",
+    "chainNumber": 1,
+    "chainType": "EVM"
+  },
+  "estimatedTimeRemaining": 120,
+  "retryCount": 0,
+  "maxRetries": 3,
+  "createdAt": "2026-01-29T10:00:00.000Z",
+  "updatedAt": "2026-01-29T10:02:00.000Z"
+}
+```
+
+**Documentation:**
+- Security documentation: [docs/SECURITY_STATUS_API.md](../../docs/SECURITY_STATUS_API.md)
+- Operational runbook: [docs/OPERATIONAL_RUNBOOK_STATUS_API.md](../../docs/OPERATIONAL_RUNBOOK_STATUS_API.md)
+
+**Testing:**
+- Unit tests: `apps/api/src/transactions/transactions-status.service.spec.ts`
+- Controller tests: `apps/api/src/transactions/transactions.controller.spec.ts`
+
 ## Project setup
 
 ```bash

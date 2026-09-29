@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import '../types/express-extend'; // Extend Express request types
 import { ApiResponse } from '../types/api-response.interface';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 /**
  * Global response interceptor to wrap successful responses into the
@@ -62,7 +62,7 @@ export class ResponseInterceptor implements NestInterceptor {
   }
 
   private generateRequestId(): string {
-    return uuidv4();
+    return randomUUID();
   }
 
   private logSuccess(

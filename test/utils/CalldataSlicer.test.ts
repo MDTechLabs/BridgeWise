@@ -319,4 +319,53 @@ describe('CalldataSlicer', function () {
       harness.echoExtractedBytes(encoded, ethers.dataLength(encoded)),
     ).to.be.revertedWithCustomError(harness, 'SliceOutOfBounds');
   });
+
+  describe('deterministic generated boundary checks', () => {
+    it('matches native byte slicing for seeded valid ranges', async () => {
+      const { harness } = await deploy();
+      let state = 0x6d2b79f5;
+      const nextValue = () => {
+        state =
+          (Math.imul(state ^ (state >>> 15), 1 | state) + 0x6d2b79f5) >>> 0;
+        state ^= state + Math.imul(state ^ (state >>> 7), 61 | state);
+        return (state ^ (state >>> 14)) >>> 0;
+      };
+      const bytes = Uint8Array.from(
+        { length: 128 },
+        (_, index) => (index * 73 + nextValue()) & 0xff,
+      );
+      const data = ethers.hexlify(bytes);
+
+      for (let index = 0; index < 24; index++) {
+        const start = nextValue() % (bytes.length + 1);
+        const end = start + (nextValue() % (bytes.length - start + 1));
+        expect(await harness.echoBytes(data, start, end)).to.equal(
+          ethers.hexlify(bytes.slice(start, end)),
+        );
+      }
+    });
+
+    it('rejects generated out-of-bounds ranges and malformed dynamic offsets', async () => {
+      const { harness } = await deploy();
+      const maximum = (1n << 256n) - 1n;
+      const malformedOffsets = [65n, 96n, 1n << 64n, maximum - 31n, maximum];
+
+      for (const offset of malformedOffsets) {
+        const malformed = ethers.concat([
+          ethers.zeroPadValue(ethers.toBeHex(offset), 32),
+          ethers.zeroPadValue('0x00', 32),
+        ]);
+        await expect(
+          harness.echoExtractedBytes(malformed, 0),
+        ).to.be.revertedWithCustomError(harness, 'SliceOutOfBounds');
+      }
+
+      await expect(
+        harness.echoBytes('0x01020304', 3, 2),
+      ).to.be.revertedWithCustomError(harness, 'SliceOutOfBounds');
+      await expect(
+        harness.echoBytes('0x01020304', 0, maximum),
+      ).to.be.revertedWithCustomError(harness, 'SliceOutOfBounds');
+    });
+  });
 });

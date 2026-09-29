@@ -1,112 +1,184 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 /// @title NonceBitmap
-/// @notice Gas-optimized replay-protection library for cross-chain message sequence
-///         nonces. Instead of setting a fresh 32-byte storage slot per processed
-///         message (`mapping(bytes32 => bool)`, ~20,000 cold-write gas every time),
-///         this packs 256 processed-nonce flags into a single `uint256` storage word
-///         (`mapping(uint256 => uint256)`), so sequential nonces that land in the same
-///         word only pay the cold-write cost once per 256 messages.
-/// @dev Word index = `nonce / 256`, bit index = `nonce % 256`. The actual bit read and
-///      bit set both happen inside `assembly` blocks using `shr`/`shl`/`and`/`or`, per
-///      the issue's requirement that bit manipulation happen in Yul rather than via
-///      plain Solidity `|=` on a `uint256`.
+/// @notice Gas-efficient replay protection using packed nonce bitmaps.
+/// @dev
+/// Instead of storing one boolean per nonce:
 ///
-///      Any contract can adopt replay protection by declaring one
-///      `mapping(uint256 => uint256) private _processedNonces;` state variable and
-///      calling `NonceBitmap.markProcessed(_processedNonces, nonce)` — mirroring the
-///      `BitmaskVerifierYul` library pattern already used in this codebase.
+///     mapping(uint256 => bool)
+///
+/// this library stores 256 nonce flags in each uint256 word:
+///
+///     mapping(uint256 => uint256)
+///
+/// Nonce layout:
+///
+///     wordIndex = nonce / 256
+///     bitIndex  = nonce % 256
+///
+/// The bit operations are intentionally implemented in Yul.
+///
+/// A consuming contract can declare:
+///
+///     mapping(uint256 => uint256) private _processedNonces;
+///
+/// and then use:
+///
+///     NonceBitmap.markProcessed(_processedNonces, nonce);
+///
+/// A nonce can only be marked once. Attempting to process an already
+/// marked nonce reverts with {AlreadyProcessed}.
 library NonceBitmap {
-    /// @notice Thrown by `markProcessed` when `nonce` has already been marked processed.
+    // =============================================================
+    //                            ERRORS
+    // =============================================================
+
+    /// @notice Thrown when attempting to process a nonce more than once.
+    /// @param nonce The nonce that was already processed.
     error AlreadyProcessed(uint256 nonce);
 
-    /// @notice Compute the storage word index and in-word bit index for a nonce.
-    /// @param nonce The message sequence nonce.
-    /// @return wordIndex The key into the `mapping(uint256 => uint256)` bitmap.
-    /// @return bitIndex  The bit position (0-255) within that word.
-    function locate(uint256 nonce) internal pure returns (uint256 wordIndex, uint256 bitIndex) {
+    // =============================================================
+    //                         BIT LOCATION
+    // =============================================================
+
+    /// @notice Returns the storage word and bit position for a nonce.
+    /// @param nonce Message sequence nonce.
+    /// @return wordIndex Index of the 256-bit storage word.
+    /// @return bitIndex Bit position within the word, from 0 to 255.
+    function locate(
+        uint256 nonce
+    ) internal pure returns (uint256 wordIndex, uint256 bitIndex) {
+        // Division and modulo by 256 are compiled efficiently by Solidity.
         wordIndex = nonce / 256;
         bitIndex = nonce % 256;
     }
 
-    /// @notice Check whether `nonce` has already been marked processed.
-    /// @param bitmap The caller's bitmap storage mapping.
-    /// @param nonce  The message sequence nonce to check.
-    /// @return processed True if the bit for `nonce` is already set.
-    function isProcessed(mapping(uint256 => uint256) storage bitmap, uint256 nonce)
-        internal
-        view
-        returns (bool processed)
-    {
+    // =============================================================
+    //                         READ OPERATIONS
+    // =============================================================
+
+    /// @notice Checks whether a nonce has already been processed.
+    /// @param bitmap Replay-protection bitmap.
+    /// @param nonce Message sequence nonce.
+    /// @return processed True when the nonce's bit is set.
+    function isProcessed(
+        mapping(uint256 => uint256) storage bitmap,
+        uint256 nonce
+    ) internal view returns (bool processed) {
         (uint256 wordIndex, uint256 bitIndex) = locate(nonce);
         uint256 word = bitmap[wordIndex];
 
         assembly {
+            // Shift the target bit into position zero, then mask it.
             processed := and(shr(bitIndex, word), 1)
         }
     }
 
-    /// @notice Atomically check-and-set: mark `nonce` as processed, reverting if it was
-    ///         already marked. This is the primary replay-guard entry point — a single
-    ///         call that closes the check-then-set race a separate read + write pair
-    ///         would otherwise leave open between two external calls.
-    /// @param bitmap The caller's bitmap storage mapping.
-    /// @param nonce  The message sequence nonce to mark processed.
-    function markProcessed(mapping(uint256 => uint256) storage bitmap, uint256 nonce) internal {
+    // =============================================================
+    //                       WRITE OPERATIONS
+    // =============================================================
+
+    /// @notice Marks a nonce as processed.
+    /// @dev Reverts if the nonce has already been marked.
+    ///
+    /// The existing word is loaded once, checked once, updated once,
+    /// and written back once.
+    ///
+    /// @param bitmap Replay-protection bitmap.
+    /// @param nonce Message sequence nonce.
+    function markProcessed(
+        mapping(uint256 => uint256) storage bitmap,
+        uint256 nonce
+    ) internal {
         (uint256 wordIndex, uint256 bitIndex) = locate(nonce);
+
         uint256 word = bitmap[wordIndex];
 
-        bool alreadySet;
-        assembly {
-            alreadySet := and(shr(bitIndex, word), 1)
-        }
-        if (alreadySet) revert AlreadyProcessed(nonce);
+        bool alreadyProcessed;
 
-        uint256 updated;
         assembly {
-            updated := or(word, shl(bitIndex, 1))
+            // Extract the target bit.
+            alreadyProcessed := and(shr(bitIndex, word), 1)
         }
-        bitmap[wordIndex] = updated;
+
+        if (alreadyProcessed) {
+            revert AlreadyProcessed(nonce);
+        }
+
+        uint256 updatedWord;
+
+        assembly {
+            // Set exactly one bit while preserving every other bit.
+            updatedWord := or(word, shl(bitIndex, 1))
+        }
+
+        bitmap[wordIndex] = updatedWord;
     }
 }
 
-/// @dev Thin wrapper contract to expose the library for direct testing, exactly like
-///      `BitmaskVerifierYulWrapper` for `BitmaskVerifierYul`.
+/// @title NonceBitmapWrapper
+/// @notice Test and gas-benchmark wrapper for {NonceBitmap}.
+/// @dev This contract intentionally exposes the library's operations so
+///      unit tests and gas benchmarks can validate bitmap behavior directly.
 contract NonceBitmapWrapper {
     using NonceBitmap for mapping(uint256 => uint256);
 
-    /// @notice The packed replay-protection bitmap: wordIndex => 256-bit word of flags.
+    // =============================================================
+    //                            STORAGE
+    // =============================================================
+
+    /// @notice Packed replay-protection bitmap.
+    /// @dev Each storage word contains flags for 256 consecutive nonces.
     mapping(uint256 => uint256) public bitmap;
 
-    /// @notice Check whether `nonce` has already been marked processed.
+    // =============================================================
+    //                          READ METHODS
+    // =============================================================
+
+    /// @notice Returns whether a nonce has already been processed.
     function isProcessed(uint256 nonce) external view returns (bool) {
         return bitmap.isProcessed(nonce);
     }
 
-    /// @notice Mark `nonce` processed, reverting with `NonceBitmap.AlreadyProcessed` if
-    ///         it was already marked.
-    function markProcessed(uint256 nonce) external {
-        bitmap.markProcessed(nonce);
-    }
-
-    /// @notice Mark a batch of nonces processed in a single call, so gas comparisons
-    ///         against a naive per-nonce mapping can isolate the storage bookkeeping
-    ///         cost from fixed per-transaction overhead (21,000 gas base cost, etc.)
-    ///         that both approaches would pay identically anyway.
-    function markProcessedBatch(uint256[] calldata nonces) external {
-        for (uint256 i = 0; i < nonces.length; i++) {
-            bitmap.markProcessed(nonces[i]);
-        }
-    }
-
-    /// @notice Read the raw storage word backing a given word index.
+    /// @notice Returns the raw 256-bit word for a word index.
     function getWord(uint256 wordIndex) external view returns (uint256) {
         return bitmap[wordIndex];
     }
 
-    /// @notice Expose the wordIndex/bitIndex split for a given nonce.
-    function locate(uint256 nonce) external pure returns (uint256 wordIndex, uint256 bitIndex) {
+    /// @notice Returns the word and bit position corresponding to a nonce.
+    function locate(
+        uint256 nonce
+    ) external pure returns (uint256 wordIndex, uint256 bitIndex) {
         return NonceBitmap.locate(nonce);
+    }
+
+    // =============================================================
+    //                         WRITE METHODS
+    // =============================================================
+
+    /// @notice Marks a nonce as processed.
+    /// @dev Reverts with {NonceBitmap.AlreadyProcessed} when the nonce
+    ///      has already been marked.
+    function markProcessed(uint256 nonce) external {
+        bitmap.markProcessed(nonce);
+    }
+
+    /// @notice Marks multiple nonces as processed.
+    /// @dev Primarily intended for testing and gas benchmarking.
+    ///      A repeated nonce causes the entire transaction to revert.
+    function markProcessedBatch(
+        uint256[] calldata nonces
+    ) external {
+        uint256 length = nonces.length;
+
+        for (uint256 i; i < length; ) {
+            bitmap.markProcessed(nonces[i]);
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 }

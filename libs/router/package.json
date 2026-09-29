@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "test:regression": "jest regression-corpus"
   },
   "dependencies": {},
   "devDependencies": {

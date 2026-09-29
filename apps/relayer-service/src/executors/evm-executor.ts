@@ -6,6 +6,7 @@ import {
   ExecutorConfig,
   GasRepriceConfig,
 } from '../types';
+import { NonceManager } from '../nonce/nonce-manager';
 
 const DEFAULT_GAS_REPRICING: GasRepriceConfig = {
   initialGasPrice: '50000000000',
@@ -20,7 +21,7 @@ const DEFAULT_POLL_INTERVAL_MS = 2000;
 
 export class EvmExecutor extends EventEmitter {
   private config: ExecutorConfig;
-  private nonce: number = 0;
+  private readonly nonceManager: NonceManager;
   private currentGasPrice: bigint;
   private bumpCount: number = 0;
 
@@ -33,13 +34,25 @@ export class EvmExecutor extends EventEmitter {
       confirmationPollIntervalMs: config.confirmationPollIntervalMs || DEFAULT_POLL_INTERVAL_MS,
     } as ExecutorConfig;
     this.currentGasPrice = BigInt(this.config.gasRepricing.initialGasPrice);
+    this.nonceManager = new NonceManager(this.config.chainId, { store: this.config.nonceStore });
+    this.nonceManager
+      .on('nonce-loaded', (payload) => this.emit('nonce-loaded', payload))
+      .on('nonce-assigned', (payload) => this.emit('nonce-assigned', payload))
+      .on('nonce-reused', (payload) => this.emit('nonce-reused', payload))
+      .on('nonce-error', (payload) => this.emit('nonce-error', payload));
   }
 
   async execute(message: CrossChainMessage): Promise<ExecutionResult> {
+    return this.deliver(message, null);
+  }
+
+  private async deliver(message: CrossChainMessage, reservedNonce: number | null): Promise<ExecutionResult> {
+    let nonce: number | null = reservedNonce;
     try {
       this.emit('execution-started', { messageId: message.id, chainId: this.config.chainId });
 
-      const txHash = await this.sendTransaction(message);
+      nonce = nonce ?? (await this.nonceManager.acquire(message.id));
+      const txHash = await this.sendTransaction(message, nonce);
       this.emit('transaction-submitted', { messageId: message.id, txHash, chainId: this.config.chainId });
 
       const receipt = await this.waitForConfirmation(txHash);
@@ -54,14 +67,17 @@ export class EvmExecutor extends EventEmitter {
         timestamp: Date.now(),
       };
 
+      // The message reached its final state on-chain; its pin is no longer needed.
+      await this.nonceManager.release(message.id);
+
       this.emit('execution-completed', result);
       return result;
     } catch (error: unknown) {
       const message_ = error instanceof Error ? error.message : String(error);
       this.emit('execution-error', { messageId: message.id, error: message_ });
 
-      if (this.shouldReprice(error)) {
-        return this.handleReprice(message, error);
+      if (nonce !== null && this.shouldReprice(error)) {
+        return this.handleReprice(message, nonce, error);
       }
 
       return {
@@ -102,24 +118,24 @@ export class EvmExecutor extends EventEmitter {
   }
 
   updateNonce(nonce: number): void {
-    this.nonce = nonce;
+    this.nonceManager.updateNonce(nonce);
   }
 
   getNonce(): number {
-    return this.nonce;
+    return this.nonceManager.getNonce();
   }
 
   getCurrentGasPrice(): string {
     return this.currentGasPrice.toString();
   }
 
-  private async sendTransaction(message: CrossChainMessage): Promise<string> {
+  private async sendTransaction(message: CrossChainMessage, nonce: number): Promise<string> {
     const tx = {
       to: message.recipient,
       data: message.payload,
       gas: message.maxGasLimit ? BigInt(message.maxGasLimit).toString(16) : '0x100000',
       gasPrice: '0x' + this.currentGasPrice.toString(16),
-      nonce: '0x' + this.nonce.toString(16),
+      nonce: '0x' + nonce.toString(16),
     };
 
     const response = await axios.post(
@@ -137,7 +153,6 @@ export class EvmExecutor extends EventEmitter {
       throw new Error(response.data.error?.message || 'Transaction submission failed');
     }
 
-    this.nonce++;
     return response.data.result;
   }
 
@@ -209,6 +224,7 @@ export class EvmExecutor extends EventEmitter {
 
   private async handleReprice(
     message: CrossChainMessage,
+    nonce: number,
     error: unknown,
   ): Promise<ExecutionResult> {
     this.bumpCount++;
@@ -227,7 +243,7 @@ export class EvmExecutor extends EventEmitter {
       maxBumps: this.config.gasRepricing.maxBumps,
     });
 
-    return this.execute(message);
+    return this.deliver(message, nonce);
   }
 
   private delay(ms: number): Promise<void> {

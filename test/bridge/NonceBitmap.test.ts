@@ -1,7 +1,7 @@
-import { expect } from "chai";
-import hre from "hardhat";
+import { expect } from 'chai';
+import hre from 'hardhat';
 
-describe("NonceBitmap", () => {
+describe('NonceBitmap', () => {
   let ethers: any;
 
   before(async () => {
@@ -10,21 +10,21 @@ describe("NonceBitmap", () => {
   });
 
   async function deployWrapper() {
-    const Factory = await ethers.getContractFactory("NonceBitmapWrapper");
+    const Factory = await ethers.getContractFactory('NonceBitmapWrapper');
     const wrapper = await Factory.deploy();
     await wrapper.waitForDeployment();
     return wrapper;
   }
 
   async function deployNaive() {
-    const Factory = await ethers.getContractFactory("NaiveReplayGuard");
+    const Factory = await ethers.getContractFactory('NaiveReplayGuard');
     const naive = await Factory.deploy();
     await naive.waitForDeployment();
     return naive;
   }
 
-  describe("word/bit indexing", () => {
-    it("computes wordIndex = nonce / 256 and bitIndex = nonce % 256", async () => {
+  describe('word/bit indexing', () => {
+    it('computes wordIndex = nonce / 256 and bitIndex = nonce % 256', async () => {
       const wrapper = await deployWrapper();
 
       let [wordIndex, bitIndex] = await wrapper.locate(0n);
@@ -45,8 +45,8 @@ describe("NonceBitmap", () => {
     });
   });
 
-  describe("sequential marking within one word", () => {
-    it("flips isProcessed false -> true for each nonce after marking", async () => {
+  describe('sequential marking within one word', () => {
+    it('flips isProcessed false -> true for each nonce after marking', async () => {
       const wrapper = await deployWrapper();
 
       for (let nonce = 0; nonce < 20; nonce++) {
@@ -59,7 +59,7 @@ describe("NonceBitmap", () => {
       expect(await wrapper.isProcessed(20)).to.equal(false);
     });
 
-    it("packs all 20 flags into the single word-0 storage slot", async () => {
+    it('packs all 20 flags into the single word-0 storage slot', async () => {
       const wrapper = await deployWrapper();
 
       let expectedWord = 0n;
@@ -72,8 +72,8 @@ describe("NonceBitmap", () => {
     });
   });
 
-  describe("cross-word isolation", () => {
-    it("marking a nonce in a different word does not interfere with word 0", async () => {
+  describe('cross-word isolation', () => {
+    it('marking a nonce in a different word does not interfere with word 0', async () => {
       const wrapper = await deployWrapper();
 
       // Mark some nonces in word 0.
@@ -95,24 +95,26 @@ describe("NonceBitmap", () => {
       expect(await wrapper.isProcessed(301)).to.equal(false);
 
       // word 0 storage itself must not contain bit 44 (that lives in word 1).
-      expect(await wrapper.getWord(0)).to.equal((1n << 0n) | (1n << 5n) | (1n << 19n));
+      expect(await wrapper.getWord(0)).to.equal(
+        (1n << 0n) | (1n << 5n) | (1n << 19n),
+      );
       expect(await wrapper.getWord(1)).to.equal(1n << 44n);
     });
   });
 
-  describe("replay protection", () => {
-    it("reverts with AlreadyProcessed when re-processing an already-marked nonce", async () => {
+  describe('replay protection', () => {
+    it('reverts with AlreadyProcessed when re-processing an already-marked nonce', async () => {
       const wrapper = await deployWrapper();
 
       await (await wrapper.markProcessed(42)).wait();
       expect(await wrapper.isProcessed(42)).to.equal(true);
 
       await expect(wrapper.markProcessed(42))
-        .to.be.revertedWithCustomError(wrapper, "AlreadyProcessed")
+        .to.be.revertedWithCustomError(wrapper, 'AlreadyProcessed')
         .withArgs(42n);
     });
 
-    it("does not revert for a fresh nonce even if a different nonce in the same word is marked", async () => {
+    it('does not revert for a fresh nonce even if a different nonce in the same word is marked', async () => {
       const wrapper = await deployWrapper();
 
       await (await wrapper.markProcessed(7)).wait();
@@ -120,19 +122,100 @@ describe("NonceBitmap", () => {
     });
   });
 
-  describe("gas comparison: packed bitmap vs naive bool-per-message mapping", () => {
+  describe('deterministic property checks', () => {
+    it('matches a reference bitmap for seeded values marked in adversarial order', async () => {
+      const wrapper = await deployWrapper();
+      let state = 0x6d2b79f5;
+      const nextWord = () => {
+        state =
+          (Math.imul(state ^ (state >>> 15), 1 | state) + 0x6d2b79f5) >>> 0;
+        state ^= state + Math.imul(state ^ (state >>> 7), 61 | state);
+        return (state ^ (state >>> 14)) >>> 0;
+      };
+      const maximum = (1n << 256n) - 1n;
+      const nonces = new Set<bigint>([
+        0n,
+        1n,
+        254n,
+        255n,
+        256n,
+        257n,
+        maximum - 1n,
+        maximum,
+      ]);
+
+      for (let index = 0; index < 32; index++) {
+        let nonce = 0n;
+        for (let chunk = 0; chunk < 8; chunk++) {
+          nonce = (nonce << 32n) | BigInt(nextWord());
+        }
+        nonces.add(nonce);
+      }
+
+      const orderedNonces = [...nonces];
+      for (let index = orderedNonces.length - 1; index > 0; index--) {
+        const swapIndex = nextWord() % (index + 1);
+        [orderedNonces[index], orderedNonces[swapIndex]] = [
+          orderedNonces[swapIndex],
+          orderedNonces[index],
+        ];
+      }
+
+      await (await wrapper.markProcessedBatch(orderedNonces)).wait();
+
+      const expectedWords = new Map<bigint, bigint>();
+      for (const nonce of nonces) {
+        const wordIndex = nonce / 256n;
+        const bitIndex = nonce % 256n;
+        expectedWords.set(
+          wordIndex,
+          (expectedWords.get(wordIndex) ?? 0n) | (1n << bitIndex),
+        );
+        expect(await wrapper.isProcessed(nonce)).to.equal(true);
+      }
+
+      for (const [wordIndex, expectedWord] of expectedWords) {
+        expect(await wrapper.getWord(wordIndex)).to.equal(expectedWord);
+      }
+
+      for (const nonce of orderedNonces.slice(0, 16)) {
+        const probe = nonce ^ 1n;
+        expect(await wrapper.isProcessed(probe)).to.equal(nonces.has(probe));
+      }
+    });
+
+    it('rolls back every earlier write when a later batch nonce replays', async () => {
+      const wrapper = await deployWrapper();
+      const replayedNonce = (1n << 255n) + 19n;
+      const freshNonce = replayedNonce + 1n;
+
+      await (await wrapper.markProcessed(replayedNonce)).wait();
+      await expect(wrapper.markProcessedBatch([freshNonce, replayedNonce]))
+        .to.be.revertedWithCustomError(wrapper, 'AlreadyProcessed')
+        .withArgs(replayedNonce);
+
+      expect(await wrapper.isProcessed(freshNonce)).to.equal(false);
+      expect(await wrapper.isProcessed(replayedNonce)).to.equal(true);
+    });
+  });
+
+  describe('gas comparison: packed bitmap vs naive bool-per-message mapping', () => {
     // Both contracts expose a batch entry point (`markProcessedBatch`) that marks
     // all 20 nonces inside ONE transaction/call. That isolates the storage
     // bookkeeping cost this issue is actually about from the ~21,000 gas base
     // transaction cost and calldata cost, which both approaches pay identically
     // and which would otherwise swamp a per-transaction comparison.
-    it("uses substantially less gas for 20 sequential same-word nonces in one call", async () => {
+    it('uses substantially less gas for 20 sequential same-word nonces in one call', async () => {
       const wrapper = await deployWrapper();
       const naive = await deployNaive();
       const nonces = Array.from({ length: 20 }, (_, i) => i);
 
-      const bitmapReceipt = await (await wrapper.markProcessedBatch(nonces)).wait();
-      const naiveReceipt = await (await naive.markProcessedBatch(nonces)).wait();
+      const bitmapReceipt = await (
+        await wrapper.markProcessedBatch(nonces)
+      ).wait();
+      const naiveReceipt = await (
+        await naive.markProcessedBatch(nonces)
+      ).wait();
 
       const bitmapGas: bigint = bitmapReceipt.gasUsed;
       const naiveGas: bigint = naiveReceipt.gasUsed;
@@ -150,9 +233,13 @@ describe("NonceBitmap", () => {
       // SHR/SHL/OR/AND opcodes for the remaining 19 nonces, since they all share
       // that same word.
       // eslint-disable-next-line no-console
-      console.log(`      naive  batch gas (20 nonces, 1 word): ${naiveGas.toString()}`);
+      console.log(
+        `      naive  batch gas (20 nonces, 1 word): ${naiveGas.toString()}`,
+      );
       // eslint-disable-next-line no-console
-      console.log(`      bitmap batch gas (20 nonces, 1 word): ${bitmapGas.toString()}`);
+      console.log(
+        `      bitmap batch gas (20 nonces, 1 word): ${bitmapGas.toString()}`,
+      );
 
       expect(bitmapGas).to.be.lessThan(naiveGas);
       // "Substantially" lower: require at least a 50% reduction, not just any

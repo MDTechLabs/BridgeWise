@@ -9,7 +9,6 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
       providers: [
         AppService,
         {
@@ -33,11 +32,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    it('should return environment and port info', () => {
-      expect(appController.getHello()).toBe('BridgeWise is running in test mode on port 3000');
+    it('should return the environment and port info', () => {
+      expect(appController.getHello()).toBe(
+        'BridgeWise is running in test mode on port 3000',
+      );
     });
   });
 });
-})
