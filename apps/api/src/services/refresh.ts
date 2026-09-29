@@ -179,9 +179,10 @@ export class AutoRefreshService implements OnModuleInit, OnModuleDestroy {
     await this.refresh(dataType);
 
     // Set up interval
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       if (!this.isPaused) {
-        await this.refresh(dataType);
+        // refresh records and emits its own errors, so contain interval failures.
+        void this.refresh(dataType).catch(() => undefined);
       }
     }, config.intervalMs);
 
