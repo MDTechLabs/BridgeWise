@@ -1,18 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import {
-<<<<<<< HEAD:src/reliability-score/reliability-calculator.service.ts
-  RELIABILITY_CONSTANTS,
-  RELIABILITY_BADGE_LABELS,
-} from '../constants/reliability.constants';
-import { ReliabilityTier } from '../enums/reliability.enum';
-import { ReliabilityBadgeDto } from '../dto/reliability.dto';
-=======
   RELIABILITY_BADGE_LABELS,
   RELIABILITY_CONSTANTS,
 } from './reliability.constants';
 import { ReliabilityTier } from './reliability.enum';
 import { ReliabilityBadgeDto } from './reliability.dto';
->>>>>>> 902330b94c4294029cf45eb84c6121443fbb0427:apps/api/src/reliability-score/reliability-calculator.service.ts
 
 export interface RawCounts {
   totalAttempts: number;

@@ -13,6 +13,7 @@ describe('EnvironmentLoader', () => {
     }
     // Clear relevant env vars
     delete process.env.TEST_VAR;
+    delete process.env.VAR1;
     delete process.env.NODE_ENV;
   });
 
@@ -84,7 +85,7 @@ UNQUOTED=value
       const loader = new EnvironmentLoader(testDir);
       loader.load();
 
-      expect(process.env.VAR1).toBe('base');
+      expect(process.env.VAR1).toBe('dev-override');
     });
 
     it('should not override already set environment variables', () => {

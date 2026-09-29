@@ -58,11 +58,14 @@ export class EVMLogSubscriber extends EventEmitter {
     const backoff = this.currentBackoffMs;
     this.currentBackoffMs *= 2; // Exponential backoff
 
-    return new Promise((resolve) => {
-      this.mockWsTimer = setTimeout(async () => {
-        await this.connect();
-        this.emit('reconnected', { attempt: currentAttempt });
-        resolve();
+    return new Promise((resolve, reject) => {
+      this.mockWsTimer = setTimeout(() => {
+        void this.connect()
+          .then(() => {
+            this.emit('reconnected', { attempt: currentAttempt });
+            resolve();
+          })
+          .catch(reject);
       }, backoff);
     });
   }

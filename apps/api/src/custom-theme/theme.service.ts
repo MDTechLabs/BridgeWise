@@ -108,7 +108,7 @@ export class ThemeService {
         if (query.isDefault !== undefined && t.isDefault !== query.isDefault) return false;
         return true;
       })
-      .map(this.toResponseDto);
+      .map((theme) => this.toResponseDto(theme));
   }
 
   async findOne(id: string): Promise<ThemeResponseDto> {
