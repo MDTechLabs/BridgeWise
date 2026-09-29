@@ -38,6 +38,9 @@ contract ZKVerifierRegistry is AccessControl {
     /// @notice Thrown when the verifier address is the zero address.
     error InvalidVerifierAddress();
 
+    /// @notice Thrown when the registry is deployed without an administrator.
+    error InvalidAdmin();
+
     /// @notice Thrown when the verifier does not implement IZKVerifier.
     error InvalidVerifierInterface();
 
@@ -60,6 +63,8 @@ contract ZKVerifierRegistry is AccessControl {
 
     /// @param admin Address granted DEFAULT_ADMIN_ROLE.
     constructor(address admin) {
+        if (admin == address(0)) revert InvalidAdmin();
+        _setRoleAdmin(VERIFIER_ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 

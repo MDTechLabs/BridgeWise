@@ -74,6 +74,41 @@ describe("DynamicFeeDistribution", () => {
     expect(burnBal).to.equal(ethers.parseEther("400"));
     expect(treasuryBal).to.equal(ethers.parseEther("400"));
     expect(relayerBal).to.equal(ethers.parseEther("200"));
+    expect(await distributor.totalFeesDistributed(await token.getAddress())).to.equal(amount);
+  });
+
+  it("preserves the collected minus distributed balance across partial distributions", async () => {
+    const { distributor, token, payer } = await deploy();
+    const collected = ethers.parseEther("100");
+
+    await token.connect(payer).approve(await distributor.getAddress(), collected);
+    await distributor.collectFees(await token.getAddress(), payer.address, collected);
+    await distributor.distributeFees(await token.getAddress(), ethers.parseEther("35"));
+
+    expect(await distributor.totalFeesCollected(await token.getAddress())).to.equal(collected);
+    expect(await distributor.totalFeesDistributed(await token.getAddress())).to.equal(ethers.parseEther("35"));
+    expect(await token.balanceOf(await distributor.getAddress())).to.equal(ethers.parseEther("65"));
+  });
+
+  it("rejects distributions beyond collected undistributed fees", async () => {
+    const { distributor, token, payer } = await deploy();
+    const amount = ethers.parseEther("10");
+    await token.connect(payer).approve(await distributor.getAddress(), amount);
+    await distributor.collectFees(await token.getAddress(), payer.address, amount);
+    await distributor.distributeFees(await token.getAddress(), amount);
+
+    await expect(distributor.distributeFees(await token.getAddress(), 1))
+      .to.be.revertedWithCustomError(distributor, "InsufficientUndistributedFees")
+      .withArgs(1, 0);
+    expect(await distributor.totalFeesDistributed(await token.getAddress())).to.equal(amount);
+  });
+
+  it("rejects zero payout destinations", async () => {
+    const { distributor, burn, treasury, relayer } = await deploy();
+
+    await expect(distributor.setDestinations(ethers.ZeroAddress, treasury.address, relayer.address))
+      .to.be.revertedWithCustomError(distributor, "InvalidDestination");
+    expect(await distributor.burnAddress()).to.equal(burn.address);
   });
 
   it("rejects zero-fee collection", async () => {

@@ -162,7 +162,7 @@ contract B004Safe {
         bytes memory signature,
         address expectedSigner
     ) external pure returns (bool) {
-        address signer = hash.recover(signature);
+        address signer = ECDSA.recover(hash, signature);
         return signer == expectedSigner;
     }
 

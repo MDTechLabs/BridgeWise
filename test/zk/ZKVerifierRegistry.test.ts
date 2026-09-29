@@ -39,6 +39,28 @@ describe("ZKVerifierRegistry", () => {
     expect(await registry.registeredCount()).to.equal(1);
   });
 
+  it("rejects deployment with a zero administrator", async () => {
+    const Factory = await ethers.getContractFactory("ZKVerifierRegistry");
+
+    await expect(Factory.deploy(ethers.ZeroAddress))
+      .to.be.revertedWithCustomError(Factory, "InvalidAdmin");
+  });
+
+  it("only permits explicitly authorized verifier administrators to replace a verifier", async () => {
+    const { registry, verifierAdmin, user } = await deploy();
+    const MockVerifier = await ethers.getContractFactory("MockZKVerifier");
+    const verifier = await MockVerifier.deploy();
+    await verifier.waitForDeployment();
+    const replacement = await MockVerifier.deploy();
+    await replacement.waitForDeployment();
+
+    await registry.connect(verifierAdmin).registerVerifier(1, await verifier.getAddress(), "v1");
+    await expect(
+      registry.connect(user).registerVerifier(1, await replacement.getAddress(), "v2")
+    ).to.be.revertedWithCustomError(registry, "AccessControlUnauthorizedAccount");
+    expect(await registry.chainVerifiers(1)).to.equal(await verifier.getAddress());
+  });
+
   it("upgrades a verifier for a chain", async () => {
     const { registry, verifierAdmin } = await deploy();
 

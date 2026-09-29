@@ -45,6 +45,36 @@ export interface StellarDecisionEntry extends RankedRoute {
   warnings: string[];
 }
 
+/** Stable machine-readable reasons for excluding a candidate route. */
+export type RouteRejectionCode =
+  | 'INVALID_SLIPPAGE'
+  | 'INVALID_ESTIMATED_TIME'
+  | 'INVALID_SUCCESS_RATE'
+  | 'INVALID_RISK_SCORE'
+  | 'SLIPPAGE_EXCEEDED'
+  | 'ESTIMATED_TIME_EXCEEDED'
+  | 'SUCCESS_RATE_TOO_LOW'
+  | 'PROVIDER_EXCLUDED'
+  | 'RISK_LIMIT_EXCEEDED'
+  | 'PROVIDER_INCOMPATIBLE';
+
+/** One human-readable explanation paired with a stable rejection code. */
+export interface RouteRejectionReason {
+  code: RouteRejectionCode;
+  message: string;
+}
+
+/** A rejected route and every policy/data reason that excluded it. */
+export interface RouteRejection {
+  route: BridgeRoute;
+  /** Backward-compatible summary of the first rejection reason. */
+  reason: string;
+  /** Stable machine-readable code for the first rejection reason. */
+  code: RouteRejectionCode;
+  /** All applicable rejection reasons, in deterministic evaluation order. */
+  reasons: RouteRejectionReason[];
+}
+
 /** Aggregated decision returned to the caller. */
 export interface StellarDecisionResult {
   /** Selected route (rank 1), or null when nothing survived. */
@@ -52,7 +82,7 @@ export interface StellarDecisionResult {
   /** All alternatives that survived, ordered by rank. */
   alternatives: StellarDecisionEntry[];
   /** Routes that were filtered out and the reason each one was rejected. */
-  rejections: Array<{ route: BridgeRoute; reason: string }>;
+  rejections: RouteRejection[];
   /** The policy that was actually applied after defaults were merged. */
   appliedPolicy: Required<StellarDecisionPolicy>;
   /** Snapshot of when this decision was produced. */

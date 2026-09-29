@@ -12,7 +12,7 @@ contract MockGasTarget {
         // Consume some gas with a loop
         for (uint256 i = 0; i < 100; i++) {
             assembly {
-                let _ := i
+                let dummy := i
             }
         }
         emit SimpleCalled();
@@ -28,7 +28,7 @@ contract MockGasTarget {
     function gasIntensiveCall(uint256 iterations) external {
         for (uint256 i = 0; i < iterations; i++) {
             assembly {
-                let _ := i
+                let dummy := i
             }
         }
     }

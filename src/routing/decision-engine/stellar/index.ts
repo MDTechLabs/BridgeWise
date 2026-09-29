@@ -20,4 +20,7 @@ export type {
   StellarDecisionSignals,
   StellarRouteCompatibilitySignal,
   StellarRouteRiskSignal,
+  RouteRejection,
+  RouteRejectionCode,
+  RouteRejectionReason,
 } from './types';

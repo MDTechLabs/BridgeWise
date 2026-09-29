@@ -4,6 +4,13 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
 
 ## 📚 Documentation Files
 
+### Smart Contract Operations
+
+- **[CONTRACT_UPGRADES_AND_ACCOUNTING.md](./CONTRACT_UPGRADES_AND_ACCOUNTING.md)**
+  - Upgrade authorization and immutable-code policy
+  - Fee and vault accounting invariants
+  - Production monitoring and verification
+
 ### Getting Started
 
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** ⭐ START HERE
@@ -62,6 +69,10 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Required balance and allowance checks
   - Route, policy limit, provider health, and quote freshness gates
   - Fail-closed signer wrapper and safe failure handling
+- **[ROUTE_REJECTION_REASONS.md](./ROUTE_REJECTION_REASONS.md)** - ROUTE DECISIONS
+  - Stable codes for rejected route candidates
+  - All applicable rejection reasons and backward-compatible summaries
+  - Policy boundary and invalid candidate data behavior
 
 - **[SIGNATURE_SPECIFICATION.md](./SIGNATURE_SPECIFICATION.md)** - SIGNATURE SPEC
   - EIP-712 typed data hashing for cross-chain messages

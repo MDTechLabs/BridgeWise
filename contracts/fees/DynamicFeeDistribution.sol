@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title DynamicFeeDistribution
 /// @notice Splits collected bridge fees into protocol burn addresses, treasury vaults,
@@ -46,6 +47,12 @@ contract DynamicFeeDistribution is Ownable {
     /// @notice Thrown when distribution is attempted with zero fees.
     error ZeroFees();
 
+    /// @notice Thrown when a fee allocation destination is not configured.
+    error InvalidDestination();
+
+    /// @notice Thrown when distribution exceeds collected but undistributed fees.
+    error InsufficientUndistributedFees(uint256 requested, uint256 available);
+
     /// @notice Emitted when fee parameters are updated.
     event FeeParametersUpdated(uint256 burnBps, uint256 treasuryBps, uint256 relayerBps);
 
@@ -78,6 +85,7 @@ contract DynamicFeeDistribution is Ownable {
         address _relayerPoolAddress
     ) Ownable(admin) {
         if (_burnBps + _treasuryBps + _relayerBps != 10_000) revert InvalidBasisPoints();
+        _validateDestinations(_burnAddress, _treasuryAddress, _relayerPoolAddress);
         burnBps = _burnBps;
         treasuryBps = _treasuryBps;
         relayerBps = _relayerBps;
@@ -105,6 +113,7 @@ contract DynamicFeeDistribution is Ownable {
         address _treasuryAddress,
         address _relayerPoolAddress
     ) external onlyOwner {
+        _validateDestinations(_burnAddress, _treasuryAddress, _relayerPoolAddress);
         burnAddress = _burnAddress;
         treasuryAddress = _treasuryAddress;
         relayerPoolAddress = _relayerPoolAddress;
@@ -128,28 +137,7 @@ contract DynamicFeeDistribution is Ownable {
     /// @param amount The amount to distribute (must be ≤ contract balance).
     function distributeFees(address token, uint256 amount) external onlyOwner {
         if (amount == 0) revert ZeroFees();
-
-        uint256 burnAmount = (amount * burnBps) / 10_000;
-        uint256 treasuryAmount = (amount * treasuryBps) / 10_000;
-        uint256 relayerAmount = amount - burnAmount - treasuryAmount;
-
-        // Transfer burn portion
-        if (burnAmount > 0 && burnAddress != address(0)) {
-            IERC20(token).safeTransfer(burnAddress, burnAmount);
-        }
-
-        // Transfer treasury portion
-        if (treasuryAmount > 0 && treasuryAddress != address(0)) {
-            IERC20(token).safeTransfer(treasuryAddress, treasuryAmount);
-        }
-
-        // Transfer relayer portion
-        if (relayerAmount > 0 && relayerPoolAddress != address(0)) {
-            IERC20(token).safeTransfer(relayerPoolAddress, relayerAmount);
-        }
-
-        totalFeesDistributed[token] += amount;
-        emit FeesDistributed(token, amount, burnAmount, treasuryAmount, relayerAmount);
+        _distributeFees(token, amount);
     }
 
     /// @notice Convenience: collect and distribute in a single call.
@@ -165,22 +153,32 @@ contract DynamicFeeDistribution is Ownable {
         IERC20(token).safeTransferFrom(from, address(this), amount);
         totalFeesCollected[token] += amount;
         emit FeesCollected(token, amount, from);
+        _distributeFees(token, amount);
+    }
 
-        uint256 burnAmount = (amount * burnBps) / 10_000;
-        uint256 treasuryAmount = (amount * treasuryBps) / 10_000;
+    function _distributeFees(address token, uint256 amount) internal {
+        uint256 available = totalFeesCollected[token] - totalFeesDistributed[token];
+        if (amount > available) revert InsufficientUndistributedFees(amount, available);
+
+        uint256 burnAmount = Math.mulDiv(amount, burnBps, 10_000);
+        uint256 treasuryAmount = Math.mulDiv(amount, treasuryBps, 10_000);
         uint256 relayerAmount = amount - burnAmount - treasuryAmount;
 
-        if (burnAmount > 0 && burnAddress != address(0)) {
-            IERC20(token).safeTransfer(burnAddress, burnAmount);
-        }
-        if (treasuryAmount > 0 && treasuryAddress != address(0)) {
-            IERC20(token).safeTransfer(treasuryAddress, treasuryAmount);
-        }
-        if (relayerAmount > 0 && relayerPoolAddress != address(0)) {
-            IERC20(token).safeTransfer(relayerPoolAddress, relayerAmount);
-        }
+        if (burnAmount > 0) IERC20(token).safeTransfer(burnAddress, burnAmount);
+        if (treasuryAmount > 0) IERC20(token).safeTransfer(treasuryAddress, treasuryAmount);
+        if (relayerAmount > 0) IERC20(token).safeTransfer(relayerPoolAddress, relayerAmount);
 
         totalFeesDistributed[token] += amount;
         emit FeesDistributed(token, amount, burnAmount, treasuryAmount, relayerAmount);
+    }
+
+    function _validateDestinations(
+        address _burnAddress,
+        address _treasuryAddress,
+        address _relayerPoolAddress
+    ) internal pure {
+        if (_burnAddress == address(0) || _treasuryAddress == address(0) || _relayerPoolAddress == address(0)) {
+            revert InvalidDestination();
+        }
     }
 }
