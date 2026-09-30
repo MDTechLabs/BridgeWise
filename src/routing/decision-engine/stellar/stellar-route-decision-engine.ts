@@ -42,6 +42,8 @@ const DEFAULT_POLICY: Required<StellarDecisionPolicy> = {
   minSuccessRate: 0.8,
   excludeProviders: [],
   minRiskScore: 0,
+  minLiquidity: '0',
+  requireLiquidityData: true,
   maxResults: 3,
 };
 
@@ -104,6 +106,7 @@ export class StellarRouteDecisionEngine {
 
     const riskById = indexBy(signals.riskSignals, (s) => s.routeId);
     const compatById = indexBy(signals.compatibilitySignals, (s) => s.routeId);
+    const liquidityById = indexBy(signals.liquiditySignals, (s) => s.routeId);
 
     // 2 — gate the candidates before ranking so we never score a route
     // that is going to be rejected anyway.
@@ -111,7 +114,7 @@ export class StellarRouteDecisionEngine {
     const survivors: BridgeRoute[] = [];
 
     for (const route of candidates) {
-      const reasons = this.gate(route, policy, riskById, compatById);
+      const reasons = this.gate(route, policy, riskById, compatById, liquidityById);
       if (reasons.length === 0) {
         survivors.push(route);
       } else {
@@ -180,6 +183,7 @@ export class StellarRouteDecisionEngine {
     policy: Required<StellarDecisionPolicy>,
     riskById: Map<string, { riskScore: number; reason?: string }>,
     compatById: Map<string, { compatible: boolean; missingFeatures?: string[] }>,
+    liquidityById: Map<string, { availableLiquidity: string; asset?: string }>,
   ): RouteRejectionReason[] {
     const reasons: RouteRejectionReason[] = [];
 
@@ -260,6 +264,36 @@ export class StellarRouteDecisionEngine {
       }
     }
 
+    // Liquidity gate — only active when the caller opts in via minLiquidity.
+    // A route must demonstrably carry enough available liquidity to absorb
+    // the requested transfer, otherwise it is rejected as low-liquidity.
+    if (isPositiveAmount(policy.minLiquidity)) {
+      const liquidity = liquidityById.get(route.id);
+      if (!liquidity) {
+        if (policy.requireLiquidityData) {
+          reasons.push({
+            code: 'LIQUIDITY_UNKNOWN',
+            message:
+              `route "${route.id}" has no liquidity data but policy requires at ` +
+              `least ${policy.minLiquidity} available liquidity`,
+          });
+        }
+      } else if (!isValidNonNegativeAmount(liquidity.availableLiquidity)) {
+        reasons.push({
+          code: 'INVALID_LIQUIDITY',
+          message: 'available liquidity must be a finite non-negative decimal amount',
+        });
+      } else if (compareDecimalStrings(liquidity.availableLiquidity, policy.minLiquidity) < 0) {
+        const asset = liquidity.asset ? ` ${liquidity.asset}` : '';
+        reasons.push({
+          code: 'INSUFFICIENT_LIQUIDITY',
+          message:
+            `available liquidity ${liquidity.availableLiquidity}${asset} is below ` +
+            `policy minimum ${policy.minLiquidity}${asset}`,
+        });
+      }
+    }
+
     const compat = compatById.get(route.id);
     if (compat && compat.compatible === false) {
       const missing = compat.missingFeatures?.length
@@ -294,6 +328,23 @@ export class StellarRouteDecisionEngine {
     }
     if (signals.compatibilitySignals?.find((s) => s.routeId === ranked.id && !s.compatible)) {
       warnings.push('Compatibility signal marked this provider as incompatible.');
+    }
+    if (isPositiveAmount(policy.minLiquidity)) {
+      const liquidity = signals.liquiditySignals?.find((s) => s.routeId === ranked.id);
+      if (
+        liquidity &&
+        isValidNonNegativeAmount(liquidity.availableLiquidity) &&
+        compareDecimalStrings(liquidity.availableLiquidity, policy.minLiquidity) >= 0 &&
+        compareDecimalStrings(
+          liquidity.availableLiquidity,
+          multiplyDecimalStringByRatio(policy.minLiquidity, 2),
+        ) < 0
+      ) {
+        warnings.push(
+          `Liquidity is thin (${liquidity.availableLiquidity} available vs ` +
+            `${policy.minLiquidity} floor) — larger transfers may fail.`,
+        );
+      }
     }
 
     const reason = isTop
@@ -331,6 +382,71 @@ function indexBy<T, K>(items: T[] | undefined, key: (item: T) => K): Map<K, T> {
     map.set(key(item), item);
   }
   return map;
+}
+
+const AMOUNT_PATTERN = /^\d+(\.\d+)?$/;
+
+/** True when `value` is a well-formed non-negative decimal amount string. */
+function isValidNonNegativeAmount(value: string | undefined): value is string {
+  return typeof value === 'string' && AMOUNT_PATTERN.test(value.trim());
+}
+
+/** True when `value` is a valid amount strictly greater than zero. */
+function isPositiveAmount(value: string | undefined): boolean {
+  return isValidNonNegativeAmount(value) && compareDecimalStrings(value, '0') > 0;
+}
+
+/**
+ * Compare two non-negative decimal strings without floating-point loss.
+ * Returns -1 when a < b, 0 when equal, 1 when a > b. Inputs are assumed to
+ * already be validated by {@link isValidNonNegativeAmount}.
+ */
+function compareDecimalStrings(a: string, b: string): number {
+  const [aInt, aFrac] = splitDecimal(a);
+  const [bInt, bFrac] = splitDecimal(b);
+
+  const intCmp = compareDigitStrings(aInt, bInt);
+  if (intCmp !== 0) return intCmp;
+
+  const len = Math.max(aFrac.length, bFrac.length);
+  const aPad = aFrac.padEnd(len, '0');
+  const bPad = bFrac.padEnd(len, '0');
+  return compareDigitStrings(aPad, bPad);
+}
+
+/** Split a validated amount into [integerDigits, fractionDigits]. */
+function splitDecimal(value: string): [string, string] {
+  const [intPart, fracPart = ''] = value.trim().split('.');
+  return [stripLeadingZeros(intPart), fracPart];
+}
+
+function stripLeadingZeros(digits: string): string {
+  const stripped = digits.replace(/^0+/, '');
+  return stripped.length > 0 ? stripped : '0';
+}
+
+/** Compare two equal-semantics digit strings (integers or padded fractions). */
+function compareDigitStrings(a: string, b: string): number {
+  if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+/**
+ * Multiply a validated amount by a small positive integer ratio, used to
+ * derive the "thin liquidity" warning band. Kept integer-only to avoid
+ * floating-point drift; fractional inputs are scaled digit-wise.
+ */
+function multiplyDecimalStringByRatio(value: string, ratio: number): string {
+  const [intPart, fracPart] = splitDecimal(value);
+  const scale = BigInt(Math.trunc(ratio));
+  const combined = BigInt(intPart + fracPart) * scale;
+  const combinedStr = combined.toString().padStart(fracPart.length + 1, '0');
+  if (fracPart.length === 0) return combinedStr;
+  const cut = combinedStr.length - fracPart.length;
+  const intResult = stripLeadingZeros(combinedStr.slice(0, cut) || '0');
+  const fracResult = combinedStr.slice(cut).replace(/0+$/, '');
+  return fracResult ? `${intResult}.${fracResult}` : intResult;
 }
 
 export default StellarRouteDecisionEngine;

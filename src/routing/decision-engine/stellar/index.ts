@@ -19,6 +19,7 @@ export type {
   StellarDecisionResult,
   StellarDecisionSignals,
   StellarRouteCompatibilitySignal,
+  StellarRouteLiquiditySignal,
   StellarRouteRiskSignal,
   RouteRejection,
   RouteRejectionCode,

@@ -23,6 +23,23 @@ export interface StellarDecisionPolicy {
   excludeProviders?: string[];
   /** Minimum acceptable risk score (0 = riskiest, 1 = safest). */
   minRiskScore?: number;
+  /**
+   * Minimum available liquidity a route must have to be eligible, expressed
+   * as a decimal string in the route's destination asset to preserve
+   * precision. `'0'` (the default) disables liquidity gating entirely.
+   *
+   * When set above zero the gate is opt-in and applies a secure default:
+   * a candidate whose liquidity cannot be confirmed (no accompanying
+   * liquidity signal) is rejected rather than optimistically admitted.
+   */
+  minLiquidity?: string;
+  /**
+   * How to treat a candidate that has no liquidity signal while
+   * `minLiquidity` is active. Defaults to `true` (reject when unknown) so
+   * that enabling the gate fails closed. Set to `false` to admit routes
+   * whose liquidity is simply unreported.
+   */
+  requireLiquidityData?: boolean;
   /** How many ranked routes the caller wants to see in the final result. */
   maxResults?: number;
 }
@@ -51,11 +68,14 @@ export type RouteRejectionCode =
   | 'INVALID_ESTIMATED_TIME'
   | 'INVALID_SUCCESS_RATE'
   | 'INVALID_RISK_SCORE'
+  | 'INVALID_LIQUIDITY'
   | 'SLIPPAGE_EXCEEDED'
   | 'ESTIMATED_TIME_EXCEEDED'
   | 'SUCCESS_RATE_TOO_LOW'
   | 'PROVIDER_EXCLUDED'
   | 'RISK_LIMIT_EXCEEDED'
+  | 'INSUFFICIENT_LIQUIDITY'
+  | 'LIQUIDITY_UNKNOWN'
   | 'PROVIDER_INCOMPATIBLE';
 
 /** One human-readable explanation paired with a stable rejection code. */
@@ -103,6 +123,27 @@ export interface StellarRouteRiskSignal {
   reason?: string;
 }
 
+/**
+ * Liquidity signal fed into the decision, typically produced by a liquidity
+ * monitor (e.g. the Stellar Bridge Liquidity Monitor). Carries the currently
+ * available depth for the route so the engine can reject routes that cannot
+ * absorb the requested transfer.
+ */
+export interface StellarRouteLiquiditySignal {
+  /** Stable route id matching the candidate BridgeRoute.id. */
+  routeId: string;
+  /**
+   * Available liquidity on this route, as a non-negative decimal string in
+   * the route's destination asset. Strings preserve precision for large or
+   * fractional balances.
+   */
+  availableLiquidity: string;
+  /** Optional asset symbol this liquidity figure is denominated in. */
+  asset?: string;
+  /** Optional source of the figure (provider/monitor) for observability. */
+  source?: string;
+}
+
 /** Compatibility signal fed into the decision (provider × feature). */
 export interface StellarRouteCompatibilitySignal {
   routeId: string;
@@ -116,4 +157,5 @@ export interface StellarRouteCompatibilitySignal {
 export interface StellarDecisionSignals {
   riskSignals?: StellarRouteRiskSignal[];
   compatibilitySignals?: StellarRouteCompatibilitySignal[];
+  liquiditySignals?: StellarRouteLiquiditySignal[];
 }
