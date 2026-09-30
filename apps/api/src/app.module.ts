@@ -33,6 +33,7 @@ import { SorobanLifecycleModule } from './analytics/lifecycle/transfers/stellar/
 import { SorobanTransferLifecycleEntity } from './analytics/lifecycle/transfers/stellar/entities/soroban-transfer-lifecycle.entity';
 import { QuotesModule } from './quotes/quotes.module';
 import { RelayerModule } from './relayer/relayer.module';
+import { SandboxModule } from './sandbox/sandbox.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { RelayerModule } from './relayer/relayer.module';
     RouteInsightsExporterModule,
     SorobanLifecycleModule,
     RelayerModule,
+    SandboxModule,
   ],
   controllers: [AppController],
   providers: [
