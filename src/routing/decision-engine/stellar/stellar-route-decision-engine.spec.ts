@@ -224,4 +224,110 @@ describe('StellarRouteDecisionEngine', () => {
       'INVALID_RISK_SCORE',
     ]);
   });
+
+  describe('low-liquidity route rejection', () => {
+    it('does not gate on liquidity by default (minLiquidity = 0)', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide([makeRoute({ id: 'r1', provider: 'p1' })]);
+
+      expect(result.selection!.id).toBe('r1');
+      expect(result.rejections).toEqual([]);
+    });
+
+    it('rejects a route whose available liquidity is below the policy floor', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [
+          makeRoute({ id: 'deep', provider: 'p1' }),
+          makeRoute({ id: 'shallow', provider: 'p2' }),
+        ],
+        {},
+        {
+          policy: { minLiquidity: '1000' },
+          signals: {
+            liquiditySignals: [
+              { routeId: 'deep', availableLiquidity: '5000', asset: 'USDC' },
+              { routeId: 'shallow', availableLiquidity: '250.5', asset: 'USDC' },
+            ],
+          },
+        },
+      );
+
+      expect(result.selection!.id).toBe('deep');
+      expect(result.rejections.map((r) => r.route.id)).toEqual(['shallow']);
+      expect(result.rejections[0]).toMatchObject({
+        code: 'INSUFFICIENT_LIQUIDITY',
+        reason: 'available liquidity 250.5 USDC is below policy minimum 1000 USDC',
+      });
+    });
+
+    it('admits a route sitting exactly on the liquidity floor (boundary)', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [makeRoute({ id: 'edge', provider: 'p1' })],
+        {},
+        {
+          policy: { minLiquidity: '1000.00' },
+          signals: { liquiditySignals: [{ routeId: 'edge', availableLiquidity: '1000' }] },
+        },
+      );
+
+      expect(result.selection!.id).toBe('edge');
+      expect(result.rejections).toEqual([]);
+    });
+
+    it('fails closed when liquidity data is missing and the gate is active', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [makeRoute({ id: 'unknown', provider: 'p1' })],
+        {},
+        { policy: { minLiquidity: '1000' } },
+      );
+
+      expect(result.selection).toBeNull();
+      expect(result.rejections[0].code).toBe('LIQUIDITY_UNKNOWN');
+    });
+
+    it('admits routes with unreported liquidity when requireLiquidityData is false', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [makeRoute({ id: 'unknown', provider: 'p1' })],
+        {},
+        { policy: { minLiquidity: '1000', requireLiquidityData: false } },
+      );
+
+      expect(result.selection!.id).toBe('unknown');
+      expect(result.rejections).toEqual([]);
+    });
+
+    it('flags a malformed liquidity figure with INVALID_LIQUIDITY', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [makeRoute({ id: 'bad', provider: 'p1' })],
+        {},
+        {
+          policy: { minLiquidity: '1000' },
+          signals: { liquiditySignals: [{ routeId: 'bad', availableLiquidity: 'not-a-number' }] },
+        },
+      );
+
+      expect(result.selection).toBeNull();
+      expect(result.rejections[0].code).toBe('INVALID_LIQUIDITY');
+    });
+
+    it('warns when a surviving route runs thin on liquidity', () => {
+      const engine = new StellarRouteDecisionEngine({ now });
+      const result = engine.decide(
+        [makeRoute({ id: 'thin', provider: 'p1' })],
+        {},
+        {
+          policy: { minLiquidity: '1000' },
+          signals: { liquiditySignals: [{ routeId: 'thin', availableLiquidity: '1200' }] },
+        },
+      );
+
+      expect(result.selection!.id).toBe('thin');
+      expect(result.selection!.warnings.some((w) => w.includes('Liquidity is thin'))).toBe(true);
+    });
+  });
 });
