@@ -23,7 +23,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test contract boundary and property cases
-        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/utils/CalldataSlicer.test.ts
+        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts
 
       - name: Lint
         run: pnpm run lint
