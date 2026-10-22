@@ -1,4 +1,4 @@
-import { SorobanContractMetadataCache } from '../../cache/contracts/soroban-contract-metadata-cache';
+import { SorobanContractMetadataCache } from './soroban-contract-metadata-cache';
 import {
   ContractInterfaceMetadata,
   ContractFunctionSpec,
@@ -33,7 +33,9 @@ export class SorobanContractMetadataResolver {
   private readonly cache: SorobanContractMetadataCache;
 
   constructor(
-    config: MetadataResolverConfig & { cache?: SorobanContractMetadataCache } = {} as any,
+    config: MetadataResolverConfig & {
+      cache?: SorobanContractMetadataCache;
+    } = {} as any,
   ) {
     this.config = {
       rpcUrl: config.rpcUrl ?? 'https://soroban-testnet.stellar.org',
@@ -44,7 +46,9 @@ export class SorobanContractMetadataResolver {
     };
     this.cache =
       (config as any).cache ??
-      new SorobanContractMetadataCache({ defaultTtlMs: this.config.cacheTtlMs });
+      new SorobanContractMetadataCache({
+        defaultTtlMs: this.config.cacheTtlMs,
+      });
   }
 
   /**
@@ -93,7 +97,12 @@ export class SorobanContractMetadataResolver {
           network,
         );
         if (metadata) {
-          this.cache.set(contractAddress, network, metadata, this.config.cacheTtlMs);
+          this.cache.set(
+            contractAddress,
+            network,
+            metadata,
+            this.config.cacheTtlMs,
+          );
           return {
             contractAddress,
             network,
@@ -121,7 +130,8 @@ export class SorobanContractMetadataResolver {
       metadata: null,
       resolvedAt,
       fromCache: false,
-      error: 'Metadata unavailable: no fetcher provided or fetcher returned null',
+      error:
+        'Metadata unavailable: no fetcher provided or fetcher returned null',
     };
   }
 
@@ -192,11 +202,28 @@ export class SorobanContractMetadataResolver {
       previous.functions.length !== freshMetadata.functions.length ||
       previous.events.length !== freshMetadata.events.length ||
       previous.errors.length !== freshMetadata.errors.length ||
-      JSON.stringify(previous.functions) !== JSON.stringify(freshMetadata.functions) ||
-      JSON.stringify(previous.events) !== JSON.stringify(freshMetadata.events) ||
+      JSON.stringify(previous.functions) !==
+        JSON.stringify(freshMetadata.functions) ||
+      JSON.stringify(previous.events) !==
+        JSON.stringify(freshMetadata.events) ||
       JSON.stringify(previous.errors) !== JSON.stringify(freshMetadata.errors);
 
     return { changed, previous, current: freshMetadata };
+  }
+
+  /**
+   * Alias for `detectChange` kept for callers using the plural form.
+   */
+  async detectChanges(
+    contractAddress: string,
+    freshMetadata: ContractInterfaceMetadata,
+    network?: MetadataNetwork,
+  ): Promise<{
+    changed: boolean;
+    previous: ContractInterfaceMetadata | null;
+    current: ContractInterfaceMetadata;
+  } | null> {
+    return this.detectChange(contractAddress, freshMetadata, network);
   }
 
   /**
@@ -211,7 +238,10 @@ export class SorobanContractMetadataResolver {
 
   /** Invalidate cached metadata for a specific contract. */
   invalidate(contractAddress: string, network?: MetadataNetwork): boolean {
-    return this.cache.invalidate(contractAddress, network ?? this.config.network);
+    return this.cache.invalidate(
+      contractAddress,
+      network ?? this.config.network,
+    );
   }
 
   /** Clear the entire metadata cache. */
