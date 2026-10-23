@@ -35,6 +35,9 @@ import { QuotesModule } from './quotes/quotes.module';
 import { RelayerModule } from './relayer/relayer.module';
 import { SandboxModule } from './sandbox/sandbox.module';
 import { TransferTraceModule } from './monitoring/transfer-trace/transfer-trace.module';
+import { TraceCorrelationModule } from './monitoring/trace-correlation/trace-correlation.module';
+import { ReviewFlagModule } from './compliance/review-flags/review-flag.module';
+import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.module';
 
 @Module({
   imports: [
@@ -90,6 +93,9 @@ import { TransferTraceModule } from './monitoring/transfer-trace/transfer-trace.
     RelayerModule,
     SandboxModule,
     TransferTraceModule,
+    ChainLatencyModule,
+    TraceCorrelationModule,
+    ReviewFlagModule,
   ],
   controllers: [AppController],
   providers: [

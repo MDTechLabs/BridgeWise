@@ -18,6 +18,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { paginate, PaginatedResult } from '../common/pagination';
 
 /**
  * Quote event types
@@ -340,6 +341,32 @@ export class AbandonmentTrackingService {
     eventType?: QuoteEventType;
     limit?: number;
   }): QuoteEvent[] {
+    const limit = params.limit || 1000;
+    return this.filterEvents(params).slice(0, limit);
+  }
+
+  /**
+   * Get a single page of events (most recent first) with pagination metadata
+   */
+  getEventsPage(
+    params: {
+      startDate?: Date;
+      endDate?: Date;
+      eventType?: QuoteEventType;
+    },
+    pagination: { page?: number; limit?: number },
+  ): PaginatedResult<QuoteEvent> {
+    return paginate(this.filterEvents(params), pagination);
+  }
+
+  /**
+   * Filter the event log, returning the most recent events first
+   */
+  private filterEvents(params: {
+    startDate?: Date;
+    endDate?: Date;
+    eventType?: QuoteEventType;
+  }): QuoteEvent[] {
     let filtered = this.eventLog;
 
     if (params.startDate) {
@@ -352,9 +379,7 @@ export class AbandonmentTrackingService {
       filtered = filtered.filter((e) => e.eventType === params.eventType);
     }
 
-    // Return most recent events first
-    const limit = params.limit || 1000;
-    return filtered.slice(-limit).reverse();
+    return [...filtered].reverse();
   }
 
   /**
