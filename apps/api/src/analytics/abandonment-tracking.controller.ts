@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AbandonmentTrackingService } from './abandonment-tracking.service';
+import { QuoteEventsQueryDto } from './dto/quote-events-query.dto';
 
 @ApiTags('Analytics - Abandonment')
 @Controller('analytics/abandonment')
@@ -61,25 +62,18 @@ export class AbandonmentTrackingController {
     summary: 'Get quote events',
     description: 'Returns quote request and execution events for analysis',
   })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO string)' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO string)' })
-  @ApiQuery({ name: 'eventType', required: false, description: 'Filter by event type: quote_requested, quote_executed' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of events to return (default: 1000)' })
   @ApiResponse({ status: 200, description: 'Events retrieved' })
-  async getEvents(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('eventType') eventType?: 'quote_requested' | 'quote_executed',
-    @Query('limit') limit?: string,
-  ) {
-    const events = this.abandonmentService.getEvents({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-      eventType: eventType as any,
-      limit: limit ? parseInt(limit, 10) : undefined,
-    });
+  async getEvents(@Query() query: QuoteEventsQueryDto) {
+    const { items, pagination } = this.abandonmentService.getEventsPage(
+      {
+        startDate: query.startDate ? new Date(query.startDate) : undefined,
+        endDate: query.endDate ? new Date(query.endDate) : undefined,
+        eventType: query.eventType,
+      },
+      { page: query.page, limit: query.limit },
+    );
 
-    return { events, count: events.length };
+    return { events: items, count: items.length, pagination };
   }
 
   @Get('stats')
