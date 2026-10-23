@@ -11,6 +11,11 @@ declare global {
        * Unique request identifier for tracing and logging
        */
       id?: string;
+
+      /**
+       * Trace id correlating this request with downstream transaction activity
+       */
+      traceId?: string;
     }
   }
 }

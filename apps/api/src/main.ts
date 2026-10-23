@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { TraceContextMiddleware } from './monitoring/trace-correlation/trace-context.middleware';
 import { RateLimitMiddleware } from './middleware/rate-limit';
 import { AppModule } from './app.module';
 import { ConfigService } from './config/config.service';
@@ -76,6 +77,8 @@ async function bootstrap() {
   // ===== REQUEST ID MIDDLEWARE =====
   // Use dedicated RequestIdMiddleware to set req.id and response header
   app.use((req, res, next) => new RequestIdMiddleware().use(req, res, next));
+  // Attach a trace id (honouring a valid inbound X-Trace-Id / traceparent)
+  app.use((req, res, next) => new TraceContextMiddleware().use(req, res, next));
 
   // ===== RATE LIMITING MIDDLEWARE =====
   const rateLimitMiddleware = new RateLimitMiddleware({

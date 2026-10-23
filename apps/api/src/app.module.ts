@@ -35,6 +35,7 @@ import { QuotesModule } from './quotes/quotes.module';
 import { RelayerModule } from './relayer/relayer.module';
 import { SandboxModule } from './sandbox/sandbox.module';
 import { TransferTraceModule } from './monitoring/transfer-trace/transfer-trace.module';
+import { TraceCorrelationModule } from './monitoring/trace-correlation/trace-correlation.module';
 import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.module';
 
 @Module({
@@ -92,6 +93,7 @@ import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.mod
     SandboxModule,
     TransferTraceModule,
     ChainLatencyModule,
+    TraceCorrelationModule,
   ],
   controllers: [AppController],
   providers: [
