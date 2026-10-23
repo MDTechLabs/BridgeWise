@@ -36,6 +36,7 @@ import { RelayerModule } from './relayer/relayer.module';
 import { SandboxModule } from './sandbox/sandbox.module';
 import { TransferTraceModule } from './monitoring/transfer-trace/transfer-trace.module';
 import { TraceCorrelationModule } from './monitoring/trace-correlation/trace-correlation.module';
+import { ReviewFlagModule } from './compliance/review-flags/review-flag.module';
 import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.module';
 
 @Module({
@@ -94,6 +95,7 @@ import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.mod
     TransferTraceModule,
     ChainLatencyModule,
     TraceCorrelationModule,
+    ReviewFlagModule,
   ],
   controllers: [AppController],
   providers: [
