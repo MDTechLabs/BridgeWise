@@ -35,12 +35,16 @@
 //! I-7  ZERO-AMOUNT RELEASE IS A NO-OP
 //!      `record_release(0)` does not change `tracked_balance`.
 //!
+//! I-8  NEGATIVE AMOUNTS ARE ALWAYS REJECTED
+//!      Negative deposits or releases are invalid accounting deltas and must
+//!      never increase or decrease the ledger implicitly.
+//!
 //! # Failure behaviour
 //!
-//! Violations of I-1, I-2, or I-5 panic immediately with a descriptive
-//! message so the transaction is rolled back before any token transfer can
-//! complete. Operators observing repeated panics on these paths should
-//! investigate for bridging exploits or on-chain reorg artefacts.
+//! Invalid deltas and accounting invariant violations panic immediately with a
+//! descriptive message so the transaction is rolled back before any token
+//! transfer can complete. Operators observing repeated panics on these paths
+//! should investigate for bridging exploits or on-chain reorg artefacts.
 //!
 //! # Idempotency
 //!
@@ -79,9 +83,11 @@ pub fn tracked_balance(env: &Env, token: &Address) -> i128 {
 /// Record that `amount` tokens have been deposited into the vault escrow.
 ///
 /// # Panics
+/// - If `amount` is negative.
 /// - If `tracked_balance + amount` would overflow `i128` (never in practice
 ///   because Stellar token amounts fit in i64, but the guard is cheap).
 pub fn record_deposit(env: &Env, token: &Address, amount: i128) {
+    assert!(amount >= 0, "escrow accounting: negative deposit amount");
     if amount == 0 {
         return; // I-6: zero-amount deposit is a no-op
     }
@@ -101,9 +107,11 @@ pub fn record_deposit(env: &Env, token: &Address, amount: i128) {
 /// Record that `amount` tokens have been released from the vault escrow.
 ///
 /// # Panics
+/// - If `amount` is negative.
 /// - If `amount > tracked_balance` (I-5): underflow protection.
 /// - If `tracked_balance - amount < 0` (I-1): balance-below-zero protection.
 pub fn record_release(env: &Env, token: &Address, amount: i128) {
+    assert!(amount >= 0, "escrow accounting: negative release amount");
     if amount == 0 {
         return; // I-7: zero-amount release is a no-op
     }
@@ -341,6 +349,72 @@ mod test_invariants {
 
         // I-1: balance is non-negative throughout (0 at end)
         assert!(client.balance(&token) >= 0);
+    }
+
+    #[test]
+    fn partial_fill_and_refund_sequences_preserve_accounting_invariants() {
+        let (_env, client, token) = setup();
+        let mut total_deposited = 0i128;
+        let mut total_released = 0i128;
+
+        fn assert_accounting(
+            client: &EscrowHarnessClient<'_>,
+            token: &Address,
+            total_deposited: i128,
+            total_released: i128,
+        ) {
+            let expected = total_deposited - total_released;
+            assert_eq!(client.balance(token), expected);
+            assert!(client.check_invariant(token, &expected));
+        }
+
+        // A partially filled transfer is followed by a refund, then another
+        // fill against the remaining escrow.
+        client.deposit(&token, &1_000);
+        total_deposited += 1_000;
+        assert_accounting(&client, &token, total_deposited, total_released);
+        client.release(&token, &400);
+        total_released += 400;
+        assert_accounting(&client, &token, total_deposited, total_released);
+        client.deposit(&token, &100);
+        total_deposited += 100;
+        assert_accounting(&client, &token, total_deposited, total_released);
+        client.release(&token, &250);
+        total_released += 250;
+        assert_accounting(&client, &token, total_deposited, total_released);
+
+        // Exercise repeated interleaved fills/refunds with a fixed seed so the
+        // sequence is reproducible without relying on untrusted RPC data.
+        let mut seed = 0x1414_u64;
+        for _ in 0..128 {
+            seed = seed.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+            if seed & 1 == 0 || total_deposited == total_released {
+                let amount = ((seed >> 32) % 100 + 1) as i128;
+                client.deposit(&token, &amount);
+                total_deposited += amount;
+            } else {
+                let available = total_deposited - total_released;
+                let amount = ((seed >> 32) % available as u64 + 1) as i128;
+                client.release(&token, &amount);
+                total_released += amount;
+            }
+            assert_accounting(&client, &token, total_deposited, total_released);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "negative deposit amount")]
+    fn negative_deposit_is_rejected() {
+        let (_env, client, token) = setup();
+        client.deposit(&token, &-1);
+    }
+
+    #[test]
+    #[should_panic(expected = "negative release amount")]
+    fn negative_release_is_rejected() {
+        let (_env, client, token) = setup();
+        client.deposit(&token, &10);
+        client.release(&token, &-1);
     }
 
     // -----------------------------------------------------------------------
