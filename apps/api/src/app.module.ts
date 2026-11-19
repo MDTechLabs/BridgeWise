@@ -38,6 +38,8 @@ import { TransferTraceModule } from './monitoring/transfer-trace/transfer-trace.
 import { TraceCorrelationModule } from './monitoring/trace-correlation/trace-correlation.module';
 import { ReviewFlagModule } from './compliance/review-flags/review-flag.module';
 import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.module';
+import { BalanceDriftModule } from './monotoring/balance-drift/balance-drift.module';
+import { BalanceDriftRecord } from './monotoring/balance-drift/balance-drift.entity';
 
 @Module({
   imports: [
@@ -57,7 +59,7 @@ import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.mod
           password: dbConfig.password,
           database: dbConfig.database,
           ssl: dbConfig.ssl,
-          entities: [Transaction, WalletSession, SorobanTransferLifecycleEntity],
+          entities: [Transaction, WalletSession, SorobanTransferLifecycleEntity, BalanceDriftRecord],
           synchronize: process.env.NODE_ENV === 'development',
           logging: process.env.NODE_ENV === 'development',
         };
@@ -96,6 +98,7 @@ import { ChainLatencyModule } from './monitoring/chain-latency/chain-latency.mod
     ChainLatencyModule,
     TraceCorrelationModule,
     ReviewFlagModule,
+    BalanceDriftModule,
   ],
   controllers: [AppController],
   providers: [
