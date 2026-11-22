@@ -540,14 +540,6 @@ export const ERROR_CATALOGUE: Record<ErrorCode, ErrorCatalogueEntry> = {
     retryHint: 'never',
     docsUrl: `${BASE_DOCS}#FORBIDDEN`,
   },
-  [ALL_ERROR_CODES.INVALID_TOKEN]: {
-    code: ALL_ERROR_CODES.INVALID_TOKEN,
-    title: 'Authentication token invalid',
-    description: 'The provided Bearer token is not a valid credential.',
-    httpStatus: HttpStatus.UNAUTHORIZED,
-    retryHint: 'never',
-    docsUrl: `${BASE_DOCS}#INVALID_TOKEN`,
-  },
   [ALL_ERROR_CODES.TOKEN_EXPIRED]: {
     code: ALL_ERROR_CODES.TOKEN_EXPIRED,
     title: 'Authentication token expired',
