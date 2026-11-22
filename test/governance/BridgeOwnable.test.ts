@@ -1,7 +1,14 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 describe("BridgeOwnable", () => {
+  let ethers: any;
+
+  before(async () => {
+    const connection = await hre.network.create();
+    ethers = connection.ethers;
+  });
+
   async function deploy() {
     const [owner, pendingOwner, user] = await ethers.getSigners();
     const Factory = await ethers.getContractFactory("BridgeOwnable");

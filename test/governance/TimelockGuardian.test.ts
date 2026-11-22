@@ -1,7 +1,14 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 describe("TimelockGuardian", () => {
+  let ethers: any;
+
+  before(async () => {
+    const connection = await hre.network.create();
+    ethers = connection.ethers;
+  });
+
   async function deploy() {
     const [admin, guardian, user] = await ethers.getSigners();
     const Factory = await ethers.getContractFactory("TimelockGuardian");

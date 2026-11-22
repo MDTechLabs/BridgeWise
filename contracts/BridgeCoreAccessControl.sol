@@ -37,7 +37,6 @@ contract BridgeCoreAccessControl is Initializable, UUPSUpgradeable, AccessContro
 
     function initialize(uint256 _chainId, address admin) public initializer {
         __AccessControl_init();
-        __UUPSUpgradeable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(OPERATOR_ROLE, admin);

@@ -26,7 +26,6 @@ contract BridgeCoreUpgradeable is Initializable, UUPSUpgradeable, OwnableUpgrade
 
     function initialize(uint256 _chainId) public initializer {
         __Ownable_init(msg.sender);
-        __UUPSUpgradeable_init();
         chainId = _chainId;
     }
 
