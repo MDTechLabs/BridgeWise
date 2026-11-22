@@ -140,7 +140,7 @@ export class ChainRpcCapabilityDiscoveryService {
 
     // Concurrency deduplication
     const existing = this.inFlight.get(key);
-    if (existing) return existing;
+    if (existing !== undefined) return existing;
 
     const discoveryPromise = this.performDiscovery(chainId, endpoint, client)
       .finally(() => {
@@ -272,7 +272,7 @@ export class ChainRpcCapabilityDiscoveryService {
       if (err instanceof ChainIdMismatchError) throw err;
 
       const latencyMs = Math.max(1, this.now() - startTime);
-      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
 
       const degradedProfile: ChainRpcCapabilityProfile = {
         chainId,
