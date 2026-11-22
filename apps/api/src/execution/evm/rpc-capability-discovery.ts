@@ -79,7 +79,7 @@ export function sanitizeEndpoint(url: string): string {
     parsed.pathname = pathParts
       .map((part) => (/^[a-fA-F0-9]{32,}$|^[a-zA-Z0-9_-]{24,}$/.test(part) ? '[REDACTED]' : part))
       .join('/');
-    return parsed.toString().replace('%5BREDACTED%5D', '[REDACTED]');
+    return parsed.toString().replace('//%5BREDACTED%5D@', '//[REDACTED]@');
   } catch {
     // If not a valid URL, replace any secret-looking hex/alphanumeric sequences
     return url.replace(/([?&][a-zA-Z0-9_-]+=[^&]+)/g, '?credentials=[REDACTED]');
