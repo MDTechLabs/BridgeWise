@@ -24,6 +24,9 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Severity ownership, escalation sequence, and contact-directory readiness
 - **[KEY_MANAGEMENT_RUNBOOK.md](./KEY_MANAGEMENT_RUNBOOK.md)**
   - Production credential creation, rotation, recovery, and emergency revocation
+- **[VALIDATOR_QUORUM_LOSS_RECOVERY_RUNBOOK.md](./VALIDATOR_QUORUM_LOSS_RECOVERY_RUNBOOK.md)**
+  - Detection, containment, timelocked validator rotation, and fail-safe recovery
+  - Quorum invariants, replay protection, reorg handling, and verification evidence
 
 ### Getting Started
 
