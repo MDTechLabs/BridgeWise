@@ -14,6 +14,10 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Upgrade authorization and immutable-code policy
   - Fee and vault accounting invariants
   - Production monitoring and verification
+- **[BRIDGE_ESCROW_CONSERVATION_SPEC.md](./BRIDGE_ESCROW_CONSERVATION_SPEC.md)**
+  - Formal state machine and conservation invariants for bridge escrow
+  - Versioned chain parameters, reorg/recovery behavior and conformance gaps
+  - Executable model, fuzz evidence and supported-chain integration checks
 - **[MULTISIG_PROPOSAL_MONITORING.md](./MULTISIG_PROPOSAL_MONITORING.md)**
   - Governance event sources, monitoring requirements, alert response, and deployment dependencies
 - **[MAINNET_CHANGE_APPROVAL_CHECKLIST.md](./MAINNET_CHANGE_APPROVAL_CHECKLIST.md)**

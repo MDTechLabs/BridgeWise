@@ -1,5 +1,7 @@
 # Global Escrow Solvency Invariants
 
+The broader state machine, fee accounting, replay, reorg and recovery properties are specified in [BRIDGE_ESCROW_CONSERVATION_SPEC.md](./BRIDGE_ESCROW_CONSERVATION_SPEC.md). This document records the narrower per-chain solvency checks and the known `FallbackEscrow` gaps.
+
 Scope: `contracts/execution/FallbackEscrow.sol`, deployed once per chain.
 
 ## Definitions

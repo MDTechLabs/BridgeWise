@@ -25,6 +25,12 @@ jobs:
       - name: Test contract boundary and property cases
         run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts
 
+      - name: Verify bridge escrow conservation specification
+        run: pnpm exec jest --runInBand --runTestsByPath scripts/bridge-escrow-conservation.spec.ts
+
+      - name: Verify escrow conservation on every supported chain profile
+        run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/BridgeEscrowConservation.integration.test.ts
+
       - name: Lint
         run: pnpm run lint
         working-directory: apps/api
