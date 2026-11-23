@@ -28,6 +28,12 @@ jobs:
       - name: Verify bridge escrow conservation specification
         run: pnpm exec jest --runInBand --runTestsByPath scripts/bridge-escrow-conservation.spec.ts
 
+      - name: Verify token adapter risk and reconciliation specification
+        run: pnpm exec jest --runInBand --runTestsByPath scripts/token-adapter-risk.spec.ts
+
+      - name: Verify token adapter risk on Hardhat integration suite
+        run: pnpm exec hardhat --config scripts/hardhat.token-adapter.config.ts test test/tokens/TokenAdapterRisk.integration.test.ts
+
       - name: Verify escrow conservation on every supported chain profile
         run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/BridgeEscrowConservation.integration.test.ts
 

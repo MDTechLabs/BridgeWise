@@ -14,6 +14,11 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Upgrade authorization and immutable-code policy
   - Fee and vault accounting invariants
   - Production monitoring and verification
+- **[TOKEN_ADAPTER_RISK_AND_RECONCILIATION_SPEC.md](./TOKEN_ADAPTER_RISK_AND_RECONCILIATION_SPEC.md)**
+  - Prevention of arbitrary token approval growth in adapters (#1485, #1486)
+  - Malicious token callback and reentrancy isolation (#1488)
+  - Balance delta reconciliation for Fee-on-Transfer and rebasing assets (#1489)
+  - Executable reference model, adversarial test suites, and Hardhat integration evidence
 - **[BRIDGE_ESCROW_CONSERVATION_SPEC.md](./BRIDGE_ESCROW_CONSERVATION_SPEC.md)**
   - Formal state machine and conservation invariants for bridge escrow
   - Versioned chain parameters, reorg/recovery behavior and conformance gaps
