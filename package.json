@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:simulation": "jest --config ./tests/simulation/jest.config.js --testPathPattern='tests/simulation/'",
     "deploy:contracts": "hardhat run scripts/deploy-contracts.cli.ts",
-    "deployment:preflight": "hardhat run scripts/deployment-preflight.entry.ts"
+    "deployment:preflight": "hardhat run scripts/deployment-preflight.entry.ts",
+    "deployment:verify-addresses": "hardhat run scripts/post-deployment-address-check.entry.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
