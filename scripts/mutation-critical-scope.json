@@ -1,0 +1,15 @@
+{
+  "criticalPaths": [
+    "contracts/**/auth*.sol",
+    "contracts/**/access*.sol",
+    "contracts/**/pause*.sol",
+    "contracts/**/escrow*.sol",
+    "contracts/**/account*.sol",
+    "src/**/authorization/**",
+    "src/**/accounting/**"
+  ],
+  "threshold": {
+    "critical": 0.8
+  },
+  "report": "mutation-report.json"
+}
