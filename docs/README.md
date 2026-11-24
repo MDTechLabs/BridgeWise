@@ -36,6 +36,21 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
 - **[VALIDATOR_QUORUM_LOSS_RECOVERY_RUNBOOK.md](./VALIDATOR_QUORUM_LOSS_RECOVERY_RUNBOOK.md)**
   - Detection, containment, timelocked validator rotation, and fail-safe recovery
   - Quorum invariants, replay protection, reorg handling, and verification evidence
+- **[OPERATIONAL_SAFETY_BUNDLE.md](./OPERATIONAL_SAFETY_BUNDLE.md)**
+  - Release index for the signed and reviewed production configuration bundle (#1526-#1529)
+  - Trust boundaries, acceptance mapping, deployment and emergency recovery
+- **[PRODUCTION_CONFIGURATION_BUNDLE.md](./PRODUCTION_CONFIGURATION_BUNDLE.md)**
+  - Versioned chain parameters, reviewer quorum and activation invariants
+  - Replay/rollback safety, monitoring and operator recovery
+- **[INCIDENT_EVIDENCE_EXPORT_CROSS_CHAIN.md](./INCIDENT_EVIDENCE_EXPORT_CROSS_CHAIN.md)**
+  - Signed, bounded and redacted evidence export for affected transfer identifiers
+  - Finality, corroboration, integrity and audit-first guarantees
+- **[DAILY_EVENT_RECONCILIATION_REPORT.md](./DAILY_EVENT_RECONCILIATION_REPORT.md)**
+  - Deterministic daily contract-event vs database reconciliation
+  - Chain coverage, exact comparisons, bounded discrepancies and replay safety
+- **[DELAYED_RELAYER_RECOVERY.md](./DELAYED_RELAYER_RECOVERY.md)**
+  - Stateful relayer loss/retry/recovery model with at-most-once destination execution
+  - Pinned nonces, corroborated probes, reorg handling and conservation invariants
 
 ### Getting Started
 

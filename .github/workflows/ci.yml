@@ -37,6 +37,12 @@ jobs:
       - name: Verify escrow conservation on every supported chain profile
         run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/BridgeEscrowConservation.integration.test.ts
 
+      - name: Verify signed production configuration and operational safety models
+        run: pnpm exec jest --runInBand --runTestsByPath scripts/production-config-bundle.spec.ts scripts/incident-evidence-export.spec.ts scripts/daily-event-reconciliation-report.spec.ts scripts/delayed-relayer-recovery.spec.ts --moduleFileExtensions ts json js
+
+      - name: Verify operational safety on every supported chain profile
+        run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/OperationalSafety.integration.test.ts
+
       - name: Lint
         run: pnpm run lint
         working-directory: apps/api
