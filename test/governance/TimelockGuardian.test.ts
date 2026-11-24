@@ -40,4 +40,15 @@ describe("TimelockGuardian", () => {
     await expect(contract.connect(user).cancelUpgrade(proposalId))
       .to.be.revertedWithCustomError(contract, "AccessControlUnauthorizedAccount");
   });
+
+  it("does not permit a cancelled proposal to be cancelled twice", async () => {
+    const { contract, admin, guardian } = await deploy();
+    const proposalId = ethers.id("upgrade-v3");
+    await contract.connect(admin).queueUpgrade(proposalId);
+    await contract.connect(guardian).cancelUpgrade(proposalId);
+
+    await expect(contract.connect(guardian).cancelUpgrade(proposalId))
+      .to.be.revertedWith("Proposal not pending");
+    expect(await contract.isProposalCanceled(proposalId)).to.equal(true);
+  });
 });

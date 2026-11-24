@@ -2,6 +2,17 @@ const { ethers, upgrades } = require('hardhat');
 const { expect } = require('chai');
 
 describe('BridgeCoreUpgradeable Storage Gap & Upgrade Safety (#1314)', function () {
+  it('disables initialization on the implementation contract', async function () {
+    const BridgeCore = await ethers.getContractFactory('BridgeCoreUpgradeable');
+    const implementation = await BridgeCore.deploy();
+    await implementation.waitForDeployment();
+
+    await expect(implementation.initialize(1)).to.be.revertedWithCustomError(
+      implementation,
+      'InvalidInitialization'
+    );
+  });
+
   it('should successfully deploy and validate upgrade safety via UUPS proxy', async function () {
     const [owner] = await ethers.getSigners();
 
