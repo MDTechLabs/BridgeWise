@@ -42,6 +42,18 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
 - **[PRODUCTION_CONFIGURATION_BUNDLE.md](./PRODUCTION_CONFIGURATION_BUNDLE.md)**
   - Versioned chain parameters, reviewer quorum and activation invariants
   - Replay/rollback safety, monitoring and operator recovery
+- **[CHAIN_READINESS_GATE.md](./CHAIN_READINESS_GATE.md)**
+  - Fail-closed production readiness for chain halt and restart scenarios (#1522)
+  - Quorum, reorg depth, monotonic restart epochs and operator recovery
+- **[ROUTE_CANARY_LIMITS.md](./ROUTE_CANARY_LIMITS.md)**
+  - Bounded canary transfer/notional caps for newly enabled bridge routes (#1523)
+  - Idempotent messages, promotion/rollback and bounded windows
+- **[TREASURY_ADDRESS_VERIFICATION.md](./TREASURY_ADDRESS_VERIFICATION.md)**
+  - Automated verification of treasury and fee recipient addresses (#1524)
+  - Burn/reserved address rules, pinned reads and fail-closed RPC handling
+- **[PRODUCTION_DEPLOYMENT_GUARD.md](./PRODUCTION_DEPLOYMENT_GUARD.md)**
+  - Offline guard against testnet chain ids and wrong addresses (#1525)
+  - Explicit mainnet inventory, network labels and pinned source commits
 - **[INCIDENT_EVIDENCE_EXPORT_CROSS_CHAIN.md](./INCIDENT_EVIDENCE_EXPORT_CROSS_CHAIN.md)**
   - Signed, bounded and redacted evidence export for affected transfer identifiers
   - Finality, corroboration, integrity and audit-first guarantees
