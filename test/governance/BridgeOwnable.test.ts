@@ -34,4 +34,13 @@ describe("BridgeOwnable", () => {
     await contract.connect(owner).cancelOwnershipTransfer();
     expect(await contract.pendingOwner()).to.equal(ethers.ZeroAddress);
   });
+
+  it("keeps ownership unchanged when an unrelated account attempts acceptance", async () => {
+    const { contract, owner, pendingOwner, user } = await deploy();
+    await contract.connect(owner).transferOwnership(pendingOwner.address);
+
+    await expect(contract.connect(user).acceptOwnership()).to.be.reverted;
+    expect(await contract.owner()).to.equal(owner.address);
+    expect(await contract.pendingOwner()).to.equal(pendingOwner.address);
+  });
 });
