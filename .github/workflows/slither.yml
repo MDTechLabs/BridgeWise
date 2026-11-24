@@ -1,0 +1,58 @@
+name: Slither
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  slither:
+    name: Slither security gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.9
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned Slither
+        run: python -m pip install --disable-pip-version-check slither-analyzer==0.10.3
+
+      # A missing compiler, unavailable dependency, or Slither error fails this job.
+      - name: Analyze contracts
+        run: slither . --json slither-report.json
+
+      - name: Enforce reviewed baseline
+        if: success()
+        run: python3 scripts/check_slither_baseline.py slither-report.json slither-baseline.json
+
+      - name: Preserve Slither report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: slither-report.json
+          if-no-files-found: ignore
+          retention-days: 14
