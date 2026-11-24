@@ -98,14 +98,20 @@ export function redactMetadata(data?: Record<string, unknown>): Record<string, u
   return result;
 }
 
+if (typeof BigInt !== 'undefined' && !(BigInt.prototype as any).toJSON) {
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+}
+
 /** Allowed transitions for EVM transactions. */
 export const EVM_TRANSITIONS: Record<EvmTxState, readonly EvmTxState[]> = {
   prepared: ['submitted', 'cancelled'],
-  submitted: ['in_mempool', 'mined', 'replaced', 'timed_out', 'cancelled'],
-  in_mempool: ['mined', 'replaced', 'timed_out', 'cancelled'],
+  submitted: ['in_mempool', 'mined', 'confirmed', 'replaced', 'timed_out', 'cancelled'],
+  in_mempool: ['mined', 'confirmed', 'replaced', 'timed_out', 'cancelled'],
   mined: ['confirmed', 'reorg_detected', 'reverted'],
   reorg_detected: ['in_mempool', 'mined', 'timed_out', 'replaced'],
-  confirmed: ['reorg_detected'], // Deep reorg can theoretically reorg a confirmed block
+  confirmed: ['reorg_detected', 'reverted'], // Deep reorg can theoretically reorg a confirmed block
   replaced: [],
   reverted: [],
   timed_out: ['replaced', 'cancelled'],

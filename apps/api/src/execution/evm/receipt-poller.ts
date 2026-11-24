@@ -282,7 +282,7 @@ export function validateReceipt(receipt: unknown, expectedTxHash: string): EvmTr
   const r = receipt as Record<string, unknown>;
 
   if (typeof r.transactionHash !== 'string' || r.transactionHash.toLowerCase() !== expectedTxHash.toLowerCase()) {
-    throw new MalformedReceiptError(`Receipt transactionHash mismatch: expected ${expectedTxHash}, got ${r.transactionHash}`);
+    throw new MalformedReceiptError(`Receipt transactionHash mismatch: expected ${expectedTxHash}, got ${typeof r.transactionHash === 'string' ? r.transactionHash : 'invalid'}`);
   }
 
   let blockNumber: number;
@@ -295,11 +295,11 @@ export function validateReceipt(receipt: unknown, expectedTxHash: string): EvmTr
   }
 
   if (!Number.isFinite(blockNumber) || blockNumber < 0) {
-    throw new MalformedReceiptError(`Invalid blockNumber value: ${r.blockNumber}`);
+    throw new MalformedReceiptError(`Invalid blockNumber value: ${typeof r.blockNumber === 'string' || typeof r.blockNumber === 'number' ? r.blockNumber : 'invalid'}`);
   }
 
   if (typeof r.blockHash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(r.blockHash)) {
-    throw new MalformedReceiptError(`Invalid blockHash format: ${r.blockHash}`);
+    throw new MalformedReceiptError(`Invalid blockHash format: ${typeof r.blockHash === 'string' ? r.blockHash : 'invalid'}`);
   }
 
   let status: 0 | 1;
@@ -308,7 +308,7 @@ export function validateReceipt(receipt: unknown, expectedTxHash: string): EvmTr
   } else if (r.status === 0 || r.status === '0x0' || r.status === '0' || r.status === false) {
     status = 0;
   } else {
-    throw new MalformedReceiptError(`Invalid transaction execution status: ${r.status}`);
+    throw new MalformedReceiptError(`Invalid transaction execution status: ${typeof r.status === 'string' || typeof r.status === 'number' || typeof r.status === 'boolean' ? r.status : 'invalid'}`);
   }
 
   let gasUsed: bigint | undefined;
@@ -460,7 +460,7 @@ export class EVMReceiptPoller {
 
     // Prevent duplicate concurrent polling loops for the same transaction
     const existing = this.activePollers.get(idempotencyKey);
-    if (existing) {
+    if (existing !== undefined) {
       return existing;
     }
 

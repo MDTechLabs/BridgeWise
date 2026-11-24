@@ -155,4 +155,7 @@ contract BridgeMultiSigOwnable {
     function getProposalsCount() external view returns (uint256) {
         return proposals.length;
     }
+
+    /// @notice Allow multisig contract to receive native currency to fund value-bearing proposals.
+    receive() external payable {}
 }

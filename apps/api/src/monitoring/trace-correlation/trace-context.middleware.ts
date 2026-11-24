@@ -10,7 +10,7 @@ import { resolveTraceId } from './trace-context';
 @Injectable()
 export class TraceContextMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
-    const traceId = resolveTraceId(req.headers);
+    const traceId = resolveTraceId(req.headers as any);
     req.traceId = traceId;
     res.setHeader('X-Trace-Id', traceId);
     next();

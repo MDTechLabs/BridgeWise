@@ -79,7 +79,7 @@ export function sanitizeEndpoint(url: string): string {
     parsed.pathname = pathParts
       .map((part) => (/^[a-fA-F0-9]{32,}$|^[a-zA-Z0-9_-]{24,}$/.test(part) ? '[REDACTED]' : part))
       .join('/');
-    return parsed.toString();
+    return parsed.toString().replace('//%5BREDACTED%5D@', '//[REDACTED]@');
   } catch {
     // If not a valid URL, replace any secret-looking hex/alphanumeric sequences
     return url.replace(/([?&][a-zA-Z0-9_-]+=[^&]+)/g, '?credentials=[REDACTED]');
@@ -140,7 +140,7 @@ export class ChainRpcCapabilityDiscoveryService {
 
     // Concurrency deduplication
     const existing = this.inFlight.get(key);
-    if (existing) return existing;
+    if (existing !== undefined) return existing;
 
     const discoveryPromise = this.performDiscovery(chainId, endpoint, client)
       .finally(() => {
@@ -272,7 +272,7 @@ export class ChainRpcCapabilityDiscoveryService {
       if (err instanceof ChainIdMismatchError) throw err;
 
       const latencyMs = Math.max(1, this.now() - startTime);
-      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorMessage = err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
 
       const degradedProfile: ChainRpcCapabilityProfile = {
         chainId,
