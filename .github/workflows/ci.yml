@@ -25,6 +25,11 @@ jobs:
       - name: Test contract boundary and property cases
         run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts
 
+      - name: Test signer policy allowlists and privileged-operation simulation gate
+        run: |
+          pnpm exec hardhat --config scripts/hardhat.signer-policy.config.ts test
+          pnpm exec jest --runInBand --runTestsByPath src/security/simulation/privileged-operation-simulation-gate.spec.ts --moduleFileExtensions ts json js
+
       - name: Verify bridge escrow conservation specification
         run: pnpm exec jest --runInBand --runTestsByPath scripts/bridge-escrow-conservation.spec.ts
 
