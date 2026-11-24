@@ -77,4 +77,14 @@ describe('BridgeCore Emergency Pause Across All Entry Points (#1311)', function 
 
     expect(await bridge.executedTransfers(transferId)).to.be.true;
   });
+
+  it('keeps the emergency pause active when an unauthorized account attempts to unpause', async function () {
+    await bridge.connect(owner).pause();
+
+    await expect(bridge.connect(nonOwner).unpause()).to.be.revertedWithCustomError(
+      bridge,
+      'OwnableUnauthorizedAccount'
+    );
+    expect(await bridge.paused()).to.equal(true);
+  });
 });
