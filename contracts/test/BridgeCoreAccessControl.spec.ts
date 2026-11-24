@@ -84,6 +84,18 @@ describe('BridgeCore Access Control Role Revocation Verification', function () {
   });
 
   describe('Role revocation behavior and verification', function () {
+    it('emits reconciliable grant and revocation records for privileged roles', async function () {
+      await expect(bridge.connect(admin).grantRole(EXECUTOR_ROLE, attacker.address))
+        .to.emit(bridge, 'RoleGranted')
+        .withArgs(EXECUTOR_ROLE, attacker.address, admin.address);
+      expect(await bridge.hasRole(EXECUTOR_ROLE, attacker.address)).to.be.true;
+
+      await expect(bridge.connect(admin).revokeRole(EXECUTOR_ROLE, attacker.address))
+        .to.emit(bridge, 'RoleRevoked')
+        .withArgs(EXECUTOR_ROLE, attacker.address, admin.address);
+      expect(await bridge.hasRole(EXECUTOR_ROLE, attacker.address)).to.be.false;
+    });
+
     it('successfully revokes EXECUTOR_ROLE, immediately disallowing execution', async function () {
       const transferId1 = ethers.id('transfer-before-revoke');
       const amount = ethers.parseEther('2.0');
