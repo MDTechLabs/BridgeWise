@@ -36,9 +36,11 @@ contract UniswapV3TwapOracle is IPriceOracle {
     int8 public immutable decimalAdjustment;
     string private _description;
 
+    error ZeroAddress();
     error TwapPeriodZero();
     error TickOutOfRange(int24 tick);
     error ObservationMismatch();
+    error InvalidDecimalAdjustment(int8 adjustment);
 
     /// @param pool_               Uniswap V3 pool to observe.
     /// @param twapPeriod_         Averaging window in seconds.
@@ -50,7 +52,11 @@ contract UniswapV3TwapOracle is IPriceOracle {
         int8 decimalAdjustment_,
         string memory description_
     ) {
+        if (address(pool_) == address(0)) revert ZeroAddress();
         if (twapPeriod_ == 0) revert TwapPeriodZero();
+        if (decimalAdjustment_ < -18 || decimalAdjustment_ > 18) {
+            revert InvalidDecimalAdjustment(decimalAdjustment_);
+        }
         pool = pool_;
         twapPeriod = twapPeriod_;
         decimalAdjustment = decimalAdjustment_;

@@ -268,6 +268,75 @@ describe("BridgeMultiOracle", () => {
       const [price] = await oracle.getValidatedPrice();
       expect(price).to.equal(usd(2100));
     });
+
+    it("configures and validates oracle decimal scaling and precision bounds (#1477)", async () => {
+      const { oracle, primary } = await deployAggregator();
+      const primaryAddr = await primary.getAddress();
+
+      // Configure valid 18 decimals output, 8 decimals underlying feed, min precision 1e6, max bound 1e36
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 18, 8, 10n ** 6n, 10n ** 36n)
+      ).to.emit(oracle, "OracleDecimalConfigured")
+        .withArgs(primaryAddr, 18, 8, 10n ** 6n, 10n ** 36n);
+
+      const cfg = await oracle.oracleDecimalConfigs(primaryAddr);
+      expect(cfg.configured).to.equal(true);
+      expect(cfg.oracleDecimals).to.equal(18);
+      expect(cfg.underlyingDecimals).to.equal(8);
+
+      const [valPrice] = await oracle.validateOracleDecimals(primaryAddr);
+      expect(valPrice).to.equal(usd(2000));
+    });
+
+    it("rejects invalid oracle decimal configuration parameters", async () => {
+      const { oracle, primary } = await deployAggregator();
+      const primaryAddr = await primary.getAddress();
+
+      // Zero address
+      await expect(
+        oracle.configureOracleDecimals(ethers.ZeroAddress, 18, 8, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "InvalidConfiguration");
+
+      // Non-18 oracle decimals
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 8, 8, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "UnsupportedOracleDecimals");
+
+      // 0 underlying decimals
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 18, 0, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "UnsupportedOracleDecimals");
+
+      // >18 underlying decimals
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 18, 19, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "UnsupportedOracleDecimals");
+
+      // min >= max bound
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 18, 8, 100n, 50n)
+      ).to.be.revertedWithCustomError(oracle, "InvalidPricePrecision");
+    });
+
+    it("rejects configuration if oracle price underflows minimum precision", async () => {
+      const { oracle, primary } = await deployAggregator();
+      const primaryAddr = await primary.getAddress();
+      await primary.setPrice(100n); // very low price
+
+      await expect(
+        oracle.configureOracleDecimals(primaryAddr, 18, 8, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "OraclePrecisionUnderflow");
+    });
+
+    it("only owner can configure oracle decimals", async () => {
+      const { oracle, primary } = await deployAggregator();
+      const primaryAddr = await primary.getAddress();
+      const [, stranger] = await ethers.getSigners();
+
+      await expect(
+        oracle.connect(stranger).configureOracleDecimals(primaryAddr, 18, 8, 10n ** 6n, 10n ** 36n)
+      ).to.be.revertedWithCustomError(oracle, "Unauthorized");
+    });
   });
 });
 
@@ -329,6 +398,23 @@ describe("ChainlinkPriceOracle", () => {
     );
   });
 
+  it("rejects a feed with 0 decimals (#1477)", async () => {
+    const Mock = await ethers.getContractFactory("MockChainlinkAggregator");
+    const feed = await Mock.deploy(0, 1n, now);
+    const Factory = await ethers.getContractFactory("ChainlinkPriceOracle");
+
+    await expect(
+      Factory.deploy(await feed.getAddress(), "bad0"),
+    ).to.be.revertedWithCustomError(Factory, "UnsupportedDecimals");
+  });
+
+  it("rejects zero address aggregator (#1477)", async () => {
+    const Factory = await ethers.getContractFactory("ChainlinkPriceOracle");
+    await expect(
+      Factory.deploy(ethers.ZeroAddress, "zero"),
+    ).to.be.revertedWithCustomError(Factory, "ZeroAddress");
+  });
+
   it("rejects a feed with more than 18 decimals", async () => {
     const Mock = await ethers.getContractFactory("MockChainlinkAggregator");
     const feed = await Mock.deploy(19, 1n, now);
@@ -357,6 +443,27 @@ describe("UniswapV3TwapOracle", () => {
     );
     return { pool, adapter };
   }
+
+  it("rejects zero address pool (#1477)", async () => {
+    const Factory = await ethers.getContractFactory("UniswapV3TwapOracle");
+    await expect(
+      Factory.deploy(ethers.ZeroAddress, 1800, 0, "badPool"),
+    ).to.be.revertedWithCustomError(Factory, "ZeroAddress");
+  });
+
+  it("rejects invalid decimal adjustment (#1477)", async () => {
+    const Pool = await ethers.getContractFactory("MockUniswapV3Pool");
+    const pool = await Pool.deploy(1000);
+    const Factory = await ethers.getContractFactory("UniswapV3TwapOracle");
+
+    await expect(
+      Factory.deploy(await pool.getAddress(), 1800, 19, "badDec"),
+    ).to.be.revertedWithCustomError(Factory, "InvalidDecimalAdjustment");
+
+    await expect(
+      Factory.deploy(await pool.getAddress(), 1800, -19, "badDecNeg"),
+    ).to.be.revertedWithCustomError(Factory, "InvalidDecimalAdjustment");
+  });
 
   it("derives the mean tick from cumulative observations", async () => {
     const { adapter } = await deployTwap(1000);
