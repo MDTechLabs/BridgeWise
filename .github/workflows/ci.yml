@@ -23,7 +23,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test contract boundary and property cases
-        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts test/governance/BridgeMultiSigOwnable.test.ts test/governance/BridgeMultiSigOwnable.fuzz.test.ts test/verifiers/MultiSigThresholdUnavailability.production.test.ts
+        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts test/governance/BridgeMultiSigOwnable.test.ts test/governance/BridgeMultiSigOwnable.fuzz.test.ts test/verifiers/MultiSigThresholdUnavailability.production.test.ts test/execution/EscrowSolvency.test.ts test/execution/EmergencyWithdrawalEntitlement.test.ts
 
       - name: Test signer policy allowlists and privileged-operation simulation gate
         run: |

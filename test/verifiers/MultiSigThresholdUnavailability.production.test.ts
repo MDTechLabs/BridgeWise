@@ -268,11 +268,15 @@ describe("Production MultiSig Threshold & Signer Unavailability Suite", () => {
       const PROPOSER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("PROPOSER_ROLE"));
       await mgr.grantRole(PROPOSER_ROLE, proposer.address);
 
+      const APPROVER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("APPROVER_ROLE"));
+      await mgr.grantRole(APPROVER_ROLE, admin.address);
+
       const oldSet = randomWallets(3).map((w) => w.address);
       const newSet = randomWallets(3).map((w) => w.address);
 
       // Initialize with old set
       await mgr.connect(proposer).proposeValidatorSet(oldSet, 2);
+      await mgr.connect(admin).approveValidatorSet();
       await networkHelpers.time.increase(EPOCH_DELAY + 1);
       await mgr.connect(proposer).activateValidatorSet();
 
@@ -281,6 +285,7 @@ describe("Production MultiSig Threshold & Signer Unavailability Suite", () => {
 
       // Propose rotation to new set
       await mgr.connect(proposer).proposeValidatorSet(newSet, 2);
+      await mgr.connect(admin).approveValidatorSet();
 
       // While pending (new signers are not yet ready / during timelock delay), old set stays active
       expect(await mgr.hasPendingProposal()).to.be.true;
