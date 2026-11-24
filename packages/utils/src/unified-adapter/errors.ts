@@ -18,6 +18,7 @@ export enum AdapterErrorCode {
   UNSUPPORTED_TOKEN = 'UNSUPPORTED_TOKEN',
   INVALID_CHAIN = 'INVALID_CHAIN',
   INVALID_TOKEN = 'INVALID_TOKEN',
+  AMBIGUOUS_TOKEN_IDENTIFIER = 'AMBIGUOUS_TOKEN_IDENTIFIER',
 
   // Request errors
   INVALID_REQUEST = 'INVALID_REQUEST',
@@ -99,6 +100,14 @@ export const ADAPTER_ERRORS = {
       AdapterErrorCode.UNSUPPORTED_CHAIN_PAIR,
       `Chain pair ${source} -> ${target} not supported`,
       { source, target },
+    ),
+
+  ambiguousTokenIdentifier: (identifier: string, sourceChain: string, targetChain: string) =>
+    new AdapterError(
+      AdapterErrorCode.AMBIGUOUS_TOKEN_IDENTIFIER,
+      `Token identifier "${identifier}" matches more than one distinct token mapping ` +
+        `for ${sourceChain} -> ${targetChain}; pass an explicit address instead of a symbol`,
+      { identifier, sourceChain, targetChain },
     ),
 
   unsupportedToken: (token: string, chain: string) =>
