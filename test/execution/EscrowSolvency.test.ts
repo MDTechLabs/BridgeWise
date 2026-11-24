@@ -52,7 +52,8 @@ describe("Global escrow solvency", () => {
     await expect(chainA.escrowTokens(ids[0], recipient.address, tokenAddr, 1n))
       .to.be.revertedWithCustomError(chainA, "AlreadyEscrowed");
     await expect(chainB.connect(attacker).escrowTokens(ids[2], attacker.address, tokenAddr, 1n))
-      .to.be.reverted;
+      .to.be.revertedWithCustomError(chainB, "OwnableUnauthorizedAccount")
+      .withArgs(attacker.address);
     await assertGlobalSolvency(all, token, ids);
 
     // Partial claims, then a replayed claim.

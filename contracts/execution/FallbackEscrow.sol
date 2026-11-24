@@ -17,6 +17,7 @@ contract FallbackEscrow is Ownable {
     struct EscrowEntry {
         uint256 amount;
         address token;
+        address recipient;
         bool claimed;
     }
 
@@ -75,6 +76,7 @@ contract FallbackEscrow is Ownable {
         escrows[messageId] = EscrowEntry({
             amount: amount,
             token: token,
+            recipient: recipient,
             claimed: false
         });
 
@@ -90,14 +92,12 @@ contract FallbackEscrow is Ownable {
         EscrowEntry storage entry = escrows[messageId];
         if (entry.amount == 0) revert NothingToClaim(messageId);
         if (entry.claimed) revert NothingToClaim(messageId);
-
-        // Note: In production, msg.sender should match the original recipient.
-        // Here we allow anyone to claim for simplicity — the MessageReceiverCore
-        // stores the recipient, and the claim function could be restricted.
+        if (msg.sender != entry.recipient) revert NotRecipient();
 
         entry.claimed = true;
         uint256 amount = entry.amount;
         address token = entry.token;
+        claimable[entry.recipient][token] -= amount;
 
         IERC20(token).safeTransfer(msg.sender, amount);
 
