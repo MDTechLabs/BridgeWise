@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IPriceOracle} from "./IPriceOracle.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title BridgeMultiOracle
 /// @notice Aggregates two independent price sources and refuses to value a
@@ -155,14 +156,14 @@ contract BridgeMultiOracle {
 
     /// @notice Disagreement between two prices, in basis points.
     /// @dev Measured against the smaller price so the figure is never flattered
-    ///      by the larger one. Two equal prices yield 0; a zero input yields the
-    ///      maximum, since no meaningful comparison exists.
+    ///      by the larger one. Uses 512-bit-safe OpenZeppelin arithmetic.
+    ///      A zero input yields the maximum, since no meaningful comparison exists.
     function calculateDeviationBps(uint256 a, uint256 b) public pure returns (uint256) {
         if (a == 0 || b == 0) return type(uint256).max;
         if (a == b) return 0;
 
         (uint256 lower, uint256 higher) = a < b ? (a, b) : (b, a);
-        return ((higher - lower) * BPS_DENOMINATOR) / lower;
+        return Math.mulDiv(higher - lower, BPS_DENOMINATOR, lower);
     }
 
     /// @notice Whether both feeds currently agree closely enough to transact.
@@ -229,7 +230,7 @@ contract BridgeMultiOracle {
         (price, updatedAt) = oracle.latestPrice();
 
         if (price == 0) revert InvalidPrice(address(oracle));
-        // A timestamp in the future is as untrustworthy as one long past.
+        // A timestamp in the future is as untrustworthy as long past.
         if (updatedAt > block.timestamp || block.timestamp - updatedAt > maxPriceAge) {
             revert StalePrice(address(oracle), updatedAt, maxPriceAge);
         }
