@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "evm": {
+    "sourcesDir": "contracts",
+    "compiler": {
+      "solcVersion": "0.8.24",
+      "evmVersion": "cancun",
+      "optimizer": { "enabled": false, "runs": 200 },
+      "viaIR": false,
+      "metadataBytecodeHash": "ipfs"
+    },
+    "hardhatConfigs": ["hardhat.config.ts", "contracts/hardhat.config.ts"],
+    "evidenceOnlyHardhatConfigs": [
+      {
+        "path": "scripts/hardhat.token-adapter.config.ts",
+        "reason": "Scoped test-evidence config; its artifacts are never deployed."
+      },
+      {
+        "path": "scripts/hardhat.escrow-conservation.config.ts",
+        "reason": "Scoped test-evidence config; its artifacts are never deployed."
+      }
+    ],
+    "excludedSources": [
+      {
+        "path": "contracts/test/MockERC20.sol",
+        "reason": "Test-only token helper; never deployed to production."
+      },
+      {
+        "path": "contracts/bridge/RejectorMock.sol",
+        "reason": "Test-only mock that rejects transfers; never deployed to production."
+      },
+      {
+        "path": "contracts/verifiers/Mocks.sol",
+        "reason": "Test-only verifier mocks; never deployed to production."
+      }
+    ],
+    "artifacts": {}
+  },
+  "soroban": {
+    "workspaceRoot": "contracts/soroban",
+    "rustToolchain": "1.81.0",
+    "target": "wasm32-unknown-unknown",
+    "sorobanSdk": "22.0.7",
+    "releaseProfile": {
+      "opt-level": "z",
+      "overflow-checks": true,
+      "debug": 0,
+      "strip": "symbols",
+      "debug-assertions": false,
+      "panic": "abort",
+      "codegen-units": 1,
+      "lto": true
+    },
+    "packages": [
+      { "id": "access-control", "dir": "access_control", "crateName": "access_control", "wasmSha256": null },
+      { "id": "atomic-swap", "dir": "atomic_swap", "crateName": "atomic_swap", "wasmSha256": null },
+      { "id": "bridge-vault", "dir": "bridge_vault", "crateName": "bridge_vault", "wasmSha256": null },
+      { "id": "common", "dir": "common", "crateName": "common", "wasmSha256": null },
+      { "id": "vault", "dir": "vault", "crateName": "soroban_vault", "wasmSha256": null }
+    ],
+    "excluded": [
+      {
+        "dir": "bls_verifier",
+        "reason": "Not release-grade: soroban-sdk 20 with testutils in normal dependencies and no hardened release profile. Fix, then move to packages."
+      },
+      {
+        "dir": "bridge_endpoint",
+        "reason": "No Cargo.toml, so it cannot be built. Add a manifest, then move to packages."
+      }
+    ]
+  }
+}
