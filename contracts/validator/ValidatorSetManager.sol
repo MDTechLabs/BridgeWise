@@ -29,6 +29,11 @@ contract ValidatorSetManager is AccessControl {
     /// @notice Role authorized to propose validator set changes.
     bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
 
+    /// @notice Role authorized to approve a pending validator set replacement.
+    /// @dev Kept separate from PROPOSER_ROLE so that no single key can both
+    ///      propose and activate a replacement set.
+    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
+
     /// @notice Minimum delay (in seconds) before a proposed validator set becomes active.
     uint256 public immutable EPOCH_DELAY;
 
@@ -54,6 +59,19 @@ contract ValidatorSetManager is AccessControl {
     /// @notice Whether a pending proposal exists.
     bool public hasPendingProposal;
 
+    /// @notice Distinct approvals required before a pending set can be activated.
+    uint256 public approvalThreshold = 1;
+
+    /// @notice Identifier of the current pending proposal. Increments on every
+    ///         proposal so approvals can never carry over to a different set.
+    uint256 public proposalId;
+
+    /// @notice Approvals collected for the current pending proposal.
+    uint256 public approvalCount;
+
+    /// @dev proposalId => approver => approved.
+    mapping(uint256 => mapping(address => bool)) private _approved;
+
     /// @notice Thrown when proposing an empty validator set.
     error EmptyValidatorSet();
 
@@ -65,6 +83,21 @@ contract ValidatorSetManager is AccessControl {
 
     /// @notice Thrown when no pending proposal exists.
     error NoPendingProposal();
+
+    /// @notice Thrown when an approver approves the same proposal twice.
+    error AlreadyApproved(uint256 proposalId, address approver);
+
+    /// @notice Thrown when activation is attempted without enough approvals.
+    error InsufficientApprovals(uint256 have, uint256 required);
+
+    /// @notice Thrown when the approval threshold is zero.
+    error InvalidApprovalThreshold();
+
+    /// @notice Emitted when an approver approves the pending validator set.
+    event ValidatorSetApproved(uint256 indexed proposalId, address indexed approver, uint256 approvals);
+
+    /// @notice Emitted when the approval threshold changes.
+    event ApprovalThresholdUpdated(uint256 previousThreshold, uint256 newThreshold);
 
     /// @notice Emitted when a new validator set is proposed.
     event ValidatorSetProposed(
@@ -114,12 +147,45 @@ contract ValidatorSetManager is AccessControl {
         pendingActiveAt = block.timestamp + EPOCH_DELAY;
         hasPendingProposal = true;
 
+        // A new proposal invalidates every approval given to the previous one.
+        unchecked { ++proposalId; }
+        approvalCount = 0;
+
         emit ValidatorSetProposed(newValidators, newThreshold, pendingActiveAt);
     }
 
-    /// @notice Activate the pending validator set after the timelock expires.
+    /// @notice Approve the pending validator set. Each approver counts once per proposal.
+    function approveValidatorSet() external onlyRole(APPROVER_ROLE) {
+        if (!hasPendingProposal) revert NoPendingProposal();
+        if (_approved[proposalId][msg.sender]) revert AlreadyApproved(proposalId, msg.sender);
+
+        _approved[proposalId][msg.sender] = true;
+        unchecked { ++approvalCount; }
+
+        emit ValidatorSetApproved(proposalId, msg.sender, approvalCount);
+    }
+
+    /// @notice Whether `approver` has approved the current pending proposal.
+    function hasApproved(address approver) external view returns (bool) {
+        return hasPendingProposal && _approved[proposalId][approver];
+    }
+
+    /// @notice Change how many approvals a replacement needs. Admin only.
+    /// @dev Applies to proposals activated after the change. Approvals already
+    ///      collected are kept, so lowering the threshold can unblock a pending set.
+    function setApprovalThreshold(uint256 newThreshold) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (newThreshold == 0) revert InvalidApprovalThreshold();
+        emit ApprovalThresholdUpdated(approvalThreshold, newThreshold);
+        approvalThreshold = newThreshold;
+    }
+
+    /// @notice Activate the pending validator set after the timelock expires and
+    ///         the approval threshold is met.
     function activateValidatorSet() external onlyRole(PROPOSER_ROLE) {
         if (!hasPendingProposal) revert NoPendingProposal();
+        if (approvalCount < approvalThreshold) {
+            revert InsufficientApprovals(approvalCount, approvalThreshold);
+        }
         if (block.timestamp < pendingActiveAt) {
             revert TimelockNotExpired(pendingActiveAt, block.timestamp);
         }
@@ -136,6 +202,7 @@ contract ValidatorSetManager is AccessControl {
         pendingThreshold = 0;
         hasPendingProposal = false;
         pendingActiveAt = 0;
+        approvalCount = 0;
 
         emit ValidatorSetActivated(activeValidators, activeThreshold, block.timestamp);
     }

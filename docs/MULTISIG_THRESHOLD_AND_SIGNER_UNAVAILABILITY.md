@@ -95,7 +95,7 @@ Security-critical parameters are versioned and immutable; contracts never infer 
 2. **Signer Recovery / Key Rotation**:
    - Propose a new validator set via `ValidatorSetManager.proposeValidatorSet`.
    - Wait for `EPOCH_DELAY` (24h standard).
-   - Activate via `activateValidatorSet`. Outgoing set remains valid during `OVERLAP_WINDOW` to maintain bridge continuity during relayer transition.
+   - Collect `approveValidatorSet` approvals from `APPROVER_ROLE` holders until `approvalThreshold` (default 1, admin-settable) is met, then activate via `activateValidatorSet`. Outgoing set remains valid during `OVERLAP_WINDOW` to maintain bridge continuity during relayer transition.
 3. **Emergency Pause**:
    - If signer keys are compromised, the guardian or admin invokes `BridgeCorePausable.pause()` to halt processing until quorum keys are rotated.
 
