@@ -38,6 +38,7 @@ contract BridgeGateway is AccessControl {
 
     error ZeroAddress();
     error ZeroAmount();
+    error AssetDepositsDisabled(address token);
     error DepositExceedsLimit(uint256 amount, uint256 limit);
 
     // =============================================================
@@ -53,6 +54,10 @@ contract BridgeGateway is AccessControl {
     /// @dev A value of zero disables the per-deposit limit for that token.
     mapping(address token => uint256 limit) public maxDepositLimit;
 
+    /// @notice Whether new deposits for a token are disabled.
+    /// @dev This only gates deposits; it does not affect refunds or escrow claims.
+    mapping(address token => bool disabled) public assetDisabled;
+
     // =============================================================
     //                            EVENTS
     // =============================================================
@@ -62,6 +67,9 @@ contract BridgeGateway is AccessControl {
         address indexed token,
         uint256 amount
     );
+
+    /// @notice Emitted when deposits for a token are enabled or disabled.
+    event AssetDepositStatusUpdated(address indexed token, bool disabled);
 
     /// @notice Emitted after a deposit has been transferred and locked.
     event DepositLocked(
@@ -107,6 +115,20 @@ contract BridgeGateway is AccessControl {
         emit MaxDepositLimitSet(token, amount);
     }
 
+    /// @notice Enable or disable new deposits for a token during incident response.
+    /// @dev Existing user refunds and escrow claims are not gated by this setting.
+    function setAssetDisabled(
+        address token,
+        bool disabled
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (token == address(0)) {
+            revert ZeroAddress();
+        }
+
+        assetDisabled[token] = disabled;
+        emit AssetDepositStatusUpdated(token, disabled);
+    }
+
     // =============================================================
     //                       USER FUNCTIONS
     // =============================================================
@@ -135,6 +157,10 @@ contract BridgeGateway is AccessControl {
 
         if (amount == 0) {
             revert ZeroAmount();
+        }
+
+        if (assetDisabled[token]) {
+            revert AssetDepositsDisabled(token);
         }
 
         uint256 limit = maxDepositLimit[token];

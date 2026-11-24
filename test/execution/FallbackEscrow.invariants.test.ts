@@ -464,10 +464,6 @@ describe("FallbackEscrow — invariant tests", () => {
     });
 
     it("attacker cannot steal funds by claiming an entry they did not create", async () => {
-      // Note: FallbackEscrow.claimEscrowedTokens sends tokens to msg.sender
-      // without verifying they are the original recipient (acknowledged in the
-      // contract comment). This test documents that limitation by verifying the
-      // accounting remains consistent — not that the access control is enforced.
       const { escrow, tokenA, owner, alice, attacker } = await deploy();
       const id = ethers.keccak256(ethers.toUtf8Bytes("i6-claim-attacker"));
       const amount = ethers.parseEther("100");
@@ -475,17 +471,15 @@ describe("FallbackEscrow — invariant tests", () => {
       await tokenA.approve(await escrow.getAddress(), amount);
       await escrow.escrowTokens(id, alice.address, await tokenA.getAddress(), amount);
 
-      // The escrow currently transfers to msg.sender regardless of recipient;
-      // document the expected current behaviour (not a security assertion).
       const escrowBalBefore = await tokenA.balanceOf(await escrow.getAddress());
-      await escrow.connect(attacker).claimEscrowedTokens(id);
+      await expect(escrow.connect(attacker).claimEscrowedTokens(id))
+        .to.be.revertedWithCustomError(escrow, "NotRecipient");
       const escrowBalAfter = await tokenA.balanceOf(await escrow.getAddress());
 
-      // Invariant: escrow balance decreased by exactly `amount`
-      expect(escrowBalBefore - escrowBalAfter).to.equal(amount);
-      // Invariant: entry is now marked claimed
+      expect(escrowBalBefore).to.equal(escrowBalAfter);
       const entry = await escrow.escrows(id);
-      expect(entry.claimed).to.equal(true);
+      expect(entry.claimed).to.equal(false);
+      expect(await escrow.getClaimableAmount(alice.address, await tokenA.getAddress())).to.equal(amount);
     });
   });
 
