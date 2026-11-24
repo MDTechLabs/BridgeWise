@@ -22,7 +22,9 @@
     "test:simulation": "jest --config ./tests/simulation/jest.config.js --testPathPattern='tests/simulation/'",
     "deploy:contracts": "hardhat run scripts/deploy-contracts.cli.ts",
     "deployment:preflight": "hardhat run scripts/deployment-preflight.entry.ts",
-    "deployment:verify-addresses": "hardhat run scripts/post-deployment-address-check.entry.ts"
+    "deployment:verify-addresses": "hardhat run scripts/post-deployment-address-check.entry.ts",
+    "readiness:test": "jest --runInBand --runTestsByPath scripts/chain-readiness-gate.spec.ts scripts/route-canary-limits.spec.ts scripts/treasury-address-verification.spec.ts scripts/production-deployment-guard.spec.ts --moduleFileExtensions ts json js",
+    "readiness:integration": "hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/ProductionReadinessGuards.integration.test.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

@@ -43,6 +43,12 @@ jobs:
       - name: Verify operational safety on every supported chain profile
         run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/OperationalSafety.integration.test.ts
 
+      - name: Verify production readiness gates
+        run: pnpm exec jest --runInBand --runTestsByPath scripts/chain-readiness-gate.spec.ts scripts/route-canary-limits.spec.ts scripts/treasury-address-verification.spec.ts scripts/production-deployment-guard.spec.ts --moduleFileExtensions ts json js
+
+      - name: Verify production readiness gates on every supported chain profile
+        run: pnpm exec hardhat --config scripts/hardhat.escrow-conservation.config.ts test test/execution/ProductionReadinessGuards.integration.test.ts
+
       - name: Lint
         run: pnpm run lint
         working-directory: apps/api
