@@ -18,16 +18,16 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.9
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.15.9
 
       - name: Install project dependencies
         run: pnpm install --frozen-lockfile
@@ -40,9 +40,14 @@ jobs:
       - name: Install pinned Slither
         run: python -m pip install --disable-pip-version-check slither-analyzer==0.10.3
 
+      - name: Compile contracts and prepare Slither artifacts
+        run: |
+          pnpm exec hardhat compile
+          node scripts/prepare-slither.cjs
+
       # A missing compiler, unavailable dependency, or Slither error fails this job.
       - name: Analyze contracts
-        run: slither . --json slither-report.json
+        run: slither . --hardhat-ignore-compile --fail-none --json slither-report.json
 
       - name: Enforce reviewed baseline
         if: success()
