@@ -35,9 +35,15 @@ def finding_identity(detector: dict) -> dict:
 
     file_name = mapping.get("filename_relative")
     if not file_name:
-        fail(f"finding has no relative source file: {detector.get('check', '<unknown>')}")
+        desc_match = re.search(r"\bin\s+([^\s:]+\.sol)\b", detector.get("description", ""))
+        if desc_match:
+            file_name = desc_match.group(1)
+        else:
+            fail(f"finding has no relative source file: {detector.get('check', '<unknown>')}")
 
     file_name = Path(file_name).as_posix()
+    if file_name.startswith("project/"):
+        file_name = file_name[len("project/"):]
     if file_name.startswith("../") or file_name.startswith("/"):
         fail(f"finding source path is not repository-relative: {file_name}")
 
