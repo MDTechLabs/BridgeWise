@@ -19,6 +19,13 @@ Welcome to the BridgeWise API documentation! This comprehensive guide covers eve
   - Malicious token callback and reentrancy isolation (#1488)
   - Balance delta reconciliation for Fee-on-Transfer and rebasing assets (#1489)
   - Executable reference model, adversarial test suites, and Hardhat integration evidence
+- **[ORACLE_DECIMAL_SCALING_AND_PRECISION_SPEC.md](./ORACLE_DECIMAL_SCALING_AND_PRECISION_SPEC.md)**
+  - Validate oracle decimal scaling and precision at configuration time (#1477)
+  - Bounds on underlying feed decimals, TWAP decimal adjustment, and initial dual-oracle agreement
+- **[LIQUIDITY_RESERVE_FLOOR_AND_RESERVATION_SPEC.md](./LIQUIDITY_RESERVE_FLOOR_AND_RESERVATION_SPEC.md)**
+  - Liquidity reserve floor enforcement before route acceptance (#1478)
+  - Prevention of concurrent route reservations oversubscribing liquidity (#1479)
+  - Expiration of abandoned liquidity reservations and balance reconciliation (#1480)
 - **[BRIDGE_ESCROW_CONSERVATION_SPEC.md](./BRIDGE_ESCROW_CONSERVATION_SPEC.md)**
   - Formal state machine and conservation invariants for bridge escrow
   - Versioned chain parameters, reorg/recovery behavior and conformance gaps

@@ -23,7 +23,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test contract boundary and property cases
-        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/utils/CalldataSlicer.test.ts test/governance/BridgeMultiSigOwnable.test.ts test/governance/BridgeMultiSigOwnable.fuzz.test.ts test/verifiers/MultiSigThresholdUnavailability.production.test.ts
+        run: pnpm exec hardhat test test/bridge/NonceBitmap.test.ts test/bridge/BridgeRoute.fuzz.test.ts test/bridge/BridgeRoute.test.ts test/bridge/LiquidityReservation.test.ts test/oracle/BridgeMultiOracle.test.ts test/utils/CalldataSlicer.test.ts test/governance/BridgeMultiSigOwnable.test.ts test/governance/BridgeMultiSigOwnable.fuzz.test.ts test/verifiers/MultiSigThresholdUnavailability.production.test.ts
+
+      - name: Verify oracle decimal scaling and liquidity reservation specifications
+        run: |
+          pnpm exec jest --runInBand --runTestsByPath scripts/oracle-precision-scaling.spec.ts scripts/liquidity-reserve-reservation.spec.ts --moduleFileExtensions ts json js
+          node --test scripts/oracle-precision-scaling.test.mjs scripts/liquidity-reserve-reservation.test.mjs
 
       - name: Test signer policy allowlists and privileged-operation simulation gate
         run: |

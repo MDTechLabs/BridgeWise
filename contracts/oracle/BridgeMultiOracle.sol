@@ -49,6 +49,17 @@ contract BridgeMultiOracle {
 
     address public owner;
 
+    /// @notice Configuration-time decimal and precision metadata for price feeds.
+    struct OracleDecimalConfig {
+        uint8 oracleDecimals;
+        uint8 underlyingDecimals;
+        uint256 minPricePrecision;
+        uint256 maxPriceBound;
+        bool configured;
+    }
+
+    mapping(address => OracleDecimalConfig) public oracleDecimalConfigs;
+
     /// @notice Raised when the two feeds disagree by more than {maxDeviationBps}.
     error OracleDeviationExceeded(uint256 deviationBps, uint256 maxDeviationBps);
     /// @notice A feed reported an observation older than {maxPriceAge}.
@@ -59,6 +70,14 @@ contract BridgeMultiOracle {
     error InvalidConfiguration();
     /// @notice Caller is not the owner.
     error Unauthorized();
+    /// @notice Decimal count is outside the valid range [1, 18].
+    error UnsupportedOracleDecimals(uint8 decimals);
+    /// @notice Precision bounds invalid (min must be > 0 and < max).
+    error InvalidPricePrecision(uint256 minPrecision, uint256 maxBound);
+    /// @notice Price violates minimum precision threshold.
+    error OraclePrecisionUnderflow(address oracle, uint256 price, uint256 minPrecision);
+    /// @notice Price exceeds maximum configured bound.
+    error OraclePriceOverflow(address oracle, uint256 price, uint256 maxBound);
 
     event OraclesUpdated(address indexed primary, address indexed fallbackOracle);
     event DeviationThresholdUpdated(uint256 maxDeviationBps);
@@ -66,6 +85,14 @@ contract BridgeMultiOracle {
     event MaxPriceAgeUpdated(uint256 maxPriceAge);
     event OwnershipTransferred(address indexed from, address indexed to);
     event HighValueTransferValidated(uint256 valueUsd, uint256 price, uint256 deviationBps);
+    event OracleDecimalConfigured(
+        address indexed oracle,
+        uint8 oracleDecimals,
+        uint8 underlyingDecimals,
+        uint256 minPricePrecision,
+        uint256 maxPriceBound
+    );
+    event OracleValidationSucceeded(address indexed oracle, uint256 price, uint256 updatedAt);
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Unauthorized();
@@ -219,6 +246,79 @@ contract BridgeMultiOracle {
         if (newOwner == address(0)) revert InvalidConfiguration();
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
+    }
+
+    /// @notice Validates and registers decimal scaling and precision bounds for an oracle at configuration time.
+    /// @dev Probes the oracle to verify it produces valid non-zero prices within configured precision bounds.
+    function configureOracleDecimals(
+        address oracle,
+        uint8 oracleDecimals,
+        uint8 underlyingDecimals,
+        uint256 minPricePrecision,
+        uint256 maxPriceBound
+    ) external onlyOwner {
+        if (oracle == address(0)) revert InvalidConfiguration();
+        if (oracleDecimals != 18) revert UnsupportedOracleDecimals(oracleDecimals);
+        if (underlyingDecimals == 0 || underlyingDecimals > 18) {
+            revert UnsupportedOracleDecimals(underlyingDecimals);
+        }
+        if (minPricePrecision == 0 || minPricePrecision >= maxPriceBound) {
+            revert InvalidPricePrecision(minPricePrecision, maxPriceBound);
+        }
+
+        // Configuration-time probe of oracle
+        (uint256 price, uint256 updatedAt) = IPriceOracle(oracle).latestPrice();
+        if (price == 0) revert InvalidPrice(oracle);
+        if (price < minPricePrecision) {
+            revert OraclePrecisionUnderflow(oracle, price, minPricePrecision);
+        }
+        if (price > maxPriceBound) {
+            revert OraclePriceOverflow(oracle, price, maxPriceBound);
+        }
+        if (updatedAt > block.timestamp || block.timestamp - updatedAt > maxPriceAge) {
+            revert StalePrice(oracle, updatedAt, maxPriceAge);
+        }
+
+        oracleDecimalConfigs[oracle] = OracleDecimalConfig({
+            oracleDecimals: oracleDecimals,
+            underlyingDecimals: underlyingDecimals,
+            minPricePrecision: minPricePrecision,
+            maxPriceBound: maxPriceBound,
+            configured: true
+        });
+
+        emit OracleDecimalConfigured(
+            oracle,
+            oracleDecimals,
+            underlyingDecimals,
+            minPricePrecision,
+            maxPriceBound
+        );
+        emit OracleValidationSucceeded(oracle, price, updatedAt);
+    }
+
+    /// @notice Validates that an oracle produces a valid price meeting configured decimal scaling and precision.
+    function validateOracleDecimals(IPriceOracle oracle)
+        external
+        view
+        returns (uint256 price, uint256 updatedAt)
+    {
+        address oracleAddr = address(oracle);
+        (price, updatedAt) = oracle.latestPrice();
+        if (price == 0) revert InvalidPrice(oracleAddr);
+        if (updatedAt > block.timestamp || block.timestamp - updatedAt > maxPriceAge) {
+            revert StalePrice(oracleAddr, updatedAt, maxPriceAge);
+        }
+
+        OracleDecimalConfig memory cfg = oracleDecimalConfigs[oracleAddr];
+        if (cfg.configured) {
+            if (price < cfg.minPricePrecision) {
+                revert OraclePrecisionUnderflow(oracleAddr, price, cfg.minPricePrecision);
+            }
+            if (price > cfg.maxPriceBound) {
+                revert OraclePriceOverflow(oracleAddr, price, cfg.maxPriceBound);
+            }
+        }
     }
 
     // ---------------------------------------------------------------------

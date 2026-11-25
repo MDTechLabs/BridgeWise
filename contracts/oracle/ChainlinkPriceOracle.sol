@@ -15,18 +15,29 @@ contract ChainlinkPriceOracle is IPriceOracle {
     uint8 public immutable feedDecimals;
     string private _description;
 
+    error ZeroAddress();
     error NonPositiveAnswer(int256 answer);
     error IncompleteRound(uint80 roundId, uint80 answeredInRound);
     error UnsupportedDecimals(uint8 decimals);
+    error InvalidConfigurationTimeFeed(string reason);
 
     constructor(IChainlinkAggregator aggregator_, string memory description_) {
+        if (address(aggregator_) == address(0)) revert ZeroAddress();
         aggregator = aggregator_;
         uint8 decimals_ = aggregator_.decimals();
+        // A feed with 0 decimals cannot represent fractional precision.
         // Above 18 the normalisation below would have to divide and silently
         // lose precision; no mainstream feed exceeds it.
-        if (decimals_ > 18) revert UnsupportedDecimals(decimals_);
+        if (decimals_ == 0 || decimals_ > 18) revert UnsupportedDecimals(decimals_);
         feedDecimals = decimals_;
         _description = description_;
+
+        // Configuration-time feed validation: confirm aggregator is operational
+        (uint80 roundId, int256 answer, , uint256 reportedAt, uint80 answeredInRound) =
+            aggregator_.latestRoundData();
+        if (answer <= 0) revert NonPositiveAnswer(answer);
+        if (answeredInRound < roundId) revert IncompleteRound(roundId, answeredInRound);
+        if (reportedAt > block.timestamp) revert InvalidConfigurationTimeFeed("Timestamp in future");
     }
 
     /// @inheritdoc IPriceOracle
