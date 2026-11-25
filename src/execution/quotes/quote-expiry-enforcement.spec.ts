@@ -216,6 +216,98 @@ describe('QuoteExpiryEnforcementService (#1285)', () => {
     expect(conflictingQuery.rejectionCode).toBe('QUOTE_ALREADY_EXECUTED');
   });
 
+  // ── Boundary conditions (#1446) ──────────────────────────────────────────────
+
+  it('treats remainingTtlMs exactly 0 (now === expiresAt) as expired, not borderline-valid', () => {
+    const now = 1_000_000;
+    service.registerQuote({
+      quoteId: 'quote-exact-expiry',
+      routeId: 'route-x',
+      sourceChainId: 1,
+      destinationChainId: 137,
+      sourceAsset: 'USDC',
+      destinationAsset: 'USDC',
+      amountIn: '500',
+      expectedAmountOut: '499',
+      minAmountOut: '495',
+      ttlMs: 30_000,
+      createdAt: now,
+    });
+
+    const lockResult = service.acquireExecutionLock({
+      quoteId: 'quote-exact-expiry',
+      idempotencyKey: 'idem-key-1',
+      callerAddress: '0x1234567890abcdef',
+      submittedAt: now + 30_000, // exactly at expiresAt
+    });
+
+    expect(lockResult.allowed).toBe(false);
+    expect(lockResult.rejectionCode).toBe('QUOTE_EXPIRED');
+  });
+
+  it('allows execution when remaining TTL exactly equals the execution buffer', () => {
+    const now = 1_000_000;
+    service.registerQuote({
+      quoteId: 'quote-exact-buffer',
+      routeId: 'route-x',
+      sourceChainId: 1,
+      destinationChainId: 137,
+      sourceAsset: 'USDC',
+      destinationAsset: 'USDC',
+      amountIn: '500',
+      expectedAmountOut: '499',
+      minAmountOut: '495',
+      ttlMs: 30_000,
+      createdAt: now,
+    });
+
+    // 25s in, exactly 5s remain == executionBufferMs: must pass, not be rejected.
+    const lockResult = service.acquireExecutionLock({
+      quoteId: 'quote-exact-buffer',
+      idempotencyKey: 'idem-key-1',
+      callerAddress: '0x1234567890abcdef',
+      submittedAt: now + 25_000,
+    });
+
+    expect(lockResult.allowed).toBe(true);
+    expect(lockResult.remainingTtlMs).toBe(5_000);
+  });
+
+  it('does not treat a lock exactly at lockTtlMs old as still fresh', () => {
+    const now = 1_000_000;
+    service.registerQuote({
+      quoteId: 'quote-exact-lock-timeout',
+      routeId: 'route-x',
+      sourceChainId: 1,
+      destinationChainId: 137,
+      sourceAsset: 'USDC',
+      destinationAsset: 'USDC',
+      amountIn: '500',
+      expectedAmountOut: '499',
+      minAmountOut: '495',
+      ttlMs: 120_000,
+      createdAt: now,
+    });
+
+    service.acquireExecutionLock({
+      quoteId: 'quote-exact-lock-timeout',
+      idempotencyKey: 'idem-first',
+      callerAddress: '0xuser1',
+      submittedAt: now,
+    });
+
+    // lockTtlMs is 60_000 in this suite's config; exactly that old must be
+    // treated as stale (reclaimable), not as still-fresh/conflicting.
+    const lockResult = service.acquireExecutionLock({
+      quoteId: 'quote-exact-lock-timeout',
+      idempotencyKey: 'idem-second',
+      callerAddress: '0xuser2',
+      submittedAt: now + 60_000,
+    });
+
+    expect(lockResult.rejectionCode).not.toBe('QUOTE_IN_FLIGHT_CONFLICT');
+  });
+
   it('releases lock upon execution failure allowing subsequent attempts if still unexpired', () => {
     const now = 1_000_000;
     service.registerQuote({

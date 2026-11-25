@@ -99,36 +99,41 @@ export class TokenRegistry implements ITokenRegistry {
     await Promise.resolve(); // Added await to satisfy require-await
     const sourceLower = sourceToken.toLowerCase();
 
-    // Try direct address lookup first
+    // Collect every match instead of returning the first (#1444): a symbol
+    // can coincide with another token's address string, so an identifier
+    // that resolves to more than one distinct token across chain namespaces
+    // must be rejected rather than silently resolved to whichever happened
+    // to be found first.
+    const candidates: TokenMapping[] = [];
     if (provider) {
       const key = this.getMappingKey(sourceChain, targetChain, provider);
-      const mappings = this.mappings.get(key) || [];
-
-      for (const mapping of mappings) {
-        if (
-          mapping.sourceToken.address.toLowerCase() === sourceLower ||
-          mapping.sourceToken.symbol.toLowerCase() === sourceLower
-        ) {
-          return mapping;
-        }
-      }
+      candidates.push(...(this.mappings.get(key) || []));
     } else {
-      // Search across all providers
       for (const [key, mappings] of this.mappings) {
         if (key.startsWith(`${sourceChain}-${targetChain}`)) {
-          for (const mapping of mappings) {
-            if (
-              mapping.sourceToken.address.toLowerCase() === sourceLower ||
-              mapping.sourceToken.symbol.toLowerCase() === sourceLower
-            ) {
-              return mapping;
-            }
-          }
+          candidates.push(...mappings);
         }
       }
     }
 
-    return null;
+    const matches = candidates.filter(
+      (mapping) =>
+        mapping.sourceToken.address.toLowerCase() === sourceLower ||
+        mapping.sourceToken.symbol.toLowerCase() === sourceLower,
+    );
+
+    const distinctAddresses = new Set(
+      matches.map((m) => m.sourceToken.address.toLowerCase()),
+    );
+    if (distinctAddresses.size > 1) {
+      throw ADAPTER_ERRORS.ambiguousTokenIdentifier(
+        sourceToken,
+        sourceChain,
+        targetChain,
+      );
+    }
+
+    return matches[0] ?? null;
   }
 
   async getMappingsForBridge(
